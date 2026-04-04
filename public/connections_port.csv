@@ -1,1 +1,68 @@
-/Users/naototakayama/shutoko/connections_port.csv
+﻿from,to,kind,notes
+EdobashiJCT:C1_CW,HakozakiRotary,link,江戸橋付近→箱崎ロータリー（アクセス）
+EdobashiJCT:C1_CCW,HakozakiRotary,link,江戸橋付近→箱崎ロータリー（アクセス）
+HakozakiRotary,EdobashiJCT:C1_CW,link,箱崎→江戸橋付近（復帰）
+HakozakiRotary,EdobashiJCT:C1_CCW,link,箱崎→江戸橋付近（復帰）
+ShibauraJCT:R11_UP,ShibauraPA,link,芝浦PA（R11_UP上、芝浦JCT手前）
+ShibauraPA,ShibauraJCT:R11_UP,link,芝浦PA→R11_UPへ復帰（R1Hへは出さない）
+DaikokuJCT:BAY_E,DaikokuPA,link,大黒PA（大黒JCT同位置）
+DaikokuJCT:BAY_W,DaikokuPA,link,大黒PA（大黒JCT同位置）
+DaikokuPA,DaikokuJCT:BAY_E,link,大黒PA→BAY_E
+DaikokuPA,DaikokuJCT:BAY_W,link,大黒PA→BAY_W
+TatsumiPA2,TatsumiR9UpAfterPA2,link,辰巳PA2→R9_UP(分岐後)
+TatsumiR9UpAfterPA2,EdobashiJCT:R9_UP,link,R9_UP(分岐後)→上流へ（BAYへ戻れない）
+ShibauraJCT:R11_UP,ShibauraPA,link,Shibaura PA: on R11_UP
+ShibauraPA,ShibauraJCT:R11_UP,link,Shibaura PA: back to R11_UP
+TatsumiJCT:BAY_E,TatsumiPA1,link,Tatsumi PA1: entry from BAY_E only
+TatsumiPA1,TatsumiR9UpAfterPA1,link,Tatsumi PA1: exit to R9_UP (via afterPA1)
+TatsumiR9UpAfterPA1,TatsumiJCT:R9_UP,link,Tatsumi PA1: merge to R9_UP
+HakozakiJCT:R9_UP,EdobashiJCT:R9_UP,link,R9_UP上流接続（福住→箱崎→江戸橋）
+OhashiJCT:R3B_UP,OhashiJCT:R3A_UP,link,3号渋谷線B→A（上り連続）
+OhashiJCT:R3A_DOWN,OhashiJCT:R3B_DOWN,link,3号渋谷線A→B（下り連続）
+NishiShinjukuJCT:R4B_UP,NishiShinjukuJCT:R4A_UP,link,4号新宿線B→A（上り連続）
+NishiShinjukuJCT:R4A_DOWN,NishiShinjukuJCT:R4B_DOWN,link,4号新宿線A→B（下り連続）
+KomatsugawaJCT:R7B_UP,KomatsugawaJCT:R7A_UP,link,7号小松川線B→A（上り連続）
+KomatsugawaJCT:R7A_DOWN,KomatsugawaJCT:R7B_DOWN,link,7号小松川線A→B（下り連続）
+RyougokuJCT:R7A_UP,RyougokuJCT:R6A_UP,link,7A→6A（上り）
+DaikokuJCT:BAY_E,DaikokuJCT:K5_UP,link,大黒JCT: BAY→K5
+DaikokuJCT:BAY_W,DaikokuJCT:K5_UP,link,大黒JCT: BAY→K5
+DaikokuJCT:K5_DOWN,DaikokuJCT:BAY_E,link,大黒JCT: K5→BAY
+DaikokuJCT:K5_DOWN,DaikokuJCT:BAY_W,link,大黒JCT: K5→BAY
+NamamugiJCT:K1_UP,NamamugiJCT:K5_DOWN,link,生麦JCT: K1→K5
+NamamugiJCT:K1_DOWN,NamamugiJCT:K5_DOWN,link,生麦JCT: K1→K5
+NamamugiJCT:K5_UP,NamamugiJCT:K1_UP,link,生麦JCT: K5→K1
+NamamugiJCT:K5_UP,NamamugiJCT:K1_DOWN,link,生麦JCT: K5→K1
+TokaiJCT:BAY_E,TokaiJCT:BAYX_E,link,東海JCT: BAY→湾岸分岐線
+TokaiJCT:BAY_W,TokaiJCT:BAYX_W,link,東海JCT: BAY→湾岸分岐線
+TokaiJCT:BAYX_E,TokaiJCT:BAY_E,link,東海JCT: 湾岸分岐線→BAY
+TokaiJCT:BAYX_W,TokaiJCT:BAY_W,link,東海JCT: 湾岸分岐線→BAY
+ShowajimaJCT:R1H_DOWN,ShowajimaJCT:BAYX_W,link,昭和島JCT: R1H→湾岸分岐線
+ShowajimaJCT:R1H_UP,ShowajimaJCT:BAYX_E,link,昭和島JCT: R1H→湾岸分岐線
+ShowajimaJCT:BAYX_E,ShowajimaJCT:R1H_DOWN,link,昭和島JCT: 湾岸分岐線→R1H
+ShowajimaJCT:BAYX_W,ShowajimaJCT:R1H_UP,link,昭和島JCT: 湾岸分岐線→R1H
+DaishiJCT:K1_DOWN,DaishiJCT:K6_UP,link,大師JCT: K1→K6
+DaishiJCT:K1_UP,DaishiJCT:K6_DOWN,link,大師JCT: K1→K6
+DaishiJCT:K6_UP,DaishiJCT:K1_DOWN,link,大師JCT: K6→K1
+DaishiJCT:K6_DOWN,DaishiJCT:K1_UP,link,大師JCT: K6→K1
+KouhokuJCT:C2_CW,KouhokuJCT:S1_UP,link,江北JCT: C2→S1
+KouhokuJCT:S1_DOWN,KouhokuJCT:C2_CW,link,江北JCT: S1→C2
+SaitamaJCT:S2_UP,SaitamaJCT:S5_UP,link,S2→S5 乗り入れ
+SaitamaJCT:S5_DOWN,SaitamaJCT:S2_DOWN,link,S5→S2 乗り入れ
+BijogiJCT:S5_UP,BijogiJCT:R5B_UP,link,S5→5B 乗り入れ
+BijogiJCT:R5B_DOWN,BijogiJCT:S5_DOWN,link,5B→S5 乗り入れ
+KinkouJCT:K2_UP,KinkouJCT:K1_UP,link,金港JCT: K2→K1
+KinkouJCT:K1_DOWN,KinkouJCT:K2_DOWN,link,金港JCT: K1→K2
+KinkouJCT:K1_UP,KinkouJCT:K2_UP,link,金港JCT: K1→K2
+KinkouJCT:K2_DOWN,KinkouJCT:K1_DOWN,link,金港JCT: K2→K1
+IshikawachoJCT:K3_UP,IshikawachoJCT:K1_UP,link,石川町JCT: K3→K1
+IshikawachoJCT:K1_DOWN,IshikawachoJCT:K3_DOWN,link,石川町JCT: K1→K3
+IshikawachoJCT:K1_UP,IshikawachoJCT:K3_UP,link,石川町JCT: K1→K3
+IshikawachoJCT:K3_DOWN,IshikawachoJCT:K1_DOWN,link,石川町JCT: K3→K1
+HonmokuJCT:K3_UP,HonmokuJCT:BAY_E,link,本牧JCT: K3→BAY
+HonmokuJCT:BAY_W,HonmokuJCT:K3_DOWN,link,本牧JCT: BAY→K3
+HonmokuJCT:BAY_E,HonmokuJCT:K3_UP,link,本牧JCT: BAY→K3
+HonmokuJCT:K3_DOWN,HonmokuJCT:BAY_W,link,本牧JCT: K3→BAY
+NamamugiJCT:K7_UP,NamamugiJCT:K1_UP,link,生麦JCT: K7→K1
+NamamugiJCT:K1_DOWN,NamamugiJCT:K7_DOWN,link,生麦JCT: K1→K7
+NamamugiJCT:K1_UP,NamamugiJCT:K7_UP,link,生麦JCT: K1→K7
+NamamugiJCT:K7_DOWN,NamamugiJCT:K1_DOWN,link,生麦JCT: K7→K1

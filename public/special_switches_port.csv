@@ -1,1 +1,5 @@
-/Users/naototakayama/shutoko/special_switches_port.csv
+junction,type,from,to,notes
+HakozakiRotary,switch,HakozakiRotary,EdobashiJCT:C1_CW,箱崎ロータリー：C1外回りへ出る
+HakozakiRotary,switch,HakozakiRotary,EdobashiJCT:C1_CCW,箱崎ロータリー：C1内回りへ出る
+DaikokuJCT,switch,DaikokuJCT:BAY_E,DaikokuJCT:BAY_W,大黒Uターン（E→W）
+DaikokuJCT,switch,DaikokuJCT:BAY_W,DaikokuJCT:BAY_E,大黒Uターン（W→E）

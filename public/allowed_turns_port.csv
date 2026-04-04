@@ -1,1 +1,335 @@
-/Users/naototakayama/shutoko/allowed_turns_port.csv
+﻿junction,from,to,notes
+EdobashiJCT,EdobashiJCT:C1_CCW,EdobashiJCT:R1U_DOWN,seed (remove if impossible)
+EdobashiJCT,EdobashiJCT:C1_CCW,EdobashiJCT:R6A_DOWN,seed (remove if impossible)
+EdobashiJCT,EdobashiJCT:C1_CW,EdobashiJCT:R6A_DOWN,seed (remove if impossible)
+EdobashiJCT,EdobashiJCT:R1U_UP,EdobashiJCT:C1_CW,seed (remove if impossible)
+EdobashiJCT,EdobashiJCT:R6A_UP,EdobashiJCT:C1_CCW,seed (remove if impossible)
+EdobashiJCT,EdobashiJCT:R6A_UP,EdobashiJCT:C1_CW,seed (remove if impossible)
+HamasakibashiJCT,HamasakibashiJCT:C1_CCW,HamasakibashiJCT:R1H_DOWN,seed (remove if impossible)
+HamasakibashiJCT,HamasakibashiJCT:R1H_UP,HamasakibashiJCT:C1_CW,seed (remove if impossible)
+IchinohashiJCT,IchinohashiJCT:C1_CCW,IchinohashiJCT:R2_DOWN,seed (remove if impossible)
+IchinohashiJCT,IchinohashiJCT:C1_CW,IchinohashiJCT:R2_DOWN,seed (remove if impossible)
+IchinohashiJCT,IchinohashiJCT:R2_UP,IchinohashiJCT:C1_CCW,seed (remove if impossible)
+IchinohashiJCT,IchinohashiJCT:R2_UP,IchinohashiJCT:C1_CW,seed (remove if impossible)
+MiyakezakaJCT,MiyakezakaJCT:C1_CCW,MiyakezakaJCT:R4A_DOWN,seed (remove if impossible)
+MiyakezakaJCT,MiyakezakaJCT:C1_CW,MiyakezakaJCT:R4A_DOWN,seed (remove if impossible)
+MiyakezakaJCT,MiyakezakaJCT:R4A_UP,MiyakezakaJCT:C1_CCW,seed (remove if impossible)
+MiyakezakaJCT,MiyakezakaJCT:R4A_UP,MiyakezakaJCT:C1_CW,seed (remove if impossible)
+TakebashiJCT,TakebashiJCT:C1_CCW,TakebashiJCT:R5A_DOWN,seed (remove if impossible)
+TakebashiJCT,TakebashiJCT:C1_CW,TakebashiJCT:R5A_DOWN,seed (remove if impossible)
+TakebashiJCT,TakebashiJCT:R5A_UP,TakebashiJCT:C1_CCW,seed (remove if impossible)
+TakebashiJCT,TakebashiJCT:R5A_UP,TakebashiJCT:C1_CW,seed (remove if impossible)
+TanimachiJCT,TanimachiJCT:C1_CCW,TanimachiJCT:R3A_DOWN,seed (remove if impossible)
+TanimachiJCT,TanimachiJCT:C1_CW,TanimachiJCT:R3A_DOWN,seed (remove if impossible)
+TanimachiJCT,TanimachiJCT:R3A_UP,TanimachiJCT:C1_CCW,seed (remove if impossible)
+TanimachiJCT,TanimachiJCT:R3A_UP,TanimachiJCT:C1_CW,seed (remove if impossible)
+HorikiriJCT,HorikiriJCT:C2_CCW,HorikiriJCT:R6A_DOWN,seed
+HorikiriJCT,HorikiriJCT:C2_CCW,HorikiriJCT:R6A_UP,seed
+HorikiriJCT,HorikiriJCT:C2_CW,HorikiriJCT:R6A_DOWN,seed
+HorikiriJCT,HorikiriJCT:C2_CW,HorikiriJCT:R6A_UP,seed
+HorikiriJCT,HorikiriJCT:R6A_DOWN,HorikiriJCT:C2_CCW,seed
+HorikiriJCT,HorikiriJCT:R6A_DOWN,HorikiriJCT:C2_CW,seed
+HorikiriJCT,HorikiriJCT:R6A_UP,HorikiriJCT:C2_CCW,seed
+HorikiriJCT,HorikiriJCT:R6A_UP,HorikiriJCT:C2_CW,seed
+ItabashiJCT,ItabashiJCT:C2_CCW,ItabashiJCT:R5B_DOWN,seed
+ItabashiJCT,ItabashiJCT:C2_CCW,ItabashiJCT:R5B_UP,seed
+ItabashiJCT,ItabashiJCT:C2_CW,ItabashiJCT:R5B_DOWN,seed
+ItabashiJCT,ItabashiJCT:R5B_DOWN,ItabashiJCT:C2_CW,seed
+ItabashiJCT,ItabashiJCT:R5B_UP,ItabashiJCT:C2_CCW,seed
+ItabashiJCT,ItabashiJCT:R5B_UP,ItabashiJCT:C2_CW,seed
+KasaiJCT,KasaiJCT:BAY_E,KasaiJCT:C2_CCW,seed
+KasaiJCT,KasaiJCT:BAY_E,KasaiJCT:C2_CW,seed
+KasaiJCT,KasaiJCT:BAY_W,KasaiJCT:C2_CCW,seed
+KasaiJCT,KasaiJCT:BAY_W,KasaiJCT:C2_CW,seed
+KasaiJCT,KasaiJCT:C2_CCW,KasaiJCT:BAY_E,seed
+KasaiJCT,KasaiJCT:C2_CCW,KasaiJCT:BAY_W,seed
+KasaiJCT,KasaiJCT:C2_CW,KasaiJCT:BAY_E,seed
+KasaiJCT,KasaiJCT:C2_CW,KasaiJCT:BAY_W,seed
+KomatsugawaJCT,KomatsugawaJCT:C2_CW,KomatsugawaJCT:R7B_DOWN,seed
+KomatsugawaJCT,KomatsugawaJCT:R7B_UP,KomatsugawaJCT:C2_CCW,seed
+KosugeJCT,KosugeJCT:C2_CCW,KosugeJCT:R6B_DOWN,seed
+KosugeJCT,KosugeJCT:C2_CCW,KosugeJCT:R6B_UP,seed
+KosugeJCT,KosugeJCT:C2_CW,KosugeJCT:R6B_DOWN,seed
+KosugeJCT,KosugeJCT:C2_CW,KosugeJCT:R6B_UP,seed
+KosugeJCT,KosugeJCT:R6B_UP,KosugeJCT:C2_CCW,seed
+KosugeJCT,KosugeJCT:R6B_UP,KosugeJCT:C2_CW,seed
+KumanochoJCT,KumanochoJCT:C2_CCW,KumanochoJCT:R5A_DOWN,seed
+KumanochoJCT,KumanochoJCT:C2_CCW,KumanochoJCT:R5A_UP,seed
+KumanochoJCT,KumanochoJCT:C2_CW,KumanochoJCT:R5A_DOWN,seed
+KumanochoJCT,KumanochoJCT:R5A_DOWN,KumanochoJCT:C2_CW,seed
+KumanochoJCT,KumanochoJCT:R5A_UP,KumanochoJCT:C2_CCW,seed
+KumanochoJCT,KumanochoJCT:R5A_UP,KumanochoJCT:C2_CW,seed
+NishiShinjukuJCT,NishiShinjukuJCT:C2_CCW,NishiShinjukuJCT:R4B_DOWN,seed
+NishiShinjukuJCT,NishiShinjukuJCT:C2_CW,NishiShinjukuJCT:R4B_DOWN,seed
+NishiShinjukuJCT,NishiShinjukuJCT:R4B_UP,NishiShinjukuJCT:C2_CCW,seed
+NishiShinjukuJCT,NishiShinjukuJCT:R4B_UP,NishiShinjukuJCT:C2_CW,seed
+ShinonomeJCT,ShinonomeJCT:BAY_E,ShinonomeJCT:R10_DOWN,seed
+ShinonomeJCT,ShinonomeJCT:BAY_E,ShinonomeJCT:R10_UP,seed
+ShinonomeJCT,ShinonomeJCT:R10_DOWN,ShinonomeJCT:BAY_E,seed
+ShinonomeJCT,ShinonomeJCT:R10_DOWN,ShinonomeJCT:BAY_W,seed
+ShinonomeJCT,ShinonomeJCT:R10_UP,ShinonomeJCT:BAY_E,seed
+ShinonomeJCT,ShinonomeJCT:R10_UP,ShinonomeJCT:BAY_W,seed
+EdobashiJCT,EdobashiJCT:R9_UP,EdobashiJCT:C1_CW,9号→C1（江戸橋）
+EdobashiJCT,EdobashiJCT:R9_UP,EdobashiJCT:C1_CCW,9号→C1（江戸橋）
+EdobashiJCT,EdobashiJCT:R9_DOWN,EdobashiJCT:C1_CW,9号→C1（江戸橋）
+EdobashiJCT,EdobashiJCT:R9_DOWN,EdobashiJCT:C1_CCW,9号→C1（江戸橋）
+EdobashiJCT,EdobashiJCT:C1_CW,EdobashiJCT:R9_UP,C1→9号（江戸橋）
+EdobashiJCT,EdobashiJCT:C1_CCW,EdobashiJCT:R9_UP,C1→9号（江戸橋）
+EdobashiJCT,EdobashiJCT:C1_CW,EdobashiJCT:R9_DOWN,C1→9号（江戸橋）
+EdobashiJCT,EdobashiJCT:C1_CCW,EdobashiJCT:R9_DOWN,C1→9号（江戸橋）
+ShibauraJCT,ShibauraJCT:R11_UP,ShibauraJCT:R1H_UP,11号→1号羽田（芝浦）
+ShibauraJCT,ShibauraJCT:R11_UP,ShibauraJCT:R1H_DOWN,11号→1号羽田（芝浦）
+ShibauraJCT,ShibauraJCT:R11_DOWN,ShibauraJCT:R1H_UP,11号→1号羽田（芝浦）
+ShibauraJCT,ShibauraJCT:R11_DOWN,ShibauraJCT:R1H_DOWN,11号→1号羽田（芝浦）
+ShibauraJCT,ShibauraJCT:R1H_UP,ShibauraJCT:R11_UP,1号羽田→11号（芝浦）
+ShibauraJCT,ShibauraJCT:R1H_UP,ShibauraJCT:R11_DOWN,1号羽田→11号（芝浦）
+ShibauraJCT,ShibauraJCT:R1H_DOWN,ShibauraJCT:R11_UP,1号羽田→11号（芝浦）
+ShibauraJCT,ShibauraJCT:R1H_DOWN,ShibauraJCT:R11_DOWN,1号羽田→11号（芝浦）
+HamasakibashiJCT,HamasakibashiJCT:R1H_UP,HamasakibashiJCT:C1_CW,1号羽田→C1（浜崎橋）
+HamasakibashiJCT,HamasakibashiJCT:R1H_UP,HamasakibashiJCT:C1_CCW,1号羽田→C1（浜崎橋）
+HamasakibashiJCT,HamasakibashiJCT:R1H_DOWN,HamasakibashiJCT:C1_CW,1号羽田→C1（浜崎橋）
+HamasakibashiJCT,HamasakibashiJCT:R1H_DOWN,HamasakibashiJCT:C1_CCW,1号羽田→C1（浜崎橋）
+HamasakibashiJCT,HamasakibashiJCT:C1_CW,HamasakibashiJCT:R1H_UP,C1→1号羽田（浜崎橋）
+HamasakibashiJCT,HamasakibashiJCT:C1_CCW,HamasakibashiJCT:R1H_UP,C1→1号羽田（浜崎橋）
+HamasakibashiJCT,HamasakibashiJCT:C1_CW,HamasakibashiJCT:R1H_DOWN,C1→1号羽田（浜崎橋）
+HamasakibashiJCT,HamasakibashiJCT:C1_CCW,HamasakibashiJCT:R1H_DOWN,C1→1号羽田（浜崎橋）
+OoiJCT,OoiJCT:C2_CW,OoiJCT:BAY_W,大井：C2_CW→BAY_W
+OoiJCT,OoiJCT:BAY_W,OoiJCT:C2_CW,大井：BAY_W→C2_CW
+OoiJCT,OoiJCT:C2_CCW,OoiJCT:BAY_E,大井：C2_CCW→BAY_E
+OoiJCT,OoiJCT:BAY_E,OoiJCT:C2_CCW,大井：BAY_E→C2_CCW
+MiyakezakaJCT,MiyakezakaJCT:C1_CW,MiyakezakaJCT:R4A_UP,C1->R4 (inner)
+MiyakezakaJCT,MiyakezakaJCT:C1_CW,MiyakezakaJCT:R4A_DOWN,C1->R4 (inner)
+MiyakezakaJCT,MiyakezakaJCT:R4A_UP,MiyakezakaJCT:C1_CW,R4->C1 (inner)
+MiyakezakaJCT,MiyakezakaJCT:R4A_DOWN,MiyakezakaJCT:C1_CW,R4->C1 (inner)
+MiyakezakaJCT,MiyakezakaJCT:C1_CCW,MiyakezakaJCT:R4A_UP,C1->R4 (inner)
+MiyakezakaJCT,MiyakezakaJCT:C1_CCW,MiyakezakaJCT:R4A_DOWN,C1->R4 (inner)
+MiyakezakaJCT,MiyakezakaJCT:R4A_UP,MiyakezakaJCT:C1_CCW,R4->C1 (inner)
+MiyakezakaJCT,MiyakezakaJCT:R4A_DOWN,MiyakezakaJCT:C1_CCW,R4->C1 (inner)
+NishiShinjukuJCT,NishiShinjukuJCT:C2_CW,NishiShinjukuJCT:R4B_UP,C2->R4 (outer)
+NishiShinjukuJCT,NishiShinjukuJCT:C2_CW,NishiShinjukuJCT:R4B_DOWN,C2->R4 (outer)
+NishiShinjukuJCT,NishiShinjukuJCT:R4B_UP,NishiShinjukuJCT:C2_CW,R4->C2 (outer)
+NishiShinjukuJCT,NishiShinjukuJCT:R4B_DOWN,NishiShinjukuJCT:C2_CW,R4->C2 (outer)
+NishiShinjukuJCT,NishiShinjukuJCT:C2_CCW,NishiShinjukuJCT:R4B_UP,C2->R4 (outer)
+NishiShinjukuJCT,NishiShinjukuJCT:C2_CCW,NishiShinjukuJCT:R4B_DOWN,C2->R4 (outer)
+NishiShinjukuJCT,NishiShinjukuJCT:R4B_UP,NishiShinjukuJCT:C2_CCW,R4->C2 (outer)
+NishiShinjukuJCT,NishiShinjukuJCT:R4B_DOWN,NishiShinjukuJCT:C2_CCW,R4->C2 (outer)
+HamasakibashiJCT,HamasakibashiJCT:C1_CW,HamasakibashiJCT:R11_UP,C1->R11 (inner)
+HamasakibashiJCT,HamasakibashiJCT:C1_CW,HamasakibashiJCT:R11_DOWN,C1->R11 (inner)
+HamasakibashiJCT,HamasakibashiJCT:R11_UP,HamasakibashiJCT:C1_CW,R11->C1 (inner)
+HamasakibashiJCT,HamasakibashiJCT:R11_DOWN,HamasakibashiJCT:C1_CW,R11->C1 (inner)
+HamasakibashiJCT,HamasakibashiJCT:C1_CCW,HamasakibashiJCT:R11_UP,C1->R11 (inner)
+HamasakibashiJCT,HamasakibashiJCT:C1_CCW,HamasakibashiJCT:R11_DOWN,C1->R11 (inner)
+HamasakibashiJCT,HamasakibashiJCT:R11_UP,HamasakibashiJCT:C1_CCW,R11->C1 (inner)
+HamasakibashiJCT,HamasakibashiJCT:R11_DOWN,HamasakibashiJCT:C1_CCW,R11->C1 (inner)
+EdobashiJCT,EdobashiJCT:C1_CW,EdobashiJCT:R9_UP,C1->R9 (inner)
+EdobashiJCT,EdobashiJCT:C1_CW,EdobashiJCT:R9_DOWN,C1->R9 (inner)
+EdobashiJCT,EdobashiJCT:R9_UP,EdobashiJCT:C1_CW,R9->C1 (inner)
+EdobashiJCT,EdobashiJCT:R9_DOWN,EdobashiJCT:C1_CW,R9->C1 (inner)
+EdobashiJCT,EdobashiJCT:C1_CCW,EdobashiJCT:R9_UP,C1->R9 (inner)
+EdobashiJCT,EdobashiJCT:C1_CCW,EdobashiJCT:R9_DOWN,C1->R9 (inner)
+EdobashiJCT,EdobashiJCT:R9_UP,EdobashiJCT:C1_CCW,R9->C1 (inner)
+EdobashiJCT,EdobashiJCT:R9_DOWN,EdobashiJCT:C1_CCW,R9->C1 (inner)
+ShibauraJCT,ShibauraJCT:C1_CW,ShibauraJCT:R1H_UP,C1->R1H (inner)
+ShibauraJCT,ShibauraJCT:C1_CW,ShibauraJCT:R1H_DOWN,C1->R1H (inner)
+ShibauraJCT,ShibauraJCT:R1H_UP,ShibauraJCT:C1_CW,R1H->C1 (inner)
+ShibauraJCT,ShibauraJCT:R1H_DOWN,ShibauraJCT:C1_CW,R1H->C1 (inner)
+ShibauraJCT,ShibauraJCT:C1_CCW,ShibauraJCT:R1H_UP,C1->R1H (inner)
+ShibauraJCT,ShibauraJCT:C1_CCW,ShibauraJCT:R1H_DOWN,C1->R1H (inner)
+ShibauraJCT,ShibauraJCT:R1H_UP,ShibauraJCT:C1_CCW,R1H->C1 (inner)
+ShibauraJCT,ShibauraJCT:R1H_DOWN,ShibauraJCT:C1_CCW,R1H->C1 (inner)
+ShowajimaJCT,ShowajimaJCT:BAY_E,ShowajimaJCT:R1H_UP,BAY->R1H (outer)
+ShowajimaJCT,ShowajimaJCT:BAY_E,ShowajimaJCT:R1H_DOWN,BAY->R1H (outer)
+ShowajimaJCT,ShowajimaJCT:R1H_UP,ShowajimaJCT:BAY_E,R1H->BAY (outer)
+ShowajimaJCT,ShowajimaJCT:R1H_DOWN,ShowajimaJCT:BAY_E,R1H->BAY (outer)
+ShowajimaJCT,ShowajimaJCT:BAY_W,ShowajimaJCT:R1H_UP,BAY->R1H (outer)
+ShowajimaJCT,ShowajimaJCT:BAY_W,ShowajimaJCT:R1H_DOWN,BAY->R1H (outer)
+ShowajimaJCT,ShowajimaJCT:R1H_UP,ShowajimaJCT:BAY_W,R1H->BAY (outer)
+ShowajimaJCT,ShowajimaJCT:R1H_DOWN,ShowajimaJCT:BAY_W,R1H->BAY (outer)
+IchinohashiJCT,IchinohashiJCT:C1_CW,IchinohashiJCT:R2_UP,C1->R2 (inner)
+IchinohashiJCT,IchinohashiJCT:C1_CW,IchinohashiJCT:R2_DOWN,C1->R2 (inner)
+IchinohashiJCT,IchinohashiJCT:R2_UP,IchinohashiJCT:C1_CW,R2->C1 (inner)
+IchinohashiJCT,IchinohashiJCT:R2_DOWN,IchinohashiJCT:C1_CW,R2->C1 (inner)
+IchinohashiJCT,IchinohashiJCT:C1_CCW,IchinohashiJCT:R2_UP,C1->R2 (inner)
+IchinohashiJCT,IchinohashiJCT:C1_CCW,IchinohashiJCT:R2_DOWN,C1->R2 (inner)
+IchinohashiJCT,IchinohashiJCT:R2_UP,IchinohashiJCT:C1_CCW,R2->C1 (inner)
+IchinohashiJCT,IchinohashiJCT:R2_DOWN,IchinohashiJCT:C1_CCW,R2->C1 (inner)
+TanimachiJCT,TanimachiJCT:C1_CW,TanimachiJCT:R3A_UP,C1->R3 (inner)
+TanimachiJCT,TanimachiJCT:C1_CW,TanimachiJCT:R3A_DOWN,C1->R3 (inner)
+TanimachiJCT,TanimachiJCT:R3A_UP,TanimachiJCT:C1_CW,R3->C1 (inner)
+TanimachiJCT,TanimachiJCT:R3A_DOWN,TanimachiJCT:C1_CW,R3->C1 (inner)
+TanimachiJCT,TanimachiJCT:C1_CCW,TanimachiJCT:R3A_UP,C1->R3 (inner)
+TanimachiJCT,TanimachiJCT:C1_CCW,TanimachiJCT:R3A_DOWN,C1->R3 (inner)
+TanimachiJCT,TanimachiJCT:R3A_UP,TanimachiJCT:C1_CCW,R3->C1 (inner)
+TanimachiJCT,TanimachiJCT:R3A_DOWN,TanimachiJCT:C1_CCW,R3->C1 (inner)
+OhashiJCT,OhashiJCT:C2_CW,OhashiJCT:R3B_UP,C2->R3 (outer)
+OhashiJCT,OhashiJCT:C2_CW,OhashiJCT:R3B_DOWN,C2->R3 (outer)
+OhashiJCT,OhashiJCT:R3B_UP,OhashiJCT:C2_CW,R3->C2 (outer)
+OhashiJCT,OhashiJCT:R3B_DOWN,OhashiJCT:C2_CW,R3->C2 (outer)
+OhashiJCT,OhashiJCT:C2_CCW,OhashiJCT:R3B_UP,C2->R3 (outer)
+OhashiJCT,OhashiJCT:C2_CCW,OhashiJCT:R3B_DOWN,C2->R3 (outer)
+OhashiJCT,OhashiJCT:R3B_UP,OhashiJCT:C2_CCW,R3->C2 (outer)
+OhashiJCT,OhashiJCT:R3B_DOWN,OhashiJCT:C2_CCW,R3->C2 (outer)
+TakebashiJCT,TakebashiJCT:C1_CW,TakebashiJCT:R5A_UP,C1->R5 (inner)
+TakebashiJCT,TakebashiJCT:C1_CW,TakebashiJCT:R5A_DOWN,C1->R5 (inner)
+TakebashiJCT,TakebashiJCT:R5A_UP,TakebashiJCT:C1_CW,R5->C1 (inner)
+TakebashiJCT,TakebashiJCT:R5A_DOWN,TakebashiJCT:C1_CW,R5->C1 (inner)
+TakebashiJCT,TakebashiJCT:C1_CCW,TakebashiJCT:R5A_UP,C1->R5 (inner)
+TakebashiJCT,TakebashiJCT:C1_CCW,TakebashiJCT:R5A_DOWN,C1->R5 (inner)
+TakebashiJCT,TakebashiJCT:R5A_UP,TakebashiJCT:C1_CCW,R5->C1 (inner)
+TakebashiJCT,TakebashiJCT:R5A_DOWN,TakebashiJCT:C1_CCW,R5->C1 (inner)
+KumanochoJCT,KumanochoJCT:C2_CW,KumanochoJCT:R5A_UP,C2->R5 (outer)
+KumanochoJCT,KumanochoJCT:C2_CW,KumanochoJCT:R5A_DOWN,C2->R5 (outer)
+KumanochoJCT,KumanochoJCT:R5A_UP,KumanochoJCT:C2_CW,R5->C2 (outer)
+KumanochoJCT,KumanochoJCT:R5A_DOWN,KumanochoJCT:C2_CW,R5->C2 (outer)
+KumanochoJCT,KumanochoJCT:C2_CCW,KumanochoJCT:R5A_UP,C2->R5 (outer)
+KumanochoJCT,KumanochoJCT:C2_CCW,KumanochoJCT:R5A_DOWN,C2->R5 (outer)
+KumanochoJCT,KumanochoJCT:R5A_UP,KumanochoJCT:C2_CCW,R5->C2 (outer)
+KumanochoJCT,KumanochoJCT:R5A_DOWN,KumanochoJCT:C2_CCW,R5->C2 (outer)
+EdobashiJCT,EdobashiJCT:C1_CW,EdobashiJCT:R1U_UP,C1->R1U (inner)
+EdobashiJCT,EdobashiJCT:C1_CW,EdobashiJCT:R1U_DOWN,C1->R1U (inner)
+EdobashiJCT,EdobashiJCT:R1U_UP,EdobashiJCT:C1_CW,R1U->C1 (inner)
+EdobashiJCT,EdobashiJCT:R1U_DOWN,EdobashiJCT:C1_CW,R1U->C1 (inner)
+EdobashiJCT,EdobashiJCT:C1_CCW,EdobashiJCT:R1U_UP,C1->R1U (inner)
+EdobashiJCT,EdobashiJCT:C1_CCW,EdobashiJCT:R1U_DOWN,C1->R1U (inner)
+EdobashiJCT,EdobashiJCT:R1U_UP,EdobashiJCT:C1_CCW,R1U->C1 (inner)
+EdobashiJCT,EdobashiJCT:R1U_DOWN,EdobashiJCT:C1_CCW,R1U->C1 (inner)
+EdobashiJCT,EdobashiJCT:C1_CW,EdobashiJCT:R6A_UP,C1->R6 (inner)
+EdobashiJCT,EdobashiJCT:C1_CW,EdobashiJCT:R6A_DOWN,C1->R6 (inner)
+EdobashiJCT,EdobashiJCT:R6A_UP,EdobashiJCT:C1_CW,R6->C1 (inner)
+EdobashiJCT,EdobashiJCT:R6A_DOWN,EdobashiJCT:C1_CW,R6->C1 (inner)
+EdobashiJCT,EdobashiJCT:C1_CCW,EdobashiJCT:R6A_UP,C1->R6 (inner)
+EdobashiJCT,EdobashiJCT:C1_CCW,EdobashiJCT:R6A_DOWN,C1->R6 (inner)
+EdobashiJCT,EdobashiJCT:R6A_UP,EdobashiJCT:C1_CCW,R6->C1 (inner)
+EdobashiJCT,EdobashiJCT:R6A_DOWN,EdobashiJCT:C1_CCW,R6->C1 (inner)
+KomatsugawaJCT,KomatsugawaJCT:C2_CW,KomatsugawaJCT:R7B_UP,C2->R7 (outer)
+KomatsugawaJCT,KomatsugawaJCT:C2_CW,KomatsugawaJCT:R7B_DOWN,C2->R7 (outer)
+KomatsugawaJCT,KomatsugawaJCT:R7B_UP,KomatsugawaJCT:C2_CW,R7->C2 (outer)
+KomatsugawaJCT,KomatsugawaJCT:R7B_DOWN,KomatsugawaJCT:C2_CW,R7->C2 (outer)
+KomatsugawaJCT,KomatsugawaJCT:C2_CCW,KomatsugawaJCT:R7B_UP,C2->R7 (outer)
+KomatsugawaJCT,KomatsugawaJCT:C2_CCW,KomatsugawaJCT:R7B_DOWN,C2->R7 (outer)
+KomatsugawaJCT,KomatsugawaJCT:R7B_UP,KomatsugawaJCT:C2_CCW,R7->C2 (outer)
+KomatsugawaJCT,KomatsugawaJCT:R7B_DOWN,KomatsugawaJCT:C2_CCW,R7->C2 (outer)
+MiyakezakaJCT,MiyakezakaJCT:C1_CW,MiyakezakaJCT:R4A_UP,C1->R4 (inner)
+MiyakezakaJCT,MiyakezakaJCT:C1_CW,MiyakezakaJCT:R4A_DOWN,C1->R4 (inner)
+MiyakezakaJCT,MiyakezakaJCT:R4A_UP,MiyakezakaJCT:C1_CW,R4->C1 (inner)
+MiyakezakaJCT,MiyakezakaJCT:R4A_DOWN,MiyakezakaJCT:C1_CW,R4->C1 (inner)
+MiyakezakaJCT,MiyakezakaJCT:C1_CCW,MiyakezakaJCT:R4A_UP,C1->R4 (inner)
+MiyakezakaJCT,MiyakezakaJCT:C1_CCW,MiyakezakaJCT:R4A_DOWN,C1->R4 (inner)
+MiyakezakaJCT,MiyakezakaJCT:R4A_UP,MiyakezakaJCT:C1_CCW,R4->C1 (inner)
+MiyakezakaJCT,MiyakezakaJCT:R4A_DOWN,MiyakezakaJCT:C1_CCW,R4->C1 (inner)
+NishiShinjukuJCT,NishiShinjukuJCT:C2_CW,NishiShinjukuJCT:R4B_UP,C2->R4 (outer)
+NishiShinjukuJCT,NishiShinjukuJCT:C2_CW,NishiShinjukuJCT:R4B_DOWN,C2->R4 (outer)
+NishiShinjukuJCT,NishiShinjukuJCT:R4B_UP,NishiShinjukuJCT:C2_CW,R4->C2 (outer)
+NishiShinjukuJCT,NishiShinjukuJCT:R4B_DOWN,NishiShinjukuJCT:C2_CW,R4->C2 (outer)
+NishiShinjukuJCT,NishiShinjukuJCT:C2_CCW,NishiShinjukuJCT:R4B_UP,C2->R4 (outer)
+NishiShinjukuJCT,NishiShinjukuJCT:C2_CCW,NishiShinjukuJCT:R4B_DOWN,C2->R4 (outer)
+NishiShinjukuJCT,NishiShinjukuJCT:R4B_UP,NishiShinjukuJCT:C2_CCW,R4->C2 (outer)
+NishiShinjukuJCT,NishiShinjukuJCT:R4B_DOWN,NishiShinjukuJCT:C2_CCW,R4->C2 (outer)
+HamasakibashiJCT,HamasakibashiJCT:C1_CW,HamasakibashiJCT:R11_UP,C1->R11 (inner)
+HamasakibashiJCT,HamasakibashiJCT:C1_CW,HamasakibashiJCT:R11_DOWN,C1->R11 (inner)
+HamasakibashiJCT,HamasakibashiJCT:R11_UP,HamasakibashiJCT:C1_CW,R11->C1 (inner)
+HamasakibashiJCT,HamasakibashiJCT:R11_DOWN,HamasakibashiJCT:C1_CW,R11->C1 (inner)
+HamasakibashiJCT,HamasakibashiJCT:C1_CCW,HamasakibashiJCT:R11_UP,C1->R11 (inner)
+HamasakibashiJCT,HamasakibashiJCT:C1_CCW,HamasakibashiJCT:R11_DOWN,C1->R11 (inner)
+HamasakibashiJCT,HamasakibashiJCT:R11_UP,HamasakibashiJCT:C1_CCW,R11->C1 (inner)
+HamasakibashiJCT,HamasakibashiJCT:R11_DOWN,HamasakibashiJCT:C1_CCW,R11->C1 (inner)
+EdobashiJCT,EdobashiJCT:C1_CW,EdobashiJCT:R9_UP,C1->R9 (inner)
+EdobashiJCT,EdobashiJCT:C1_CW,EdobashiJCT:R9_DOWN,C1->R9 (inner)
+EdobashiJCT,EdobashiJCT:R9_UP,EdobashiJCT:C1_CW,R9->C1 (inner)
+EdobashiJCT,EdobashiJCT:R9_DOWN,EdobashiJCT:C1_CW,R9->C1 (inner)
+EdobashiJCT,EdobashiJCT:C1_CCW,EdobashiJCT:R9_UP,C1->R9 (inner)
+EdobashiJCT,EdobashiJCT:C1_CCW,EdobashiJCT:R9_DOWN,C1->R9 (inner)
+EdobashiJCT,EdobashiJCT:R9_UP,EdobashiJCT:C1_CCW,R9->C1 (inner)
+EdobashiJCT,EdobashiJCT:R9_DOWN,EdobashiJCT:C1_CCW,R9->C1 (inner)
+ShibauraJCT,ShibauraJCT:C1_CW,ShibauraJCT:R1H_UP,C1->R1H (inner)
+ShibauraJCT,ShibauraJCT:C1_CW,ShibauraJCT:R1H_DOWN,C1->R1H (inner)
+ShibauraJCT,ShibauraJCT:R1H_UP,ShibauraJCT:C1_CW,R1H->C1 (inner)
+ShibauraJCT,ShibauraJCT:R1H_DOWN,ShibauraJCT:C1_CW,R1H->C1 (inner)
+ShibauraJCT,ShibauraJCT:C1_CCW,ShibauraJCT:R1H_UP,C1->R1H (inner)
+ShibauraJCT,ShibauraJCT:C1_CCW,ShibauraJCT:R1H_DOWN,C1->R1H (inner)
+ShibauraJCT,ShibauraJCT:R1H_UP,ShibauraJCT:C1_CCW,R1H->C1 (inner)
+ShibauraJCT,ShibauraJCT:R1H_DOWN,ShibauraJCT:C1_CCW,R1H->C1 (inner)
+ShowajimaJCT,ShowajimaJCT:BAY_E,ShowajimaJCT:R1H_UP,BAY->R1H (outer)
+ShowajimaJCT,ShowajimaJCT:BAY_E,ShowajimaJCT:R1H_DOWN,BAY->R1H (outer)
+ShowajimaJCT,ShowajimaJCT:R1H_UP,ShowajimaJCT:BAY_E,R1H->BAY (outer)
+ShowajimaJCT,ShowajimaJCT:R1H_DOWN,ShowajimaJCT:BAY_E,R1H->BAY (outer)
+ShowajimaJCT,ShowajimaJCT:BAY_W,ShowajimaJCT:R1H_UP,BAY->R1H (outer)
+ShowajimaJCT,ShowajimaJCT:BAY_W,ShowajimaJCT:R1H_DOWN,BAY->R1H (outer)
+ShowajimaJCT,ShowajimaJCT:R1H_UP,ShowajimaJCT:BAY_W,R1H->BAY (outer)
+ShowajimaJCT,ShowajimaJCT:R1H_DOWN,ShowajimaJCT:BAY_W,R1H->BAY (outer)
+IchinohashiJCT,IchinohashiJCT:C1_CW,IchinohashiJCT:R2_UP,C1->R2 (inner)
+IchinohashiJCT,IchinohashiJCT:C1_CW,IchinohashiJCT:R2_DOWN,C1->R2 (inner)
+IchinohashiJCT,IchinohashiJCT:R2_UP,IchinohashiJCT:C1_CW,R2->C1 (inner)
+IchinohashiJCT,IchinohashiJCT:R2_DOWN,IchinohashiJCT:C1_CW,R2->C1 (inner)
+IchinohashiJCT,IchinohashiJCT:C1_CCW,IchinohashiJCT:R2_UP,C1->R2 (inner)
+IchinohashiJCT,IchinohashiJCT:C1_CCW,IchinohashiJCT:R2_DOWN,C1->R2 (inner)
+IchinohashiJCT,IchinohashiJCT:R2_UP,IchinohashiJCT:C1_CCW,R2->C1 (inner)
+IchinohashiJCT,IchinohashiJCT:R2_DOWN,IchinohashiJCT:C1_CCW,R2->C1 (inner)
+TanimachiJCT,TanimachiJCT:C1_CW,TanimachiJCT:R3A_UP,C1->R3 (inner)
+TanimachiJCT,TanimachiJCT:C1_CW,TanimachiJCT:R3A_DOWN,C1->R3 (inner)
+TanimachiJCT,TanimachiJCT:R3A_UP,TanimachiJCT:C1_CW,R3->C1 (inner)
+TanimachiJCT,TanimachiJCT:R3A_DOWN,TanimachiJCT:C1_CW,R3->C1 (inner)
+TanimachiJCT,TanimachiJCT:C1_CCW,TanimachiJCT:R3A_UP,C1->R3 (inner)
+TanimachiJCT,TanimachiJCT:C1_CCW,TanimachiJCT:R3A_DOWN,C1->R3 (inner)
+TanimachiJCT,TanimachiJCT:R3A_UP,TanimachiJCT:C1_CCW,R3->C1 (inner)
+TanimachiJCT,TanimachiJCT:R3A_DOWN,TanimachiJCT:C1_CCW,R3->C1 (inner)
+OhashiJCT,OhashiJCT:C2_CW,OhashiJCT:R3B_UP,C2->R3 (outer)
+OhashiJCT,OhashiJCT:C2_CW,OhashiJCT:R3B_DOWN,C2->R3 (outer)
+OhashiJCT,OhashiJCT:R3B_UP,OhashiJCT:C2_CW,R3->C2 (outer)
+OhashiJCT,OhashiJCT:R3B_DOWN,OhashiJCT:C2_CW,R3->C2 (outer)
+OhashiJCT,OhashiJCT:C2_CCW,OhashiJCT:R3B_UP,C2->R3 (outer)
+OhashiJCT,OhashiJCT:C2_CCW,OhashiJCT:R3B_DOWN,C2->R3 (outer)
+OhashiJCT,OhashiJCT:R3B_UP,OhashiJCT:C2_CCW,R3->C2 (outer)
+OhashiJCT,OhashiJCT:R3B_DOWN,OhashiJCT:C2_CCW,R3->C2 (outer)
+TakebashiJCT,TakebashiJCT:C1_CW,TakebashiJCT:R5A_UP,C1->R5 (inner)
+TakebashiJCT,TakebashiJCT:C1_CW,TakebashiJCT:R5A_DOWN,C1->R5 (inner)
+TakebashiJCT,TakebashiJCT:R5A_UP,TakebashiJCT:C1_CW,R5->C1 (inner)
+TakebashiJCT,TakebashiJCT:R5A_DOWN,TakebashiJCT:C1_CW,R5->C1 (inner)
+TakebashiJCT,TakebashiJCT:C1_CCW,TakebashiJCT:R5A_UP,C1->R5 (inner)
+TakebashiJCT,TakebashiJCT:C1_CCW,TakebashiJCT:R5A_DOWN,C1->R5 (inner)
+TakebashiJCT,TakebashiJCT:R5A_UP,TakebashiJCT:C1_CCW,R5->C1 (inner)
+TakebashiJCT,TakebashiJCT:R5A_DOWN,TakebashiJCT:C1_CCW,R5->C1 (inner)
+KumanochoJCT,KumanochoJCT:C2_CW,KumanochoJCT:R5A_UP,C2->R5 (outer)
+KumanochoJCT,KumanochoJCT:C2_CW,KumanochoJCT:R5A_DOWN,C2->R5 (outer)
+KumanochoJCT,KumanochoJCT:R5A_UP,KumanochoJCT:C2_CW,R5->C2 (outer)
+KumanochoJCT,KumanochoJCT:R5A_DOWN,KumanochoJCT:C2_CW,R5->C2 (outer)
+KumanochoJCT,KumanochoJCT:C2_CCW,KumanochoJCT:R5A_UP,C2->R5 (outer)
+KumanochoJCT,KumanochoJCT:C2_CCW,KumanochoJCT:R5A_DOWN,C2->R5 (outer)
+KumanochoJCT,KumanochoJCT:R5A_UP,KumanochoJCT:C2_CCW,R5->C2 (outer)
+KumanochoJCT,KumanochoJCT:R5A_DOWN,KumanochoJCT:C2_CCW,R5->C2 (outer)
+EdobashiJCT,EdobashiJCT:C1_CW,EdobashiJCT:R1U_UP,C1->R1U (inner)
+EdobashiJCT,EdobashiJCT:C1_CW,EdobashiJCT:R1U_DOWN,C1->R1U (inner)
+EdobashiJCT,EdobashiJCT:R1U_UP,EdobashiJCT:C1_CW,R1U->C1 (inner)
+EdobashiJCT,EdobashiJCT:R1U_DOWN,EdobashiJCT:C1_CW,R1U->C1 (inner)
+EdobashiJCT,EdobashiJCT:C1_CCW,EdobashiJCT:R1U_UP,C1->R1U (inner)
+EdobashiJCT,EdobashiJCT:C1_CCW,EdobashiJCT:R1U_DOWN,C1->R1U (inner)
+EdobashiJCT,EdobashiJCT:R1U_UP,EdobashiJCT:C1_CCW,R1U->C1 (inner)
+EdobashiJCT,EdobashiJCT:R1U_DOWN,EdobashiJCT:C1_CCW,R1U->C1 (inner)
+EdobashiJCT,EdobashiJCT:C1_CW,EdobashiJCT:R6A_UP,C1->R6 (inner)
+EdobashiJCT,EdobashiJCT:C1_CW,EdobashiJCT:R6A_DOWN,C1->R6 (inner)
+EdobashiJCT,EdobashiJCT:R6A_UP,EdobashiJCT:C1_CW,R6->C1 (inner)
+EdobashiJCT,EdobashiJCT:R6A_DOWN,EdobashiJCT:C1_CW,R6->C1 (inner)
+EdobashiJCT,EdobashiJCT:C1_CCW,EdobashiJCT:R6A_UP,C1->R6 (inner)
+EdobashiJCT,EdobashiJCT:C1_CCW,EdobashiJCT:R6A_DOWN,C1->R6 (inner)
+EdobashiJCT,EdobashiJCT:R6A_UP,EdobashiJCT:C1_CCW,R6->C1 (inner)
+EdobashiJCT,EdobashiJCT:R6A_DOWN,EdobashiJCT:C1_CCW,R6->C1 (inner)
+KomatsugawaJCT,KomatsugawaJCT:C2_CW,KomatsugawaJCT:R7B_UP,C2->R7 (outer)
+KomatsugawaJCT,KomatsugawaJCT:C2_CW,KomatsugawaJCT:R7B_DOWN,C2->R7 (outer)
+KomatsugawaJCT,KomatsugawaJCT:R7B_UP,KomatsugawaJCT:C2_CW,R7->C2 (outer)
+KomatsugawaJCT,KomatsugawaJCT:R7B_DOWN,KomatsugawaJCT:C2_CW,R7->C2 (outer)
+KomatsugawaJCT,KomatsugawaJCT:C2_CCW,KomatsugawaJCT:R7B_UP,C2->R7 (outer)
+KomatsugawaJCT,KomatsugawaJCT:C2_CCW,KomatsugawaJCT:R7B_DOWN,C2->R7 (outer)
+KomatsugawaJCT,KomatsugawaJCT:R7B_UP,KomatsugawaJCT:C2_CCW,R7->C2 (outer)
+KomatsugawaJCT,KomatsugawaJCT:R7B_DOWN,KomatsugawaJCT:C2_CCW,R7->C2 (outer)
+AriakeJCT,AriakeJCT:R11_DOWN,AriakeJCT:BAY_E,有明：11_DOWN→BAY_E（出口のみ）
+AriakeJCT,AriakeJCT:R11_DOWN,AriakeJCT:BAY_W,有明：11_DOWN→BAY_W（出口のみ）
+AriakeJCT,AriakeJCT:BAY_E,AriakeJCT:R11_UP,BAY_E -> R11_UP (to Shibaura)
+OhashiJCT,OhashiJCT:C2_CW,OhashiJCT:R3B_DOWN,C2_CW -> R3B_DOWN (toward Youga)
+OhashiJCT,OhashiJCT:C2_CW,OhashiJCT:R3A_UP,C2_CW -> R3A_UP (toward Shibuya/Tanimachi)
+OhashiJCT,OhashiJCT:R3A_DOWN,OhashiJCT:C2_CCW,R3A_DOWN -> C2_CCW (allowed)
+TatsumiJCT,TatsumiJCT:BAY_E,TatsumiPA1,PA1 enter only from BAY_E
+TatsumiJCT,TatsumiPA1,TatsumiR9UpAfterPA1,PA1 merge toward R9_UP
+TatsumiJCT,TatsumiR9UpAfterPA1,TatsumiJCT:R9_UP,AfterPA1 -> R9_UP
+TatsumiJCT,TatsumiJCT:BAY_W,TatsumiPA2,PA2 enter only from BAY_W
+TatsumiJCT,TatsumiPA2,TatsumiR9UpAfterPA2,PA2 merge toward R9_UP
+TatsumiJCT,TatsumiR9UpAfterPA2,TatsumiJCT:R9_UP,AfterPA2 -> R9_UP
