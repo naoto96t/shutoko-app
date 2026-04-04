@@ -1,0 +1,1992 @@
+{
+  "晴海": {
+    "route": [
+      "高速10号晴海線"
+    ],
+    "entry_dir": [
+      "下り"
+    ],
+    "exit_dir": [
+      "上り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "豊洲": {
+    "route": [
+      "高速10号晴海線"
+    ],
+    "entry_dir": [
+      "下り"
+    ],
+    "exit_dir": [
+      "上り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "台場": {
+    "route": [
+      "高速11台場線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "羽田": {
+    "route": [
+      "高速1号羽田線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "平和島": {
+    "route": [
+      "高速1号羽田線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "勝島": {
+    "route": [
+      "高速1号羽田線"
+    ],
+    "entry_dir": [
+      "下り"
+    ],
+    "exit_dir": [
+      "上り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "空港西": {
+    "route": [
+      "高速1号羽田線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "芝浦": {
+    "route": [
+      "高速1号羽田線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "鈴ヶ森": {
+    "route": [
+      "高速1号羽田線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "本町": {
+    "route": [
+      "高速1号上野線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "入谷": {
+    "route": [
+      "高速1号上野線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "上野": {
+    "route": [
+      "高速1号上野線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "荏原": {
+    "route": [
+      "高速2号目黒線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "目黒": {
+    "route": [
+      "高速2号目黒線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "天現寺": {
+    "route": [
+      "高速2号目黒線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "戸越": {
+    "route": [
+      "高速2号目黒線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "池尻": {
+    "route": [
+      "高速3号渋谷線"
+    ],
+    "entry_dir": [
+      "下り"
+    ],
+    "exit_dir": [
+      "上り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "三軒茶屋": {
+    "route": [
+      "高速3号渋谷線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "渋谷": {
+    "route": [
+      "高速3号渋谷線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "高樹町": {
+    "route": [
+      "高速3号渋谷線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "用賀": {
+    "route": [
+      "高速3号渋谷線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "永福": {
+    "route": [
+      "高速4号新宿線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "外苑": {
+    "route": [
+      "高速4号新宿線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "幡ヶ谷": {
+    "route": [
+      "高速4号新宿線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "初台": {
+    "route": [
+      "高速4号新宿線"
+    ],
+    "entry_dir": [
+      "下り"
+    ],
+    "exit_dir": [
+      "上り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "新宿": {
+    "route": [
+      "高速4号新宿線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "高井戸": {
+    "route": [
+      "高速4号新宿線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "代々木": {
+    "route": [
+      "高速4号新宿線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "護国寺": {
+    "route": [
+      "高速5号池袋線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "東池袋": {
+    "route": [
+      "高速5号池袋線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "一ツ橋": {
+    "route": [
+      "高速5号池袋線"
+    ],
+    "entry_dir": [
+      "下り"
+    ],
+    "exit_dir": [
+      "上り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "飯田橋": {
+    "route": [
+      "高速5号池袋線"
+    ],
+    "entry_dir": [
+      "下り"
+    ],
+    "exit_dir": [
+      "上り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "板橋本町": {
+    "route": [
+      "高速5号池袋線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "北池袋": {
+    "route": [
+      "高速5号池袋線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "中台": {
+    "route": [
+      "高速5号池袋線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "西神田": {
+    "route": [
+      "高速5号池袋線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "高島平": {
+    "route": [
+      "高速5号池袋線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "戸田": {
+    "route": [
+      "高速5号池袋線"
+    ],
+    "entry_dir": [
+      "下り"
+    ],
+    "exit_dir": [
+      "上り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "戸田南": {
+    "route": [
+      "高速5号池袋線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "早稲田": {
+    "route": [
+      "高速5号池袋線"
+    ],
+    "entry_dir": [],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "加平": {
+    "route": [
+      "高速6号三郷線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "三郷": {
+    "route": [
+      "高速6号三郷線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "八潮": {
+    "route": [
+      "高速6号三郷線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "八潮南": {
+    "route": [
+      "高速6号三郷線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "箱崎": {
+    "route": [
+      "高速6号向島線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "浜町": {
+    "route": [
+      "高速6号向島線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "清洲橋": {
+    "route": [
+      "高速6号向島線"
+    ],
+    "entry_dir": [],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "駒形": {
+    "route": [
+      "高速6号向島線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "向島": {
+    "route": [
+      "高速6号向島線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "堤通": {
+    "route": [
+      "高速6号向島線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "一之江": {
+    "route": [
+      "高速7号小松川線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "錦糸町": {
+    "route": [
+      "高速7号小松川線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "小松川": {
+    "route": [
+      "高速7号小松川線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "枝川": {
+    "route": [
+      "高速9号深川線"
+    ],
+    "entry_dir": [],
+    "exit_dir": [
+      "上り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "福住": {
+    "route": [
+      "高速9号深川線"
+    ],
+    "entry_dir": [
+      "下り"
+    ],
+    "exit_dir": [
+      "上り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "木場": {
+    "route": [
+      "高速9号深川線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "塩浜": {
+    "route": [
+      "高速9号深川線"
+    ],
+    "entry_dir": [
+      "下り"
+    ],
+    "exit_dir": [],
+    "is_full": false,
+    "etc_only": false
+  },
+  "有明": {
+    "route": [
+      "高速湾岸線"
+    ],
+    "entry_dir": [
+      "東行き"
+    ],
+    "exit_dir": [
+      "西行き"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "千鳥町": {
+    "route": [
+      "高速湾岸線"
+    ],
+    "entry_dir": [
+      "西行き"
+    ],
+    "exit_dir": [
+      "東行き"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "大黒ふ頭": {
+    "route": [
+      "高速湾岸線",
+      "高速神奈川5号大黒線"
+    ],
+    "entry_dir": [
+      "西行き",
+      "東行き"
+    ],
+    "exit_dir": [
+      "西行き",
+      "東行き"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "東扇島": {
+    "route": [
+      "高速湾岸線"
+    ],
+    "entry_dir": [
+      "西行き",
+      "東行き"
+    ],
+    "exit_dir": [
+      "西行き",
+      "東行き"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "本牧ふ頭": {
+    "route": [
+      "高速湾岸線"
+    ],
+    "entry_dir": [
+      "東行き"
+    ],
+    "exit_dir": [
+      "西行き"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "磯子": {
+    "route": [
+      "高速湾岸線"
+    ],
+    "entry_dir": [
+      "東行き"
+    ],
+    "exit_dir": [
+      "西行き"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "葛西": {
+    "route": [
+      "高速湾岸線"
+    ],
+    "entry_dir": [
+      "西行き",
+      "東行き"
+    ],
+    "exit_dir": [
+      "西行き",
+      "東行き"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "空港中央": {
+    "route": [
+      "高速湾岸線"
+    ],
+    "entry_dir": [
+      "西行き",
+      "東行き"
+    ],
+    "exit_dir": [
+      "西行き",
+      "東行き"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "舞浜": {
+    "route": [
+      "高速湾岸線"
+    ],
+    "entry_dir": [
+      "西行き"
+    ],
+    "exit_dir": [],
+    "is_full": false,
+    "etc_only": false
+  },
+  "南本牧ふ頭": {
+    "route": [
+      "高速湾岸線"
+    ],
+    "entry_dir": [
+      "東行き"
+    ],
+    "exit_dir": [
+      "西行き"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "大井": {
+    "route": [
+      "高速湾岸線"
+    ],
+    "entry_dir": [
+      "東行き"
+    ],
+    "exit_dir": [
+      "西行き"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "大井南": {
+    "route": [
+      "高速湾岸線"
+    ],
+    "entry_dir": [
+      "西行き"
+    ],
+    "exit_dir": [
+      "西行き",
+      "東行き"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "臨海副都心": {
+    "route": [
+      "高速湾岸線"
+    ],
+    "entry_dir": [
+      "西行き"
+    ],
+    "exit_dir": [
+      "東行き"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "幸浦": {
+    "route": [
+      "高速湾岸線"
+    ],
+    "entry_dir": [
+      "東行き"
+    ],
+    "exit_dir": [
+      "西行き"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "三溪園": {
+    "route": [
+      "高速湾岸線"
+    ],
+    "entry_dir": [
+      "西行き"
+    ],
+    "exit_dir": [
+      "東行き"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "新木場": {
+    "route": [
+      "高速湾岸線"
+    ],
+    "entry_dir": [
+      "西行き",
+      "東行き"
+    ],
+    "exit_dir": [
+      "西行き",
+      "東行き"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "杉田": {
+    "route": [
+      "高速湾岸線"
+    ],
+    "entry_dir": [
+      "西行き",
+      "東行き"
+    ],
+    "exit_dir": [
+      "西行き",
+      "東行き"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "浮島": {
+    "route": [
+      "高速湾岸線"
+    ],
+    "entry_dir": [
+      "西行き",
+      "東行き"
+    ],
+    "exit_dir": [
+      "西行き",
+      "東行き"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "浦安": {
+    "route": [
+      "高速湾岸線"
+    ],
+    "entry_dir": [
+      "西行き",
+      "東行き"
+    ],
+    "exit_dir": [
+      "西行き",
+      "東行き"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "湾岸環八": {
+    "route": [
+      "高速湾岸線"
+    ],
+    "entry_dir": [
+      "西行き"
+    ],
+    "exit_dir": [
+      "東行き"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "代官町": {
+    "route": [
+      "高速都心環状線"
+    ],
+    "entry_dir": [
+      "内回り"
+    ],
+    "exit_dir": [
+      "外回り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "銀座": {
+    "route": [
+      "高速都心環状線"
+    ],
+    "entry_dir": [
+      "内回り",
+      "外回り"
+    ],
+    "exit_dir": [
+      "内回り",
+      "外回り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "飯倉": {
+    "route": [
+      "高速都心環状線"
+    ],
+    "entry_dir": [
+      "内回り"
+    ],
+    "exit_dir": [
+      "外回り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "神田橋": {
+    "route": [
+      "高速都心環状線"
+    ],
+    "entry_dir": [
+      "内回り",
+      "外回り"
+    ],
+    "exit_dir": [
+      "内回り",
+      "外回り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "霞が関": {
+    "route": [
+      "高速都心環状線"
+    ],
+    "entry_dir": [
+      "内回り",
+      "外回り"
+    ],
+    "exit_dir": [
+      "内回り",
+      "外回り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "北の丸": {
+    "route": [
+      "高速都心環状線"
+    ],
+    "entry_dir": [],
+    "exit_dir": [
+      "内回り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "京橋": {
+    "route": [
+      "高速都心環状線"
+    ],
+    "entry_dir": [
+      "外回り"
+    ],
+    "exit_dir": [
+      "内回り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "芝公園": {
+    "route": [
+      "高速都心環状線"
+    ],
+    "entry_dir": [
+      "内回り",
+      "外回り"
+    ],
+    "exit_dir": [
+      "内回り",
+      "外回り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "新富町": {
+    "route": [
+      "高速都心環状線"
+    ],
+    "entry_dir": [],
+    "exit_dir": [
+      "内回り",
+      "外回り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "汐留": {
+    "route": [
+      "高速都心環状線"
+    ],
+    "entry_dir": [
+      "外回り"
+    ],
+    "exit_dir": [
+      "内回り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "宝町": {
+    "route": [
+      "高速都心環状線"
+    ],
+    "entry_dir": [
+      "内回り"
+    ],
+    "exit_dir": [
+      "外回り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "中環小松川": {
+    "route": [
+      "高速中央環状線"
+    ],
+    "entry_dir": [
+      "内回り"
+    ],
+    "exit_dir": [],
+    "is_full": false,
+    "etc_only": false
+  },
+  "中環大井南": {
+    "route": [
+      "高速中央環状線"
+    ],
+    "entry_dir": [
+      "外回り"
+    ],
+    "exit_dir": [
+      "内回り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "船堀橋": {
+    "route": [
+      "高速中央環状線"
+    ],
+    "entry_dir": [
+      "外回り"
+    ],
+    "exit_dir": [
+      "内回り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "五反田": {
+    "route": [
+      "高速中央環状線"
+    ],
+    "entry_dir": [
+      "外回り"
+    ],
+    "exit_dir": [
+      "内回り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "初台南": {
+    "route": [
+      "高速中央環状線"
+    ],
+    "entry_dir": [
+      "内回り"
+    ],
+    "exit_dir": [
+      "外回り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "平井大橋": {
+    "route": [
+      "高速中央環状線"
+    ],
+    "entry_dir": [
+      "内回り"
+    ],
+    "exit_dir": [
+      "外回り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "小菅": {
+    "route": [
+      "高速中央環状線"
+    ],
+    "entry_dir": [
+      "外回り"
+    ],
+    "exit_dir": [
+      "内回り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "中野長者橋": {
+    "route": [
+      "高速中央環状線"
+    ],
+    "entry_dir": [
+      "外回り"
+    ],
+    "exit_dir": [
+      "内回り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "西池袋": {
+    "route": [
+      "高速中央環状線"
+    ],
+    "entry_dir": [
+      "内回り"
+    ],
+    "exit_dir": [
+      "内回り",
+      "外回り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "扇大橋": {
+    "route": [
+      "高速中央環状線"
+    ],
+    "entry_dir": [
+      "内回り",
+      "外回り"
+    ],
+    "exit_dir": [
+      "内回り",
+      "外回り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "王子北": {
+    "route": [
+      "高速中央環状線"
+    ],
+    "entry_dir": [
+      "外回り"
+    ],
+    "exit_dir": [
+      "内回り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "王子南": {
+    "route": [
+      "高速中央環状線"
+    ],
+    "entry_dir": [
+      "内回り"
+    ],
+    "exit_dir": [
+      "外回り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "清新町": {
+    "route": [
+      "高速中央環状線"
+    ],
+    "entry_dir": [
+      "内回り"
+    ],
+    "exit_dir": [
+      "外回り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "千住新橋": {
+    "route": [
+      "高速中央環状線"
+    ],
+    "entry_dir": [
+      "内回り",
+      "外回り"
+    ],
+    "exit_dir": [
+      "内回り",
+      "外回り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "高松": {
+    "route": [
+      "高速中央環状線"
+    ],
+    "entry_dir": [
+      "外回り"
+    ],
+    "exit_dir": [],
+    "is_full": false,
+    "etc_only": false
+  },
+  "滝野川": {
+    "route": [
+      "高速中央環状線"
+    ],
+    "entry_dir": [
+      "内回り"
+    ],
+    "exit_dir": [],
+    "is_full": false,
+    "etc_only": false
+  },
+  "富ヶ谷": {
+    "route": [
+      "高速中央環状線"
+    ],
+    "entry_dir": [
+      "外回り"
+    ],
+    "exit_dir": [
+      "内回り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "四つ木": {
+    "route": [
+      "高速中央環状線"
+    ],
+    "entry_dir": [
+      "内回り",
+      "外回り"
+    ],
+    "exit_dir": [
+      "内回り",
+      "外回り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "浅田": {
+    "route": [
+      "高速神奈川1号横羽線"
+    ],
+    "entry_dir": [
+      "下り"
+    ],
+    "exit_dir": [
+      "上り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "大師": {
+    "route": [
+      "高速神奈川1号横羽線",
+      "高速神奈川6号川崎線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "浜川崎": {
+    "route": [
+      "高速神奈川1号横羽線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "東神奈川": {
+    "route": [
+      "高速神奈川1号横羽線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "子安": {
+    "route": [
+      "高速神奈川1号横羽線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "みなとみらい": {
+    "route": [
+      "高速神奈川1号横羽線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "守屋町": {
+    "route": [
+      "高速神奈川1号横羽線"
+    ],
+    "entry_dir": [],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "生麦": {
+    "route": [
+      "高速神奈川1号横羽線"
+    ],
+    "entry_dir": [
+      "下り"
+    ],
+    "exit_dir": [
+      "上り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "汐入": {
+    "route": [
+      "高速神奈川1号横羽線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "横浜駅東口": {
+    "route": [
+      "高速神奈川1号横羽線"
+    ],
+    "entry_dir": [
+      "下り"
+    ],
+    "exit_dir": [
+      "上り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "横浜公園": {
+    "route": [
+      "高速神奈川1号横羽線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "三ツ沢": {
+    "route": [
+      "高速神奈川2号三ツ沢線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "横浜駅西口": {
+    "route": [
+      "高速神奈川2号三ツ沢線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "阪東橋": {
+    "route": [
+      "高速神奈川3号狩場線"
+    ],
+    "entry_dir": [
+      "下り"
+    ],
+    "exit_dir": [
+      "上り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "花之木": {
+    "route": [
+      "高速神奈川3号狩場線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "石川町": {
+    "route": [
+      "高速神奈川3号狩場線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [],
+    "is_full": false,
+    "etc_only": false
+  },
+  "永田": {
+    "route": [
+      "高速神奈川3号狩場線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "新山下": {
+    "route": [
+      "高速神奈川3号狩場線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "山下町": {
+    "route": [
+      "高速神奈川3号狩場線"
+    ],
+    "entry_dir": [],
+    "exit_dir": [
+      "上り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "殿町": {
+    "route": [
+      "高速神奈川6号川崎線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "馬場": {
+    "route": [
+      "高速神奈川7号横浜北線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "岸谷生麦": {
+    "route": [
+      "高速神奈川7号横浜北線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "新横浜": {
+    "route": [
+      "高速神奈川7号横浜北線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "横浜青葉": {
+    "route": [
+      "高速神奈川7号横浜北西線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "横浜港北": {
+    "route": [
+      "高速神奈川7号横浜北線",
+      "高速神奈川7号横浜北西線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "東銀座": {
+    "route": [
+      "東銀座出口"
+    ],
+    "entry_dir": [],
+    "exit_dir": [
+      "○"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "足立入谷": {
+    "route": [
+      "高速川口線"
+    ],
+    "entry_dir": [
+      "下り"
+    ],
+    "exit_dir": [
+      "上り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "安行": {
+    "route": [
+      "高速川口線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "新井宿": {
+    "route": [
+      "高速川口線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "東領家": {
+    "route": [
+      "高速川口線"
+    ],
+    "entry_dir": [],
+    "exit_dir": [
+      "上り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "加賀": {
+    "route": [
+      "高速川口線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "鹿浜橋": {
+    "route": [
+      "高速川口線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "新郷": {
+    "route": [
+      "高速川口線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "さいたま見沼": {
+    "route": [
+      "高速埼玉新都心線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "新都心": {
+    "route": [
+      "高速埼玉新都心線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "新都心西": {
+    "route": [
+      "高速埼玉新都心線"
+    ],
+    "entry_dir": [
+      "上り",
+      "下り"
+    ],
+    "exit_dir": [
+      "上り",
+      "下り"
+    ],
+    "is_full": true,
+    "etc_only": false
+  },
+  "浦和北": {
+    "route": [
+      "高速埼玉大宮線"
+    ],
+    "entry_dir": [
+      "下り"
+    ],
+    "exit_dir": [
+      "上り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "浦和南": {
+    "route": [
+      "高速埼玉大宮線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "与野": {
+    "route": [
+      "高速埼玉大宮線"
+    ],
+    "entry_dir": [
+      "上り"
+    ],
+    "exit_dir": [
+      "下り"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "丸の内": {
+    "route": [
+      "高速八重洲線"
+    ],
+    "entry_dir": [],
+    "exit_dir": [
+      "南行き"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "常盤橋": {
+    "route": [
+      "高速八重洲線"
+    ],
+    "entry_dir": [
+      "北行き"
+    ],
+    "exit_dir": [
+      "北行き"
+    ],
+    "is_full": false,
+    "etc_only": false
+  },
+  "八重洲": {
+    "route": [
+      "高速八重洲線"
+    ],
+    "entry_dir": [
+      "北行き",
+      "南行き"
+    ],
+    "exit_dir": [
+      "北行き",
+      "南行き"
+    ],
+    "is_full": true,
+    "etc_only": false
+  }
+}

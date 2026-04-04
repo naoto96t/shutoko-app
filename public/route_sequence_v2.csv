@@ -1,0 +1,97 @@
+route,dir,stops
+# stop は "JCT名" または "IC:IC名"
+# まずはJCTだけでOK。ICは後で追加して精度を上げる。
+
+# --- C1 ---
+C1,CW,"MiyakezakaJCT,IC:代官町,IC:北の丸,TakebashiJCT,IC:神田橋,EdobashiJCT,IC:宝町,IC:京橋,IC:新富町,IC:銀座,ShiodomeJCT,IC:汐留,HamasakibashiJCT,IC:芝公園,IchinohashiJCT,IC:飯倉,TanimachiJCT,IC:霞が関"
+C1,CCW,"IC:霞が関,TanimachiJCT,IC:飯倉,IchinohashiJCT,IC:芝公園,HamasakibashiJCT,IC:汐留,ShiodomeJCT,IC:銀座,IC:新富町,IC:京橋,IC:宝町,EdobashiJCT,IC:神田橋,TakebashiJCT,IC:北の丸,IC:代官町,MiyakezakaJCT"
+
+# --- C2 ---
+C2,CW,"OoiJCT,IC:中環大井南,IC:五反田,OhashiJCT,IC:富ヶ谷,IC:初台南,NishiShinjukuJCT,IC:中野長者橋,IC:西池袋,IC:高松,KumanochoJCT,ItabashiJCT,IC:新板橋,IC:滝野川,IC:王子南,IC:王子北,KouhokuJCT,IC:扇大橋,IC:千住新橋,KosugeJCT,IC:小菅,HorikiriJCT,IC:四つ木,IC:平井大橋,IC:中環小松川,KomatsugawaJCT,IC:船堀橋,IC:清新町,KasaiJCT"
+C2,CCW,"KasaiJCT,IC:清新町,IC:船堀橋,KomatsugawaJCT,IC:中環小松川,IC:平井大橋,IC:四つ木,HorikiriJCT,IC:小菅,KosugeJCT,IC:千住新橋,IC:扇大橋,IC:平井大橋,IC:江北JCT,IC:王子北,IC:王子南,IC:滝野川,IC:新板橋,ItabashiJCT,KumanochoJCT,IC:高松,IC:西池袋,IC:中野長者橋,NishiShinjukuJCT,IC:初台南,IC:富ヶ谷,OhashiJCT,IC:五反田,IC:中環大井南,OoiJCT"
+
+# --- BAY（端点の並びはあなたの定義に合わせて後で調整OK）---
+BAY,E,"IC:幸浦,IC:杉田,IC:磯子,IC:三溪園,IC:南本牧ふ頭,IC:本牧ふ頭,HonmokuJCT,DaikokuJCT,IC:大黒ふ頭,IC:東扇島,IC:浮島,KawasakiUkishimaJCT,IC:湾岸環八,IC:空港中央,TokaiJCT,IC:大井南,OoiJCT,IC:大井,IC:臨海副都心,AriakeJCT,ShinonomeJCT,IC:有明,TatsumiJCT,IC:新木場,KasaiJCT,IC:葛西,IC:舞浜,IC:浦安,IC:千鳥町,TakayaJCT"
+BAY,W,"TakayaJCT,IC:千鳥町,IC:浦安,IC:舞浜,IC:葛西,KasaiJCT,IC:新木場,TatsumiJCT,IC:有明,ShinonomeJCT,AriakeJCT,IC:臨海副都心,IC:大井,OoiJCT,IC:大井南,TokaiJCT,IC:空港中央,IC:湾岸環八,KawasakiUkishimaJCT,IC:浮島,IC:東扇島,IC:大黒ふ頭,DaikokuJCT,HonmokuJCT,IC:本牧ふ頭,IC:南本牧ふ頭,IC:三溪園,IC:磯子,IC:杉田,IC:幸浦"
+
+# --- 放射（まずはJCTのみ。ICは後で追加して出口精度を上げる）---
+
+R1H,UP,"IC:羽田,IC:空港西,ShowajimaJCT,IC:平和島,IC:鈴ヶ森,IC:勝島,IC:芝浦,ShibauraJCT"
+R1H,DOWN,"ShibauraJCT,IC:芝浦,IC:勝島,IC:鈴ヶ森,IC:平和島,ShowajimaJCT,IC:空港西,IC:羽田"
+
+R1U,UP,"IC:入谷,IC:上野,IC:本町,EdobashiJCT"
+R1U,DOWN,"EdobashiJCT,IC:本町,IC:上野,IC:入谷"
+
+R2A,UP,"IC:荏原,IC:目黒,IC:天現寺,IchinohashiJCT"
+R2A,DOWN,"IchinohashiJCT,IC:天現寺,IC:目黒,IC:荏原"
+R2B,UP,"IC:戸越,IC:目黒,IC:天現寺,IchinohashiJCT"
+R2B,DOWN,"IchinohashiJCT,IC:天現寺,IC:目黒,IC:戸越"
+
+
+R4A,UP,"NishiShinjukuJCT,IC:新宿,IC:代々木,IC:外苑,MiyakezakaJCT"
+R4A,DOWN,"MiyakezakaJCT,IC:外苑,IC:代々木,IC:新宿,NishiShinjukuJCT"
+R4B,UP,"IC:高井戸,IC:永福,IC:幡ヶ谷,IC:初台,NishiShinjukuJCT"
+R4B,DOWN,"NishiShinjukuJCT,IC:初台,IC:幡ヶ谷,IC:永福,IC:高井戸"
+
+# 5号はA/Bに分割：Takebashi(都心側)→Kumanocho(内側C2) と Itabashi(外側C2)→(外側…は今は未定でもOK)
+R5B,UP,"BijogiJCT,IC:戸田,IC:戸田南,IC:高島平,IC:中台,IC:板橋本町,ItabashiJCT"
+R5B,DOWN,"ItabashiJCT,IC:板橋本町,IC:中台,IC:高島平,IC:戸田南,IC:戸田,BijogiJCT"
+
+R5A,UP,"KumanochoJCT,IC:北池袋,IC:東池袋,IC:護国寺,IC:早稲田,IC:飯田橋,IC:西神田,IC:一ツ橋,TakebashiJCT"
+R5A,DOWN,"TakebashiJCT,IC:一ツ橋,IC:西神田,IC:飯田橋,IC:早稲田,IC:護国寺,IC:東池袋,IC:北池袋,KumanochoJCT"
+
+# 6号はA/Bに分割：Horikiri側(内側) と Kosuge側(外側)
+R6A,DOWN,"EdobashiJCT,IC:箱崎,IC:浜町,IC:清洲橋,RyougokuJCT,IC:駒形,IC:向島,IC:堤通,HorikiriJCT"
+R6A,UP,"HorikiriJCT,IC:堤通,IC:向島,IC:駒形,RyougokuJCT,IC:清洲橋,IC:浜町,IC:箱崎,EdobashiJCT"
+
+R6B,DOWN,"KosugeJCT,IC:加平,IC:八潮南,IC:八潮,IC:三郷,MisatoJCT"
+R6B,UP,"MisatoJCT,IC:三郷,IC:八潮,IC:八潮南,IC:加平,KosugeJCT"
+
+R7A,DOWN,"RyougokuJCT,IC:錦糸町,KomatsugawaJCT"
+R7A,UP,"KomatsugawaJCT,IC:錦糸町,RyougokuJCT"
+R7B,DOWN,"KomatsugawaJCT,IC:小松川,IC:一之江"
+R7B,UP,"IC:一之江,IC:小松川,KomatsugawaJCT"
+
+# 9号・11号は既存定義を維持（JCTのみ）
+R9,UP,"TatsumiJCT,IC:枝川,IC:塩浜,IC:木場,IC:福住,HakozakiJCT,EdobashiJCT"
+R9,DOWN,"EdobashiJCT,HakozakiJCT,IC:福住,IC:木場,IC:塩浜,IC:枝川,TatsumiJCT"
+
+R10,DOWN,"IC:晴海,IC:豊洲,ShinonomeJCT"
+R10,UP,"ShinonomeJCT,IC:豊洲,IC:晴海"
+
+R11,UP,"AriakeJCT,IC:台場,ShibauraJCT"
+R11,DOWN,"ShibauraJCT,IC:台場,AriakeJCT"
+
+K1,UP,"IshikawachoJCT,IC:横浜公園,IC:みなとみらい,IC:横浜駅東口,KinkouJCT,IC:東神奈川,IC:子安,IC:守屋町,IC:生麦,NamamugiJCT,IC:汐入,IC:浜川崎,DaishiJCT,IC:大師,IC:浅田"
+K1,DOWN,"IC:浅田,IC:大師,DaishiJCT,IC:浜川崎,IC:汐入,NamamugiJCT,IC:生麦,IC:守屋町,IC:子安,IC:東神奈川,KinkouJCT,IC:横浜駅東口,IC:みなとみらい,IC:横浜公園,IshikawachoJCT"
+
+K2,UP,"IC:三ツ沢,IC:横浜駅西口,KinkouJCT"
+K2,DOWN,"KinkouJCT,IC:横浜駅西口,IC:三ツ沢"
+
+K3,DOWN,"IC:永田,IC:花之木,IC:阪東橋,IC:石川町,IshikawachoJCT,IC:山下町,IC:新山下,HonmokuJCT"
+K3,UP,"HonmokuJCT,IC:新山下,IC:山下町,IshikawachoJCT,IC:石川町,IC:阪東橋,IC:花之木,IC:永田"
+
+K5,UP,"DaikokuJCT,NamamugiJCT"
+K5,DOWN,"NamamugiJCT,DaikokuJCT"
+
+K6,UP,"KawasakiUkishimaJCT,IC:殿町,DaishiJCT"
+K6,DOWN,"DaishiJCT,IC:殿町,KawasakiUkishimaJCT"
+
+K7,UP,"YokohamaAobaJCT,IC:横浜青葉,YokohamaKohokuJCT,IC:横浜港北,IC:新横浜,IC:馬場,IC:岸谷生麦,NamamugiJCT"
+K7,DOWN,"NamamugiJCT,IC:岸谷生麦,IC:馬場,IC:新横浜,IC:横浜港北,YokohamaKohokuJCT,IC:横浜青葉,YokohamaAobaJCT"
+
+BAYX,W,"TokaiJCT,ShowajimaJCT"
+BAYX,E,"ShowajimaJCT,TokaiJCT"
+
+S2,UP,"IC:さいたま見沼,IC:新都心,IC:新都心西,SaitamaJCT"
+S2,DOWN,"SaitamaJCT,IC:新都心西,IC:新都心,IC:さいたま見沼"
+
+S5,UP,"SaitamaJCT,IC:与野,IC:浦和北,IC:浦和南,BijogiJCT"
+S5,DOWN,"BijogiJCT,IC:浦和南,IC:浦和北,IC:与野,SaitamaJCT"
+
+S1,UP,"IC:新井宿,IC:安行,IC:新郷,IC:足立入谷,IC:加賀,IC:東領家,IC:鹿浜橋,KouhokuJCT"
+S1,DOWN,"KouhokuJCT,IC:鹿浜橋,IC:東領家,IC:加賀,IC:足立入谷,IC:新郷,IC:安行,IC:新井宿"
+R3B,UP,"IC:用賀,IC:三軒茶屋,IC:池尻,OhashiJCT"
+R3B,DOWN,"OhashiJCT,IC:池尻,IC:三軒茶屋,IC:用賀"
+R3A,UP,"OhashiJCT,IC:渋谷,IC:高樹町,TanimachiJCT"
+R3A,DOWN,"TanimachiJCT,IC:高樹町,IC:渋谷,OhashiJCT"

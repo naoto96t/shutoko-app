@@ -1,0 +1,66 @@
+{
+  "代々木PA": {
+    "u_turn": false,
+    "notes": ""
+  },
+  "八潮PA": {
+    "u_turn": false,
+    "notes": ""
+  },
+  "加平PA": {
+    "u_turn": false,
+    "notes": ""
+  },
+  "南池袋PA": {
+    "u_turn": false,
+    "notes": ""
+  },
+  "大師PA": {
+    "u_turn": false,
+    "notes": ""
+  },
+  "大黒PA": {
+    "u_turn": true,
+    "notes": ""
+  },
+  "川口PA": {
+    "u_turn": false,
+    "notes": ""
+  },
+  "市川PA": {
+    "u_turn": false,
+    "notes": ""
+  },
+  "志村PA": {
+    "u_turn": false,
+    "notes": ""
+  },
+  "永福PA": {
+    "u_turn": false,
+    "notes": ""
+  },
+  "用賀PA": {
+    "u_turn": false,
+    "notes": ""
+  },
+  "箱崎PA": {
+    "u_turn": true,
+    "notes": ""
+  },
+  "芝浦PA": {
+    "u_turn": false,
+    "notes": ""
+  },
+  "辰巳第一PA": {
+    "u_turn": false,
+    "notes": ""
+  },
+  "辰巳第二PA": {
+    "u_turn": false,
+    "notes": ""
+  },
+  "駒形PA": {
+    "u_turn": false,
+    "notes": ""
+  }
+}
