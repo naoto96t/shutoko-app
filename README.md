@@ -2,27 +2,71 @@
 
 首都高周回ドライブ向けの Next.js アプリです。
 
-機能
-- 入口 IC を選んで最安出口候補を表示
-- 通常ルートを表示
-- PA スポットを指定して周回ルートを探索
+入口 IC を選ぶと、最安出口候補と通常ルートを表示し、箱崎 / 大黒 / 辰巳 / 芝浦などのスポットを指定すると周回ルートを探索します。
 
-開発
+## 役割
+
+- 入口 IC の検索と選択
+- 最安出口候補の表示
+- 通常ルートの表示
+- スポット指定付き周回ルート探索
+- モバイルでも使いやすい簡易 UI
+
+データ生成側は別リポジトリの `shutoko` にあります。
+
+## 開発
+
 ```bash
 npm install
 npm run dev
 ```
 
 ブラウザ
+
 - `http://localhost:3000`
 
-必要なデータ
-- `public/plans.json`
-- `public/graph.json`
-- `public/allowed_turns_port.csv`
-- `public/connections_port.csv`
-- `public/special_switches_port.csv`
-- `public/route_sequence_v2.csv`
-- `public/ic_tags.csv`
+## 必要なデータ
 
-今は `public` 配下に必要データを実ファイルとして入れているので、単独 clone でもそのまま動きます。
+次のデータを `public/` 配下から読み込みます。
+
+- `plans.json`
+- `graph.json`
+- `allowed_turns_port.csv`
+- `connections_port.csv`
+- `special_switches_port.csv`
+- `route_sequence_v2.csv`
+- `ic_tags.csv`
+
+今は `public` 配下に実ファイルとして含めているため、単独 clone でもそのまま起動できます。
+
+## 現在の UI
+
+現状は MVP として、
+
+- 入口検索
+- 最安出口リスト
+- 通常ルート表示
+- 周回ルート表示
+
+に集中しています。
+
+今後は、
+
+- 簡易地図上でのルート表示
+- 現在地ベースの入口提案
+- ルートの視覚的な比較
+- PA / JCT の視認性向上
+
+などに拡張しやすい構成を目指しています。
+
+## デザインについて
+
+今はロジック優先の画面ですが、Figma で UI を作ってからそれに合わせて組むことは十分できます。
+
+特にこのアプリは、
+
+- 運転中に見やすい情報量
+- 入口 / 出口 / スポットの切り替えやすさ
+- ルートの方向感の分かりやすさ
+
+が重要なので、Figma で情報設計してから実装に寄せる進め方と相性が良いです。
