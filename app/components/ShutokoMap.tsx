@@ -79,6 +79,43 @@ function parseSvgPointMap(svgMarkup: string) {
   return map;
 }
 
+function normalizeRouteGroupId(id: string) {
+  return id.replace(/^Route_/, "").replace(/^route_/, "");
+}
+
+function buildIcNameToSvgIdMap(host: Element) {
+  const out = new Map<string, string>();
+  const nodesRoot = host.querySelector("#nodes_ic");
+  const namesRoot = host.querySelector("#ic_names");
+  if (!nodesRoot || !namesRoot) return out;
+
+  const nameGroups = new Map<string, Element>();
+  for (const el of Array.from(namesRoot.children)) {
+    if (!(el instanceof Element) || !el.id) continue;
+    nameGroups.set(normalizeRouteGroupId(el.id), el);
+  }
+
+  for (const nodeGroup of Array.from(nodesRoot.children)) {
+    if (!(nodeGroup instanceof Element) || !nodeGroup.id) continue;
+    const key = normalizeRouteGroupId(nodeGroup.id);
+    const nameGroup = nameGroups.get(key);
+    if (!nameGroup) continue;
+
+    const nodeIds = Array.from(nodeGroup.children)
+      .filter((el): el is Element => el instanceof Element && !!el.id && el.id.startsWith("ic_"))
+      .map((el) => el.id);
+    const nameIds = Array.from(nameGroup.children)
+      .filter((el): el is Element => el instanceof Element && !!el.id)
+      .map((el) => demojibakeUtf8(decodeHtmlEntities(el.id)).replace(/_\d+$/, ""));
+
+    const count = Math.min(nodeIds.length, nameIds.length);
+    for (let i = 0; i < count; i++) {
+      out.set(nameIds[i], nodeIds[i]);
+    }
+  }
+  return out;
+}
+
 const DISPLAY_ROUTE_IDS_BY_FAMILY: Record<string, string[]> = {
   C1: ["route_C1"],
   C2: ["route_C2"],
@@ -319,6 +356,7 @@ export default function ShutokoMap({
 
     const overlayLayer = addLayer(rootSvg, "route-overlay-layer");
     const markerLayer = addLayer(rootSvg, "route-marker-layer");
+    const icNameToSvgId = buildIcNameToSvgIdMap(host);
 
     let firstProjectedPoint: { x: number; y: number } | null = null;
     let lastProjectedPoint: { x: number; y: number } | null = null;
@@ -333,7 +371,9 @@ export default function ShutokoMap({
       const nodePoints = run.pointIds
         .map((id) => ({
           id,
-          point: pointMap.get(id) || centerOf(findSvgNode(host, id) as SVGGraphicsElement | null),
+          point:
+            pointMap.get(icNameToSvgId.get(id) || id) ||
+            centerOf(findSvgNode(host, icNameToSvgId.get(id) || id) as SVGGraphicsElement | null),
         }))
         .filter((x): x is { id: string; point: { x: number; y: number } } => !!x.point);
       if (nodePoints.length < 2) continue;
@@ -378,8 +418,10 @@ export default function ShutokoMap({
       }
     }
 
-    const entryPoint = (entryName ? pointMap.get(entryName) : null) || centerOf(findSvgNode(host, entryName) as SVGGraphicsElement | null) || firstProjectedPoint || null;
-    const exitPoint = (exitName ? pointMap.get(exitName) : null) || centerOf(findSvgNode(host, exitName || null) as SVGGraphicsElement | null) || lastProjectedPoint || null;
+    const entrySvgId = entryName ? icNameToSvgId.get(entryName) || entryName : null;
+    const exitSvgId = exitName ? icNameToSvgId.get(exitName) || exitName : null;
+    const entryPoint = (entrySvgId ? pointMap.get(entrySvgId) : null) || centerOf(findSvgNode(host, entrySvgId) as SVGGraphicsElement | null) || firstProjectedPoint || null;
+    const exitPoint = (exitSvgId ? pointMap.get(exitSvgId) : null) || centerOf(findSvgNode(host, exitSvgId || null) as SVGGraphicsElement | null) || lastProjectedPoint || null;
     addMarker(markerLayer, entryPoint, "#2563eb", 7);
     addMarker(markerLayer, exitPoint, "#dc2626", 7);
     for (const label of activeSpotLabels) {
