@@ -51,18 +51,30 @@ function decodeHtmlEntities(text: string) {
   return text.replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)));
 }
 
+function demojibakeUtf8(text: string) {
+  try {
+    const bytes = Uint8Array.from(Array.from(text), (ch) => ch.charCodeAt(0) & 0xff);
+    return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+  } catch {
+    return text;
+  }
+}
+
 function parseSvgPointMap(svgMarkup: string) {
   const map = new Map<string, { x: number; y: number }>();
   const circleRe = /<(circle|ellipse)\b[^>]*\sid="([^"]+)"[^>]*\scx="([^"]+)"[^>]*\scy="([^"]+)"[^>]*>/g;
   let m: RegExpExecArray | null;
   while ((m = circleRe.exec(svgMarkup))) {
     const rawId = decodeHtmlEntities(m[2]);
+    const repairedId = demojibakeUtf8(rawId);
     const x = Number(m[3]);
     const y = Number(m[4]);
     if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
-    map.set(rawId, { x, y });
-    const base = rawId.replace(/_\d+$/, "");
-    if (base && !map.has(base)) map.set(base, { x, y });
+    for (const id of uniq([rawId, repairedId])) {
+      map.set(id, { x, y });
+      const base = id.replace(/_\d+$/, "");
+      if (base && !map.has(base)) map.set(base, { x, y });
+    }
   }
   return map;
 }
