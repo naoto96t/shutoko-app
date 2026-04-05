@@ -284,14 +284,6 @@ export default function ShutokoMap({
         const family = group.id.replace(/^route_/, "");
         if (segmentedFamilies.has(family)) {
           group.style.opacity = "0.22";
-          continue;
-        }
-        if (!activeRouteIds.has(group.id)) continue;
-        const path = group.querySelector<SVGPathElement>("path");
-        group.style.opacity = "0.8";
-        if (path) {
-          path.style.strokeWidth = "13";
-          path.style.filter = "drop-shadow(0 0 8px rgba(132,204,22,0.28))";
         }
       }
     }
