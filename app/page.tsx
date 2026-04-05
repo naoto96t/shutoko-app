@@ -591,10 +591,10 @@ export default function Page() {
     const qq = q.trim();
     if (!qq) return fullEntries.slice(0, 40);
     const lower = qq.toLowerCase();
-    return fullEntries
+    return entries
       .filter((x) => x.toLowerCase().includes(lower))
       .slice(0, 40);
-  }, [q, fullEntries]);
+  }, [q, entries, fullEntries]);
 
   const resetHome = () => {
     setQ("");
@@ -831,6 +831,22 @@ export default function Page() {
           placeholder="入口を検索（例：五反田 / 外苑 / 葛西）"
           style={{ width: "100%", padding: 12, fontSize: 16, border: "1px solid #bbb", borderRadius: 12 }}
         />
+      </div>
+
+      <div style={{ marginTop: 10, padding: 12, border: "1px solid #ddd", borderRadius: 12, background: "white" }}>
+        <div style={{ fontSize: 12, color: "#666", marginBottom: 8, fontWeight: 700 }}>経由したいスポット</div>
+        <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+          {SPOTS.map((s) => (
+            <label key={s.key} style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 13 }}>
+              <input
+                type="checkbox"
+                checked={!!spotOn[s.key]}
+                onChange={(e) => setSpotOn((p) => ({ ...p, [s.key]: e.target.checked }))}
+              />
+              {s.label}
+            </label>
+          ))}
+        </div>
       </div>
 
       {!faresData && <div style={{ marginTop: 16, color: "#666" }}>plans.json を読み込めていません。</div>}
