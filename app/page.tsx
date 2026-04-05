@@ -143,13 +143,13 @@ function routeFamilyOfTail(tail: string) {
   if (!tail) return null;
   if (tail.startsWith("C1_")) return "C1";
   if (tail.startsWith("C2_")) return "C2";
-  if (tail.startsWith("BAYX_")) return "BAY";
+  if (tail.startsWith("BAYX_")) return "BAYX";
   if (tail.startsWith("BAY_")) return "BAY";
   if (tail.startsWith("R1H_")) return "R1H";
   if (tail.startsWith("R1U_")) return "R1U";
   if (tail.startsWith("R2")) return "R2";
   if (tail.startsWith("R3A_")) return "R3A";
-  if (tail.startsWith("R3B_")) return "R3A";
+  if (tail.startsWith("R3B_")) return "R3B";
   if (tail.startsWith("R4A_")) return "R4A";
   if (tail.startsWith("R4B_")) return "R4B";
   if (tail.startsWith("R5A_")) return "R5A";
