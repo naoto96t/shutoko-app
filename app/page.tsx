@@ -902,6 +902,7 @@ export default function Page() {
             exitName={selectedRow?.exit}
             activeSpotLabels={activeSpotLabels}
             highlightedRoutes={mapRouteFamilies}
+            highlightedPath={selectedMapPath}
           />
 
           <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "1fr", gap: 10 }}>
