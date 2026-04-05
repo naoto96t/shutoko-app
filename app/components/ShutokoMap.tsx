@@ -170,12 +170,12 @@ function nearestLengthOnPath(path: SVGPathElement, x: number, y: number) {
 
 function setNodeHighlight(el: Element | null, tone: "entry" | "exit" | "spot") {
   if (!el) return;
-  const fill = tone === "entry" ? "#111827" : tone === "exit" ? "#dc2626" : "#059669";
-  const stroke = tone === "entry" ? "#93c5fd" : tone === "exit" ? "#fecaca" : "#a7f3d0";
+  const fill = tone === "entry" ? "#2563eb" : tone === "exit" ? "#dc2626" : "#059669";
+  const stroke = tone === "entry" ? "#bfdbfe" : tone === "exit" ? "#fecaca" : "#a7f3d0";
   el.setAttribute("opacity", "1");
   el.setAttribute("fill", fill);
   el.setAttribute("stroke", stroke);
-  el.setAttribute("stroke-width", "4");
+  el.setAttribute("stroke-width", "5");
   if (el.tagName.toLowerCase() === "path") {
     el.setAttribute("fill", fill);
   }
@@ -233,7 +233,7 @@ export default function ShutokoMap({
 
     for (const group of routeGroups) {
       const isActive = activeRouteIds.size === 0 || activeRouteIds.has(group.id);
-      group.style.opacity = isActive ? "1" : "0.18";
+      group.style.opacity = "1";
       const path = group.querySelector<SVGPathElement>("path");
       if (path) {
         path.style.strokeWidth = "10";
@@ -266,12 +266,12 @@ export default function ShutokoMap({
         const overlay = routePath.cloneNode(true) as SVGPathElement;
         overlay.removeAttribute("filter");
         overlay.setAttribute("fill", "none");
-        overlay.setAttribute("stroke", "#84cc16");
-        overlay.setAttribute("stroke-width", "16");
+        overlay.setAttribute("stroke", "#2FFF00");
+        overlay.setAttribute("stroke-width", "14");
         overlay.setAttribute("stroke-linecap", "round");
         overlay.setAttribute("stroke-linejoin", "round");
         overlay.setAttribute("opacity", "0.98");
-        overlay.style.filter = "drop-shadow(0 0 8px rgba(132,204,22,0.55))";
+        overlay.style.filter = "drop-shadow(0 0 8px rgba(47,255,0,0.55))";
         overlay.style.strokeDasharray = `${segmentLength} ${total}`;
         overlay.style.strokeDashoffset = `${-start}`;
         overlayLayer.appendChild(overlay);
@@ -360,8 +360,10 @@ export default function ShutokoMap({
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 10 }}>
-        <div style={{ fontSize: 18, fontWeight: 800 }}>{title}</div>
-        {headerAction ? <div>{headerAction}</div> : null}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+          {headerAction ? <div>{headerAction}</div> : null}
+          <div style={{ fontSize: 18, fontWeight: 800 }}>{title}</div>
+        </div>
       </div>
 
       {toolbar ? (

@@ -242,6 +242,30 @@ function parseEdgeSetFromCsv(csvText: string): TurnRuleSet {
   return set;
 }
 
+
+function parseForbiddenEdgeSetFromCsv(csvText: string): TurnRuleSet {
+  const set: TurnRuleSet = new Set();
+  const lines = csvText.split(/\r?\n/).filter((l) => l.trim().length > 0);
+  if (lines.length === 0) return set;
+  const header = parseCsvLine(lines[0]).map((x) => x.replace(/^\uFEFF/, "").trim());
+  const iJunction = header.indexOf("junction");
+  const iFrom = header.indexOf("from");
+  const iTo = header.indexOf("to");
+  if (iFrom < 0 || iTo < 0) return set;
+
+  for (let i = 1; i < lines.length; i++) {
+    const cols = parseCsvLine(lines[i]);
+    const junction = (iJunction >= 0 ? cols[iJunction] : "").trim();
+    let from = (cols[iFrom] || "").trim();
+    let to = (cols[iTo] || "").trim();
+    if (!from || !to) continue;
+    if (!from.includes(":") && junction) from = `${junction}:${from}`;
+    if (!to.includes(":") && junction) to = `${junction}:${to}`;
+    set.add(edgeKey(from, to));
+  }
+  return set;
+}
+
 function parseRouteSequencePos(csvText: string): { pos: SeqPosMap; jcts: SeqJctMap } {
   const pos: SeqPosMap = new Map();
   const jcts: SeqJctMap = new Map();
@@ -566,7 +590,7 @@ export default function Page() {
         for (const k of parseEdgeSetFromCsv(allowedCsv)) s.add(k);
         for (const k of parseEdgeSetFromCsv(connCsv)) s.add(k);
         for (const k of parseEdgeSetFromCsv(specialCsv)) s.add(k);
-        for (const k of parseEdgeSetFromCsv(forbiddenCsv)) s.delete(k);
+        for (const k of parseForbiddenEdgeSetFromCsv(forbiddenCsv)) s.delete(k);
         setTurnRules(s);
         setSeqInfo(parseRouteSequencePos(seqCsv));
       })
