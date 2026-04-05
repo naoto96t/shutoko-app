@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import ShutokoMap from "./components/ShutokoMap";
+
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
 type ExitRow = {
   exit: string;
@@ -128,6 +131,52 @@ function prettyDetourPath(path: string[]) {
     if (label === prev) continue;
     out.push(label);
     prev = label;
+  }
+  return out;
+}
+
+function publicAsset(path: string) {
+  return `${BASE_PATH}${path}`;
+}
+
+function routeFamilyOfTail(tail: string) {
+  if (!tail) return null;
+  if (tail.startsWith("C1_")) return "C1";
+  if (tail.startsWith("C2_")) return "C2";
+  if (tail.startsWith("BAYX_")) return "BAY";
+  if (tail.startsWith("BAY_")) return "BAY";
+  if (tail.startsWith("R1H_")) return "R1H";
+  if (tail.startsWith("R1U_")) return "R1U";
+  if (tail.startsWith("R2")) return "R2";
+  if (tail.startsWith("R3A_")) return "R3A";
+  if (tail.startsWith("R3B_")) return "R3A";
+  if (tail.startsWith("R4A_")) return "R4A";
+  if (tail.startsWith("R4B_")) return "R4B";
+  if (tail.startsWith("R5A_")) return "R5A";
+  if (tail.startsWith("R5B_")) return "R5B";
+  if (tail.startsWith("R6A_")) return "R6A";
+  if (tail.startsWith("R6B_") || tail.startsWith("R6_MISATO_")) return "R6B";
+  if (tail.startsWith("R7A_")) return "R7A";
+  if (tail.startsWith("R7B_")) return "R7B";
+  if (tail.startsWith("R9_")) return "R9";
+  if (tail.startsWith("R10_")) return "R10";
+  if (tail.startsWith("R11_")) return "R11";
+  if (tail.startsWith("K1_")) return "K1";
+  if (tail.startsWith("K2_")) return "K2";
+  if (tail.startsWith("K3_")) return "K3";
+  if (tail.startsWith("K5_")) return "K5";
+  if (tail.startsWith("K6_")) return "K6";
+  if (tail.startsWith("S1_")) return "S1";
+  if (tail.startsWith("S2_")) return "S2";
+  if (tail.startsWith("S5_")) return "S5";
+  return null;
+}
+
+function highlightedRouteFamilies(path: string[]) {
+  const out: string[] = [];
+  for (const raw of path) {
+    const family = routeFamilyOfTail(routeTailOfNode(raw));
+    if (family && !out.includes(family)) out.push(family);
   }
   return out;
 }
@@ -489,6 +538,7 @@ export default function Page() {
   const [q, setQ] = useState("");
   const [entryName, setEntryName] = useState<string | null>(null);
   const [entryFlow, setEntryFlow] = useState<"auto" | "up" | "down">("auto");
+  const [selectedRowIndex, setSelectedRowIndex] = useState(0);
 
   const fares = faresData?.entries ?? EMPTY_ENTRIES;
   const entries = useMemo(() => Object.keys(fares).sort(), [fares]);
@@ -500,13 +550,13 @@ export default function Page() {
   });
 
   useEffect(() => {
-    fetch("/plans.json").then((r) => r.json()).then(setFaresData).catch(() => setFaresData(null));
-    fetch("/graph.json").then((r) => r.json()).then(setGraph).catch(() => setGraph(null));
+    fetch(publicAsset("/plans.json")).then((r) => r.json()).then(setFaresData).catch(() => setFaresData(null));
+    fetch(publicAsset("/graph.json")).then((r) => r.json()).then(setGraph).catch(() => setGraph(null));
     Promise.all([
-      fetch("/allowed_turns_port.csv").then((r) => r.text()),
-      fetch("/connections_port.csv").then((r) => r.text()),
-      fetch("/special_switches_port.csv").then((r) => r.text()),
-      fetch("/route_sequence_v2.csv").then((r) => r.text()),
+      fetch(publicAsset("/allowed_turns_port.csv")).then((r) => r.text()),
+      fetch(publicAsset("/connections_port.csv")).then((r) => r.text()),
+      fetch(publicAsset("/special_switches_port.csv")).then((r) => r.text()),
+      fetch(publicAsset("/route_sequence_v2.csv")).then((r) => r.text()),
     ])
       .then(([allowedCsv, connCsv, specialCsv, seqCsv]) => {
         const s = new Set<string>();
@@ -520,7 +570,7 @@ export default function Page() {
         setTurnRules(new Set());
         setSeqInfo(null);
       });
-    fetch("/ic_tags.csv")
+    fetch(publicAsset("/ic_tags.csv"))
       .then((r) => r.text())
       .then((csv) => setExitAllow(parseIcExitAllow(csv)))
       .catch(() => setExitAllow(new Map()));
@@ -539,6 +589,7 @@ export default function Page() {
     setEntryName(name);
     setQ(name);      // ← 入力欄に残す（これが一番自然）
     setEntryFlow("auto");
+    setSelectedRowIndex(0);
   };
 
   const entry = entryName ? fares[entryName] : null;
@@ -615,6 +666,7 @@ export default function Page() {
     targetNodes: string[] | undefined,
     normalPathNodes: string[] | undefined
   ) {
+    if (!graph) return [];
     const tnodes = targetNodes || [];
     const normalLast = (normalPathNodes && normalPathNodes.length) ? normalPathNodes[normalPathNodes.length - 1] : "";
     const preferred = normalLast && tnodes.includes(normalLast) ? [normalLast] : [];
@@ -728,6 +780,18 @@ export default function Page() {
         }))
       : [];
 
+  const selectedRow = fixedRows[selectedRowIndex] || null;
+  const selectedNormal = selectedRow ? normalPaths[selectedRowIndex] : null;
+  const selectedDetour = activeSpots.length > 0 ? evaluatedDetours[selectedRowIndex]?.detour || null : null;
+  const selectedMapPath =
+    activeSpots.length > 0 && selectedDetour?.ok
+      ? selectedDetour.path
+      : selectedNormal?.ok
+        ? selectedNormal.path
+        : [];
+  const mapRouteFamilies = highlightedRouteFamilies(selectedMapPath);
+  const activeSpotLabels = useMemo(() => activeSpots.map((s) => s.label), [activeSpots]);
+
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: 16 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
@@ -832,6 +896,14 @@ export default function Page() {
 
           </div>
 
+          <ShutokoMap
+            title={selectedRow ? `Map Preview: ${entryName} → ${selectedRow.exit}` : "Map Preview"}
+            entryName={entryName}
+            exitName={selectedRow?.exit}
+            activeSpotLabels={activeSpotLabels}
+            highlightedRoutes={mapRouteFamilies}
+          />
+
           <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "1fr", gap: 10 }}>
             {activeSpots.length > 0 ? (
               <div style={{ fontSize: 12, color: "#666" }}>
@@ -845,7 +917,18 @@ export default function Page() {
               const normal = normalCalc?.ok ? prettyDetourPath(normalCalc.path).join(" → ") : "";
 
               return (
-                <div key={i} style={{ border: "1px solid #ddd", borderRadius: 14, padding: 14 }}>
+                <div
+                  key={i}
+                  onClick={() => setSelectedRowIndex(i)}
+                  style={{
+                    border: selectedRowIndex === i ? "2px solid #0ea5e9" : "1px solid #ddd",
+                    boxShadow: selectedRowIndex === i ? "0 8px 24px rgba(14,165,233,0.12)" : "none",
+                    borderRadius: 14,
+                    padding: 14,
+                    cursor: "pointer",
+                    background: selectedRowIndex === i ? "#f8fdff" : "white",
+                  }}
+                >
                   <div style={{ fontWeight: 800, fontSize: 16 }}>
                     {x.toll}円 / 出口：{x.exit} {x.dist ? ` / ${x.dist}km` : ""}
                   </div>

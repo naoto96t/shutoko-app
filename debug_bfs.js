@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const graph = require("./public/graph.json");
 
 function tailOfPort(p) {

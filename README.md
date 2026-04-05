@@ -39,6 +39,17 @@ npm run dev
 
 今は `public` 配下に実ファイルとして含めているため、単独 clone でもそのまま起動できます。
 
+## 公開
+
+GitHub Pages での静的公開を想定した設定を入れています。
+
+- ローカル開発
+  - `npm run dev`
+- Pages 用ビルド
+  - `npm run build:pages`
+
+GitHub 上では Actions から自動で `main` ブランチを Pages にデプロイする構成です。
+
 ## 現在の UI
 
 現状は MVP として、
