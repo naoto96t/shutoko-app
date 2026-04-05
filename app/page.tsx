@@ -846,7 +846,15 @@ export default function Page() {
 
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: 16 }}>
-      <div>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+        {entryName ? (
+          <button
+            onClick={resetHome}
+            style={{ padding: "8px 12px", border: "1px solid #d6d3d1", borderRadius: 12, background: "white" }}
+          >
+            ホームへ戻る
+          </button>
+        ) : null}
         <h1 style={{ fontSize: 22, margin: 0 }}>首都高 周回ドライブプランナー</h1>
       </div>
 
@@ -928,14 +936,6 @@ export default function Page() {
                 activeSpotLabels={activeSpotLabels}
                 highlightedRoutes={mapRouteFamilies}
                 highlightedPath={selectedMapPath}
-                headerAction={
-                  <button
-                    onClick={resetHome}
-                    style={{ padding: "8px 12px", border: "1px solid #d6d3d1", borderRadius: 12, background: "white" }}
-                  >
-                    ホームへ戻る
-                  </button>
-                }
                 toolbar={
                   <div style={{ display: "grid", gap: 12 }}>
                     <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>

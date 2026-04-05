@@ -38,25 +38,20 @@ const NODE_ID_ALIASES: Record<string, string> = {
   HonmokuJCT: "HonmakiJCT",
 };
 
-const ROUTE_IDS_BY_FAMILY: Record<string, string[]> = {
+const DISPLAY_ROUTE_IDS_BY_FAMILY: Record<string, string[]> = {
   C1: ["route_C1"],
   C2: ["route_C2"],
   BAY: ["route_BAY"],
   BAYX: ["route_BAYX"],
   R1H: ["route_R1H"],
   R1U: ["route_R1U"],
-  R2: ["route_R2"],
-  R2_Togoshi: ["route_R2_Togoshi"],
-  R3A: ["route_R3A"],
-  R3B: ["route_R3B"],
-  R4A: ["route_R4A"],
-  R4B: ["route_R4B"],
-  R5A: ["route_R5A"],
-  R5B: ["route_R5B"],
+  R2: ["route_R2", "route_R2_Togoshi"],
+  R3: ["route_R3A", "route_R3B"],
+  R4: ["route_R4A", "route_R4B"],
+  R5: ["route_R5A", "route_R5B"],
   R6A: ["route_R6A"],
   R6B: ["route_R6B"],
-  R7A: ["route_R7A"],
-  R7B: ["route_R7B"],
+  R7: ["route_R7A", "route_R7B"],
   R9: ["route_R9"],
   R10: ["route_R10"],
   R11: ["route_R11"],
@@ -84,7 +79,7 @@ function routeTailOfNode(node: string) {
   return idx >= 0 ? node.slice(idx + 1) : node;
 }
 
-function routeFamilyOfTail(tail: string) {
+function displayFamilyOfTail(tail: string) {
   if (!tail) return null;
   if (tail.startsWith("C1_")) return "C1";
   if (tail.startsWith("C2_")) return "C2";
@@ -93,16 +88,12 @@ function routeFamilyOfTail(tail: string) {
   if (tail.startsWith("R1H_")) return "R1H";
   if (tail.startsWith("R1U_")) return "R1U";
   if (tail.startsWith("R2")) return "R2";
-  if (tail.startsWith("R3A_")) return "R3A";
-  if (tail.startsWith("R3B_")) return "R3B";
-  if (tail.startsWith("R4A_")) return "R4A";
-  if (tail.startsWith("R4B_")) return "R4B";
-  if (tail.startsWith("R5A_")) return "R5A";
-  if (tail.startsWith("R5B_")) return "R5B";
+  if (tail.startsWith("R3A_") || tail.startsWith("R3B_")) return "R3";
+  if (tail.startsWith("R4A_") || tail.startsWith("R4B_")) return "R4";
+  if (tail.startsWith("R5A_") || tail.startsWith("R5B_")) return "R5";
   if (tail.startsWith("R6A_") || tail.startsWith("R6_")) return "R6A";
   if (tail.startsWith("R6B_") || tail.startsWith("R6_MISATO_")) return "R6B";
-  if (tail.startsWith("R7A_")) return "R7A";
-  if (tail.startsWith("R7B_")) return "R7B";
+  if (tail.startsWith("R7A_") || tail.startsWith("R7B_")) return "R7";
   if (tail.startsWith("R9_")) return "R9";
   if (tail.startsWith("R10_")) return "R10";
   if (tail.startsWith("R11_")) return "R11";
@@ -168,25 +159,39 @@ function nearestLengthOnPath(path: SVGPathElement, x: number, y: number) {
   return { length: bestLength, dist: bestDist, total };
 }
 
-function setNodeHighlight(el: Element | null, tone: "entry" | "exit" | "spot") {
-  if (!el) return;
-  const fill = tone === "entry" ? "#2563eb" : tone === "exit" ? "#dc2626" : "#059669";
-  const stroke = tone === "entry" ? "#bfdbfe" : tone === "exit" ? "#fecaca" : "#a7f3d0";
-  el.setAttribute("opacity", "1");
-  el.setAttribute("fill", fill);
-  el.setAttribute("stroke", stroke);
-  el.setAttribute("stroke-width", "5");
-  if (el.tagName.toLowerCase() === "path") {
-    el.setAttribute("fill", fill);
-  }
-}
-
 function findSvgNode(host: Element, rawId: string | null) {
   if (!rawId) return null;
-  const exact = host.querySelector<SVGElement>(`[id="${rawId}"]`);
-  if (exact) return exact;
-  const escaped = rawId.replace(/"/g, '\\"');
-  return host.querySelector<SVGElement>(`[id^="${escaped}_"]`);
+  const all = Array.from(host.querySelectorAll<SVGElement>("[id]"));
+  for (const el of all) {
+    if (el.id === rawId) return el;
+  }
+  for (const el of all) {
+    if (el.id.startsWith(`${rawId}_`)) return el;
+  }
+  return null;
+}
+
+function addMarkerLayer(rootSvg: SVGSVGElement) {
+  rootSvg.querySelectorAll(".route-marker-layer").forEach((el) => el.remove());
+  const layer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  layer.setAttribute("class", "route-marker-layer");
+  rootSvg.appendChild(layer);
+  return layer;
+}
+
+function addMarker(layer: SVGGElement, el: SVGGraphicsElement | null, fill: string, radius: number) {
+  if (!el) return;
+  const box = el.getBBox();
+  const cx = box.x + box.width / 2;
+  const cy = box.y + box.height / 2;
+  const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+  circle.setAttribute("cx", `${cx}`);
+  circle.setAttribute("cy", `${cy}`);
+  circle.setAttribute("r", `${radius}`);
+  circle.setAttribute("fill", fill);
+  circle.setAttribute("stroke", "white");
+  circle.setAttribute("stroke-width", "3");
+  layer.appendChild(circle);
 }
 
 export default function ShutokoMap({
@@ -209,10 +214,11 @@ export default function ShutokoMap({
       .catch(() => setSvgMarkup(""));
   }, []);
 
-  const activeRouteIds = useMemo(() => {
+  const activeDisplayFamilies = useMemo(() => {
     const ids = new Set<string>();
     for (const family of highlightedRoutes) {
-      for (const id of ROUTE_IDS_BY_FAMILY[family] || []) ids.add(id);
+      const display = displayFamilyOfTail(family) || family;
+      ids.add(display);
     }
     return ids;
   }, [highlightedRoutes]);
@@ -222,17 +228,16 @@ export default function ShutokoMap({
     if (!host) return;
 
     const rootSvg = host.querySelector<SVGSVGElement>("svg");
-    if (rootSvg) {
-      rootSvg.style.width = "100%";
-      rootSvg.style.height = "auto";
-      rootSvg.style.display = "block";
-    }
+    if (!rootSvg) return;
+    rootSvg.style.width = "100%";
+    rootSvg.style.height = "auto";
+    rootSvg.style.display = "block";
 
     const routeGroups = Array.from(host.querySelectorAll<SVGGElement>('g[id^="route_"], g[id="Route_S2"], g[id="Route_S5"]'));
     host.querySelectorAll(".route-overlay-layer").forEach((el) => el.remove());
+    const markerLayer = addMarkerLayer(rootSvg);
 
     for (const group of routeGroups) {
-      const isActive = activeRouteIds.size === 0 || activeRouteIds.has(group.id);
       group.style.opacity = "1";
       const path = group.querySelector<SVGPathElement>("path");
       if (path) {
@@ -241,112 +246,85 @@ export default function ShutokoMap({
       }
     }
 
-    if (rootSvg) {
-      const overlayLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      overlayLayer.setAttribute("class", "route-overlay-layer");
-      rootSvg.appendChild(overlayLayer);
+    const overlayLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    overlayLayer.setAttribute("class", "route-overlay-layer");
+    rootSvg.appendChild(overlayLayer);
 
-      const routeRuns: Array<{ family: string; pointIds: string[] }> = [];
-      let currentRun: { family: string; pointIds: string[] } | null = null;
-      for (const node of highlightedPath) {
-        const family = routeFamilyOfTail(routeTailOfNode(node));
-        const pointId = svgNodeIdFromPathNode(node);
-        if (!family) continue;
-        if (!currentRun || currentRun.family !== family) {
-          if (currentRun) routeRuns.push(currentRun);
-          currentRun = { family, pointIds: [] };
-        }
-        if (pointId) currentRun.pointIds.push(pointId);
+    const routeRuns: Array<{ family: string; pointIds: string[] }> = [];
+    let currentRun: { family: string; pointIds: string[] } | null = null;
+    for (const node of highlightedPath) {
+      const family = displayFamilyOfTail(routeTailOfNode(node));
+      const pointId = svgNodeIdFromPathNode(node);
+      if (!family) continue;
+      if (!currentRun || currentRun.family !== family) {
+        if (currentRun) routeRuns.push(currentRun);
+        currentRun = { family, pointIds: [] };
       }
-      if (currentRun) routeRuns.push(currentRun);
+      if (pointId) currentRun.pointIds.push(pointId);
+    }
+    if (currentRun) routeRuns.push(currentRun);
 
-      const segmentedFamilies = new Set<string>();
-      const appendOverlay = (routePath: SVGPathElement, total: number, start: number, end: number) => {
-        const segmentLength = Math.max(end - start, 1);
-        const overlay = routePath.cloneNode(true) as SVGPathElement;
-        overlay.removeAttribute("filter");
-        overlay.setAttribute("fill", "none");
-        overlay.setAttribute("stroke", "#2FFF00");
-        overlay.setAttribute("stroke-width", "14");
-        overlay.setAttribute("stroke-linecap", "round");
-        overlay.setAttribute("stroke-linejoin", "round");
-        overlay.setAttribute("opacity", "0.98");
-        overlay.style.filter = "drop-shadow(0 0 8px rgba(47,255,0,0.55))";
-        overlay.style.strokeDasharray = `${segmentLength} ${total}`;
-        overlay.style.strokeDashoffset = `${-start}`;
-        overlayLayer.appendChild(overlay);
-      };
+    const appendOverlay = (routePath: SVGPathElement, total: number, start: number, end: number) => {
+      const segmentLength = Math.max(end - start, 1);
+      const overlay = routePath.cloneNode(true) as SVGPathElement;
+      overlay.removeAttribute("filter");
+      overlay.setAttribute("fill", "none");
+      overlay.setAttribute("stroke", "#2FFF00");
+      overlay.setAttribute("stroke-width", "14");
+      overlay.setAttribute("stroke-linecap", "round");
+      overlay.setAttribute("stroke-linejoin", "round");
+      overlay.setAttribute("opacity", "0.98");
+      overlay.style.filter = "drop-shadow(0 0 8px rgba(47,255,0,0.55))";
+      overlay.style.strokeDasharray = `${segmentLength} ${total}`;
+      overlay.style.strokeDashoffset = `${-start}`;
+      overlayLayer.appendChild(overlay);
+    };
 
-      for (const run of routeRuns) {
-        const routeId = ROUTE_IDS_BY_FAMILY[run.family]?.[0];
-        if (!routeId) continue;
-        const routePath = host.querySelector<SVGPathElement>(`#${routeId} path`);
-        if (!routePath) continue;
+    for (const run of routeRuns) {
+      const routeIds = DISPLAY_ROUTE_IDS_BY_FAMILY[run.family] || [];
+      if (routeIds.length === 0) continue;
+      const isRing = run.family === "C1" || run.family === "C2";
 
-        const lengths: Array<{ length: number; total: number }> = [];
-        for (const pointId of run.pointIds) {
-          const el = findSvgNode(host, pointId) as SVGGraphicsElement | null;
-          if (!el) continue;
-          const box = el.getBBox();
-          const pos = nearestLengthOnPath(routePath, box.x + box.width / 2, box.y + box.height / 2);
-          if (pos.dist > 30) continue;
-          lengths.push({ length: pos.length, total: pos.total });
-        }
-        if (lengths.length < 2) continue;
+      for (let i = 0; i + 1 < run.pointIds.length; i++) {
+        const fromEl = findSvgNode(host, run.pointIds[i]) as SVGGraphicsElement | null;
+        const toEl = findSvgNode(host, run.pointIds[i + 1]) as SVGGraphicsElement | null;
+        if (!fromEl || !toEl) continue;
 
-        const total = lengths[0].total;
-        const isRing = run.family === "C1" || run.family === "C2";
-        for (let i = 0; i + 1 < lengths.length; i++) {
-          const a = lengths[i].length;
-          const b = lengths[i + 1].length;
-          const directStart = Math.min(a, b);
-          const directEnd = Math.max(a, b);
-          const directLen = directEnd - directStart;
-
-          if (isRing && directLen > total / 2) {
-            appendOverlay(routePath, total, 0, directStart);
-            appendOverlay(routePath, total, directEnd, total);
-          } else {
-            appendOverlay(routePath, total, directStart, directEnd);
+        let best: { path: SVGPathElement; a: number; b: number; total: number; score: number } | null = null;
+        for (const routeId of routeIds) {
+          const routePath = host.querySelector<SVGPathElement>(`#${routeId} path`);
+          if (!routePath) continue;
+          const fromBox = fromEl.getBBox();
+          const toBox = toEl.getBBox();
+          const fromPos = nearestLengthOnPath(routePath, fromBox.x + fromBox.width / 2, fromBox.y + fromBox.height / 2);
+          const toPos = nearestLengthOnPath(routePath, toBox.x + toBox.width / 2, toBox.y + toBox.height / 2);
+          if (fromPos.dist > 40 || toPos.dist > 40) continue;
+          const score = fromPos.dist + toPos.dist;
+          if (!best || score < best.score) {
+            best = { path: routePath, a: fromPos.length, b: toPos.length, total: fromPos.total, score };
           }
         }
-        segmentedFamilies.add(run.family);
-      }
+        if (!best) continue;
 
-      for (const group of routeGroups) {
-        const family = group.id.replace(/^route_/, "");
-        if (segmentedFamilies.has(family)) {
-          group.style.opacity = "1";
+        const directStart = Math.min(best.a, best.b);
+        const directEnd = Math.max(best.a, best.b);
+        const directLen = directEnd - directStart;
+        if (isRing && directLen > best.total / 2) {
+          appendOverlay(best.path, best.total, 0, directStart);
+          appendOverlay(best.path, best.total, directEnd, best.total);
+        } else {
+          appendOverlay(best.path, best.total, directStart, directEnd);
         }
       }
     }
 
-    const nodeEls = Array.from(host.querySelectorAll<SVGElement>("circle, path[id^='pa_']"));
-    for (const el of nodeEls) {
-      if (!el.id) continue;
-      if (el.id.startsWith("pa_")) {
-        el.setAttribute("opacity", "0.88");
-      } else {
-        el.setAttribute("opacity", "0.85");
-      }
-      if (el.tagName.toLowerCase() === "circle") {
-        el.setAttribute("fill", "#4062C5");
-        el.setAttribute("stroke", "white");
-        el.setAttribute("stroke-width", "2");
-      }
-    }
-
-    if (entryName) {
-      setNodeHighlight(findSvgNode(host, entryName), "entry");
-    }
-    if (exitName) {
-      setNodeHighlight(findSvgNode(host, exitName), "exit");
-    }
+    addMarker(markerLayer, findSvgNode(host, entryName) as SVGGraphicsElement | null, "#2563eb", 7);
+    addMarker(markerLayer, findSvgNode(host, exitName || null) as SVGGraphicsElement | null, "#dc2626", 7);
     for (const label of activeSpotLabels) {
       const id = PA_ID_BY_LABEL[label];
-      if (id) setNodeHighlight(findSvgNode(host, id), "spot");
+      if (id) addMarker(markerLayer, findSvgNode(host, id) as SVGGraphicsElement | null, "#059669", 5);
     }
-  }, [activeRouteIds, activeSpotLabels, entryName, exitName, highlightedPath, svgMarkup]);
+  }, [activeDisplayFamilies, activeSpotLabels, entryName, exitName, highlightedPath, svgMarkup]);
 
   return (
     <div
