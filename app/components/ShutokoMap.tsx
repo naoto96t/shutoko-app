@@ -38,8 +38,75 @@ const NODE_ID_ALIASES: Record<string, string> = {
   HonmokuJCT: "HonmakiJCT",
 };
 
+const DISPLAY_ROUTE_IDS_BY_FAMILY: Record<string, string[]> = {
+  C1: ["route_C1"],
+  C2: ["route_C2"],
+  BAY: ["route_BAY"],
+  BAYX: ["route_BAYX"],
+  R1H: ["route_R1H"],
+  R1U: ["route_R1U"],
+  R2: ["route_R2", "route_R2_Togoshi"],
+  R3: ["route_R3A", "route_R3B"],
+  R4: ["route_R4A", "route_R4B"],
+  R5: ["route_R5A", "route_R5B"],
+  R6A: ["route_R6A"],
+  R6B: ["route_R6B"],
+  R7: ["route_R7A", "route_R7B"],
+  R9: ["route_R9"],
+  R10: ["route_R10"],
+  R11: ["route_R11"],
+  K1: ["route_K1"],
+  K2: ["route_K2"],
+  K3: ["route_K3"],
+  K5: ["route_K5"],
+  K6: ["route_K6"],
+  K7: ["route_K7"],
+  S1: ["route_S1"],
+  S2: ["Route_S2", "Route_S2_2"],
+  S5: ["Route_S5", "Route_S5_2"],
+};
+
 function publicAsset(path: string) {
   return `${BASE_PATH}${path}`;
+}
+
+function routeTailOfNode(node: string) {
+  if (node.startsWith("ICIN:") || node.startsWith("ICOUT:") || node.startsWith("IC:")) {
+    const parts = node.split(":");
+    return parts[parts.length - 1] || "";
+  }
+  const idx = node.indexOf(":");
+  return idx >= 0 ? node.slice(idx + 1) : node;
+}
+
+function displayFamilyOfTail(tail: string) {
+  if (!tail) return null;
+  if (tail.startsWith("C1_")) return "C1";
+  if (tail.startsWith("C2_")) return "C2";
+  if (tail.startsWith("BAYX_")) return "BAYX";
+  if (tail.startsWith("BAY_")) return "BAY";
+  if (tail.startsWith("R1H_")) return "R1H";
+  if (tail.startsWith("R1U_")) return "R1U";
+  if (tail.startsWith("R2")) return "R2";
+  if (tail.startsWith("R3A_") || tail.startsWith("R3B_")) return "R3";
+  if (tail.startsWith("R4A_") || tail.startsWith("R4B_")) return "R4";
+  if (tail.startsWith("R5A_") || tail.startsWith("R5B_")) return "R5";
+  if (tail.startsWith("R6A_") || tail.startsWith("R6_")) return "R6A";
+  if (tail.startsWith("R6B_") || tail.startsWith("R6_MISATO_")) return "R6B";
+  if (tail.startsWith("R7A_") || tail.startsWith("R7B_")) return "R7";
+  if (tail.startsWith("R9_")) return "R9";
+  if (tail.startsWith("R10_")) return "R10";
+  if (tail.startsWith("R11_")) return "R11";
+  if (tail.startsWith("K1_")) return "K1";
+  if (tail.startsWith("K2_")) return "K2";
+  if (tail.startsWith("K3_")) return "K3";
+  if (tail.startsWith("K5_")) return "K5";
+  if (tail.startsWith("K6_")) return "K6";
+  if (tail.startsWith("K7_")) return "K7";
+  if (tail.startsWith("S1_")) return "S1";
+  if (tail.startsWith("S2_")) return "S2";
+  if (tail.startsWith("S5_")) return "S5";
+  return null;
 }
 
 function svgNodeIdFromPathNode(node: string) {
@@ -92,6 +159,54 @@ function addMarker(layer: SVGGElement, point: { x: number; y: number } | null, f
   layer.appendChild(circle);
 }
 
+function nearestLengthOnPath(path: SVGPathElement, x: number, y: number) {
+  const total = path.getTotalLength();
+  const samples = Math.max(240, Math.ceil(total / 2));
+  let bestLength = 0;
+  let bestDist = Number.POSITIVE_INFINITY;
+
+  for (let i = 0; i <= samples; i++) {
+    const length = (total * i) / samples;
+    const pt = path.getPointAtLength(length);
+    const dist = Math.hypot(pt.x - x, pt.y - y);
+    if (dist < bestDist) {
+      bestDist = dist;
+      bestLength = length;
+    }
+  }
+
+  let step = Math.max(total / samples, 1);
+  while (step > 0.5) {
+    for (const length of [Math.max(0, bestLength - step), bestLength, Math.min(total, bestLength + step)]) {
+      const pt = path.getPointAtLength(length);
+      const dist = Math.hypot(pt.x - x, pt.y - y);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestLength = length;
+      }
+    }
+    step *= 0.5;
+  }
+
+  return { length: bestLength, total, dist: bestDist };
+}
+
+function appendOverlay(overlayLayer: SVGGElement, routePath: SVGPathElement, total: number, start: number, end: number) {
+  const segmentLength = Math.max(end - start, 1);
+  const overlay = routePath.cloneNode(true) as SVGPathElement;
+  overlay.removeAttribute("filter");
+  overlay.setAttribute("fill", "none");
+  overlay.setAttribute("stroke", "#2FFF00");
+  overlay.setAttribute("stroke-width", "14");
+  overlay.setAttribute("stroke-linecap", "round");
+  overlay.setAttribute("stroke-linejoin", "round");
+  overlay.setAttribute("opacity", "0.98");
+  overlay.style.filter = "drop-shadow(0 0 8px rgba(47,255,0,0.55))";
+  overlay.style.strokeDasharray = `${segmentLength} ${total}`;
+  overlay.style.strokeDashoffset = `${-start}`;
+  overlayLayer.appendChild(overlay);
+}
+
 export default function ShutokoMap({
   entryName,
   exitName,
@@ -111,14 +226,36 @@ export default function ShutokoMap({
       .catch(() => setSvgMarkup(""));
   }, []);
 
-  const routePointIds = useMemo(() => {
-    const out: string[] = [];
+  const routeRuns = useMemo(() => {
+    const runs: Array<{ family: string; pointIds: string[] }> = [];
+    let current: { family: string; pointIds: string[] } | null = null;
+
     for (const node of highlightedPath) {
-      const id = svgNodeIdFromPathNode(node);
-      if (id) out.push(id);
+      const family = displayFamilyOfTail(routeTailOfNode(node));
+      const pointId = svgNodeIdFromPathNode(node);
+      if (!family) continue;
+      if (!current || current.family !== family) {
+        if (current) runs.push(current);
+        current = { family, pointIds: [] };
+      }
+      if (pointId) current.pointIds.push(pointId);
     }
-    return out;
-  }, [highlightedPath]);
+    if (current) runs.push(current);
+
+    if (runs.length > 0 && entryName) runs[0].pointIds.unshift(entryName);
+    if (runs.length > 0 && exitName) runs[runs.length - 1].pointIds.push(exitName);
+
+    for (const run of runs) {
+      const deduped: string[] = [];
+      for (const id of run.pointIds) {
+        if (!id) continue;
+        if (deduped[deduped.length - 1] !== id) deduped.push(id);
+      }
+      run.pointIds = deduped;
+    }
+
+    return runs;
+  }, [entryName, exitName, highlightedPath]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -133,37 +270,70 @@ export default function ShutokoMap({
     const overlayLayer = addLayer(rootSvg, "route-overlay-layer");
     const markerLayer = addLayer(rootSvg, "route-marker-layer");
 
-    const points: Array<{ x: number; y: number }> = [];
-    for (const id of routePointIds) {
-      const point = centerOf(findSvgNode(host, id) as SVGGraphicsElement | null);
-      if (!point) continue;
-      const prev = points[points.length - 1];
-      if (prev && Math.hypot(prev.x - point.x, prev.y - point.y) < 1) continue;
-      points.push(point);
+    let firstProjectedPoint: { x: number; y: number } | null = null;
+    let lastProjectedPoint: { x: number; y: number } | null = null;
+
+    for (const run of routeRuns) {
+      const routeIds = DISPLAY_ROUTE_IDS_BY_FAMILY[run.family] || [];
+      const routePaths = routeIds
+        .map((id) => host.querySelector<SVGPathElement>(`#${id} path`))
+        .filter((p): p is SVGPathElement => !!p);
+      if (routePaths.length === 0 || run.pointIds.length < 2) continue;
+
+      const nodePoints = run.pointIds
+        .map((id) => ({ id, point: centerOf(findSvgNode(host, id) as SVGGraphicsElement | null) }))
+        .filter((x): x is { id: string; point: { x: number; y: number } } => !!x.point);
+      if (nodePoints.length < 2) continue;
+
+      for (let i = 0; i + 1 < nodePoints.length; i++) {
+        const a = nodePoints[i].point;
+        const b = nodePoints[i + 1].point;
+        let best:
+          | {
+              path: SVGPathElement;
+              aLen: number;
+              bLen: number;
+              total: number;
+              score: number;
+            }
+          | null = null;
+
+        for (const routePath of routePaths) {
+          const pa = nearestLengthOnPath(routePath, a.x, a.y);
+          const pb = nearestLengthOnPath(routePath, b.x, b.y);
+          const score = pa.dist + pb.dist;
+          if (!best || score < best.score) {
+            best = { path: routePath, aLen: pa.length, bLen: pb.length, total: pa.total, score };
+          }
+        }
+
+        if (!best) continue;
+        if (best.score > 160) continue;
+
+        const isRing = run.family === "C1" || run.family === "C2";
+        const start = Math.min(best.aLen, best.bLen);
+        const end = Math.max(best.aLen, best.bLen);
+        if (!firstProjectedPoint) firstProjectedPoint = a;
+        lastProjectedPoint = b;
+
+        if (isRing && end - start > best.total / 2) {
+          appendOverlay(overlayLayer, best.path, best.total, 0, start);
+          appendOverlay(overlayLayer, best.path, best.total, end, best.total);
+        } else {
+          appendOverlay(overlayLayer, best.path, best.total, start, end);
+        }
+      }
     }
 
-    if (points.length >= 2) {
-      const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-      polyline.setAttribute("points", points.map((p) => `${p.x},${p.y}`).join(" "));
-      polyline.setAttribute("fill", "none");
-      polyline.setAttribute("stroke", "#2FFF00");
-      polyline.setAttribute("stroke-width", "14");
-      polyline.setAttribute("stroke-linecap", "round");
-      polyline.setAttribute("stroke-linejoin", "round");
-      polyline.setAttribute("opacity", "0.98");
-      polyline.style.filter = "drop-shadow(0 0 8px rgba(47,255,0,0.55))";
-      overlayLayer.appendChild(polyline);
-    }
-
-    const entryPoint = centerOf(findSvgNode(host, entryName) as SVGGraphicsElement | null) || points[0] || null;
-    const exitPoint = centerOf(findSvgNode(host, exitName || null) as SVGGraphicsElement | null) || points[points.length - 1] || null;
+    const entryPoint = centerOf(findSvgNode(host, entryName) as SVGGraphicsElement | null) || firstProjectedPoint || null;
+    const exitPoint = centerOf(findSvgNode(host, exitName || null) as SVGGraphicsElement | null) || lastProjectedPoint || null;
     addMarker(markerLayer, entryPoint, "#2563eb", 7);
     addMarker(markerLayer, exitPoint, "#dc2626", 7);
     for (const label of activeSpotLabels) {
       const id = PA_ID_BY_LABEL[label];
       if (id) addMarker(markerLayer, centerOf(findSvgNode(host, id) as SVGGraphicsElement | null), "#059669", 5);
     }
-  }, [activeSpotLabels, entryName, exitName, routePointIds, svgMarkup]);
+  }, [activeSpotLabels, entryName, exitName, routeRuns, svgMarkup]);
 
   return (
     <div
