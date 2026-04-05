@@ -233,7 +233,7 @@ export default function ShutokoMap({
 
     for (const group of routeGroups) {
       const isActive = activeRouteIds.size === 0 || activeRouteIds.has(group.id);
-      group.style.opacity = isActive ? "0.42" : "0.14";
+      group.style.opacity = isActive ? "0.12" : "0.08";
       const path = group.querySelector<SVGPathElement>("path");
       if (path) {
         path.style.strokeWidth = "10";
@@ -246,56 +246,77 @@ export default function ShutokoMap({
       overlayLayer.setAttribute("class", "route-overlay-layer");
       rootSvg.appendChild(overlayLayer);
 
-      const usablePathPoints = highlightedPath
-        .map((node) => {
-          const family = routeFamilyOfTail(routeTailOfNode(node));
-          const pointId = svgNodeIdFromPathNode(node);
-          return family && pointId ? { family, pointId } : null;
-        })
-        .filter((x): x is { family: string; pointId: string } => !!x);
+      const routeRuns: Array<{ family: string; pointIds: string[] }> = [];
+      let currentRun: { family: string; pointIds: string[] } | null = null;
+      for (const node of highlightedPath) {
+        const family = routeFamilyOfTail(routeTailOfNode(node));
+        const pointId = svgNodeIdFromPathNode(node);
+        if (!family) continue;
+        if (!currentRun || currentRun.family !== family) {
+          if (currentRun) routeRuns.push(currentRun);
+          currentRun = { family, pointIds: [] };
+        }
+        if (pointId) currentRun.pointIds.push(pointId);
+      }
+      if (currentRun) routeRuns.push(currentRun);
 
       const segmentedFamilies = new Set<string>();
-      for (let i = 0; i + 1 < usablePathPoints.length; i++) {
-        const from = usablePathPoints[i];
-        const to = usablePathPoints[i + 1];
-        if (from.family !== to.family) continue;
-
-        const routeId = ROUTE_IDS_BY_FAMILY[from.family]?.[0];
-        if (!routeId) continue;
-
-        const routePath = host.querySelector<SVGPathElement>(`#${routeId} path`);
-        const fromEl = findSvgNode(host, from.pointId) as SVGGraphicsElement | null;
-        const toEl = findSvgNode(host, to.pointId) as SVGGraphicsElement | null;
-        if (!routePath || !fromEl || !toEl) continue;
-
-        const fromBox = fromEl.getBBox();
-        const toBox = toEl.getBBox();
-        const fromPos = nearestLengthOnPath(routePath, fromBox.x + fromBox.width / 2, fromBox.y + fromBox.height / 2);
-        const toPos = nearestLengthOnPath(routePath, toBox.x + toBox.width / 2, toBox.y + toBox.height / 2);
-        if (fromPos.dist > 28 || toPos.dist > 28) continue;
-
-        const start = Math.min(fromPos.length, toPos.length);
-        const end = Math.max(fromPos.length, toPos.length);
+      const appendOverlay = (routePath: SVGPathElement, total: number, start: number, end: number) => {
         const segmentLength = Math.max(end - start, 1);
         const overlay = routePath.cloneNode(true) as SVGPathElement;
         overlay.removeAttribute("filter");
         overlay.setAttribute("fill", "none");
         overlay.setAttribute("stroke", "#84cc16");
-        overlay.setAttribute("stroke-width", "14");
+        overlay.setAttribute("stroke-width", "16");
         overlay.setAttribute("stroke-linecap", "round");
         overlay.setAttribute("stroke-linejoin", "round");
-        overlay.setAttribute("opacity", "0.95");
-        overlay.style.filter = "drop-shadow(0 0 8px rgba(132,204,22,0.45))";
-        overlay.style.strokeDasharray = `${segmentLength} ${fromPos.total}`;
+        overlay.setAttribute("opacity", "0.98");
+        overlay.style.filter = "drop-shadow(0 0 8px rgba(132,204,22,0.55))";
+        overlay.style.strokeDasharray = `${segmentLength} ${total}`;
         overlay.style.strokeDashoffset = `${-start}`;
         overlayLayer.appendChild(overlay);
-        segmentedFamilies.add(from.family);
+      };
+
+      for (const run of routeRuns) {
+        const routeId = ROUTE_IDS_BY_FAMILY[run.family]?.[0];
+        if (!routeId) continue;
+        const routePath = host.querySelector<SVGPathElement>(`#${routeId} path`);
+        if (!routePath) continue;
+
+        const lengths: Array<{ length: number; total: number }> = [];
+        for (const pointId of run.pointIds) {
+          const el = findSvgNode(host, pointId) as SVGGraphicsElement | null;
+          if (!el) continue;
+          const box = el.getBBox();
+          const pos = nearestLengthOnPath(routePath, box.x + box.width / 2, box.y + box.height / 2);
+          if (pos.dist > 30) continue;
+          lengths.push({ length: pos.length, total: pos.total });
+        }
+        if (lengths.length < 2) continue;
+
+        const total = lengths[0].total;
+        const isRing = run.family === "C1" || run.family === "C2";
+        for (let i = 0; i + 1 < lengths.length; i++) {
+          const a = lengths[i].length;
+          const b = lengths[i + 1].length;
+          const directStart = Math.min(a, b);
+          const directEnd = Math.max(a, b);
+          const directLen = directEnd - directStart;
+
+          if (isRing && directLen > total / 2) {
+            appendOverlay(routePath, total, 0, directStart);
+            appendOverlay(routePath, total, directEnd, total);
+          } else {
+            appendOverlay(routePath, total, directStart, directEnd);
+          }
+        }
+        segmentedFamilies.add(run.family);
       }
 
       for (const group of routeGroups) {
         const family = group.id.replace(/^route_/, "");
         if (segmentedFamilies.has(family)) {
-          group.style.opacity = "0.22";
+          group.style.opacity = "0.06";
         }
       }
     }
