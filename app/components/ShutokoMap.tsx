@@ -38,6 +38,15 @@ const NODE_ID_ALIASES: Record<string, string> = {
   HonmokuJCT: "HonmakiJCT",
 };
 
+function mojibakeId(s: string) {
+  // Some SVG ids were exported with UTF-8 bytes interpreted as Latin-1.
+  return Array.from(new TextEncoder().encode(s), (b) => String.fromCharCode(b)).join("");
+}
+
+function uniq<T>(arr: T[]) {
+  return Array.from(new Set(arr));
+}
+
 const DISPLAY_ROUTE_IDS_BY_FAMILY: Record<string, string[]> = {
   C1: ["route_C1"],
   C2: ["route_C2"],
@@ -124,11 +133,18 @@ function svgNodeIdFromPathNode(node: string) {
 function findSvgNode(host: Element, rawId: string | null) {
   if (!rawId) return null;
   const all = Array.from(host.querySelectorAll<SVGElement>("[id]"));
-  for (const el of all) {
-    if (el.id === rawId) return el;
+  const alias = NODE_ID_ALIASES[rawId] || rawId;
+  const candidates = uniq([rawId, alias, mojibakeId(rawId), mojibakeId(alias)]);
+
+  for (const candidate of candidates) {
+    for (const el of all) {
+      if (el.id === candidate) return el;
+    }
   }
-  for (const el of all) {
-    if (el.id.startsWith(`${rawId}_`)) return el;
+  for (const candidate of candidates) {
+    for (const el of all) {
+      if (el.id.startsWith(`${candidate}_`)) return el;
+    }
   }
   return null;
 }
