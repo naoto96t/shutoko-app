@@ -21,6 +21,7 @@ type TurnRuleSet = Set<string>;
 type SeqPosMap = Map<string, number>;
 type SeqJctMap = Map<string, Set<string>>;
 type ExitAllowMap = Map<string, Set<string>>;
+type IcMasterRow = { is_full?: boolean };
 const EMPTY_ENTRIES: Record<string, EntryBlock> = {};
 
 const LABEL: Record<string, string> = {
@@ -534,6 +535,7 @@ export default function Page() {
   const [turnRules, setTurnRules] = useState<TurnRuleSet | null>(null);
   const [seqInfo, setSeqInfo] = useState<{ pos: SeqPosMap; jcts: SeqJctMap } | null>(null);
   const [exitAllow, setExitAllow] = useState<ExitAllowMap>(new Map());
+  const [icMaster, setIcMaster] = useState<Record<string, IcMasterRow>>({});
 
   const [q, setQ] = useState("");
   const [entryName, setEntryName] = useState<string | null>(null);
@@ -574,20 +576,39 @@ export default function Page() {
       .then((r) => r.text())
       .then((csv) => setExitAllow(parseIcExitAllow(csv)))
       .catch(() => setExitAllow(new Map()));
+    fetch(publicAsset("/ic_master.json"))
+      .then((r) => r.json())
+      .then(setIcMaster)
+      .catch(() => setIcMaster({}));
   }, []);
+
+  const fullEntries = useMemo(() => {
+    const names = entries.filter((name) => icMaster[name]?.is_full);
+    return names.length > 0 ? names : entries;
+  }, [entries, icMaster]);
 
   const suggestions = useMemo(() => {
     const qq = q.trim();
-    if (!qq) return entries.slice(0, 40); // ← 空でも先頭だけ出す
+    if (!qq) return fullEntries.slice(0, 40);
     const lower = qq.toLowerCase();
-    return entries
+    return fullEntries
       .filter((x) => x.toLowerCase().includes(lower))
       .slice(0, 40);
-  }, [q, entries]);
+  }, [q, fullEntries]);
+
+  const resetHome = () => {
+    setQ("");
+    setEntryName(null);
+    const o: Record<string, boolean> = {};
+    for (const s of SPOTS) o[s.key] = false;
+    setSpotOn(o);
+    setEntryFlow("auto");
+    setSelectedRowIndex(0);
+  };
 
   const onPickEntry = (name: string) => {
     setEntryName(name);
-    setQ(name);      // ← 入力欄に残す（これが一番自然）
+    setQ(name);
     setEntryFlow("auto");
     setSelectedRowIndex(0);
   };
@@ -791,23 +812,16 @@ export default function Page() {
         : [];
   const mapRouteFamilies = highlightedRouteFamilies(selectedMapPath);
   const activeSpotLabels = useMemo(() => activeSpots.map((s) => s.label), [activeSpots]);
+  const mapTitle = entryName
+    ? selectedRow
+      ? `${entryName} → ${selectedRow.exit}`
+      : entryName
+    : "首都高 周回ドライブプランナー";
 
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-        <h1 style={{ fontSize: 22, margin: 0 }}>首都高 周回ドライブプランナー（MVP）</h1>
-        <button
-          onClick={() => {
-            setQ("");
-            setEntryName(null);
-            const o: Record<string, boolean> = {};
-            for (const s of SPOTS) o[s.key] = false;
-            setSpotOn(o);
-          }}
-          style={{ padding: "8px 12px", border: "1px solid #ccc", borderRadius: 10, background: "white" }}
-        >
-          クリア
-        </button>
+      <div>
+        <h1 style={{ fontSize: 22, margin: 0 }}>首都高 周回ドライブプランナー</h1>
       </div>
 
       <div style={{ marginTop: 12 }}>
@@ -819,29 +833,12 @@ export default function Page() {
         />
       </div>
 
-      <div style={{ marginTop: 10, padding: 12, border: "1px solid #ddd", borderRadius: 12 }}>
-        <div style={{ fontSize: 12, color: "#666", marginBottom: 8 }}>経由したいスポット（出口は固定、周回ルートを作る）</div>
-        <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-          {SPOTS.map((s) => (
-            <label key={s.key} style={{ display: "flex", gap: 6, alignItems: "center" }}>
-              <input
-                type="checkbox"
-                checked={!!spotOn[s.key]}
-                onChange={(e) => setSpotOn((p) => ({ ...p, [s.key]: e.target.checked }))}
-              />
-              {s.label}
-            </label>
-          ))}
-        </div>
-      </div>
-
       {!faresData && <div style={{ marginTop: 16, color: "#666" }}>plans.json を読み込めていません。</div>}
       {!graph && <div style={{ marginTop: 8, color: "#666" }}>graph.json を読み込めていません。</div>}
 
       {faresData && !entryName && (
         <div style={{ marginTop: 12 }}>
-          <div style={{ color: "#666", fontSize: 12 }}>{faresData.meta?.note ?? ""}</div>
-          <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+          <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10 }}>
             {suggestions.map((ic) => (
               <button
                 key={ic}
@@ -863,46 +860,59 @@ export default function Page() {
 
       {faresData && entryName && entry && (
         <div style={{ marginTop: 14 }}>
-          <button
-            onClick={() => setEntryName(null)}
-            style={{ padding: "6px 10px", border: "1px solid #ccc", borderRadius: 10, background: "white" }}
-          >
-            ← 戻る
-          </button>
-
-          <div style={{ marginTop: 10, padding: 14, border: "1px solid #ddd", borderRadius: 14 }}>
-            <div style={{ fontWeight: 800, fontSize: 18 }}>{entryName}</div>
-            <div style={{ fontSize: 12, color: "#666", marginTop: 4 }}>
-              start_nodes: {entry.start_nodes.map(prettyNode).join(", ")}
-            </div>
-            {entryHasUpDown ? (
-              <div style={{ marginTop: 8, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-                <span style={{ fontSize: 12, color: "#666" }}>入口方向:</span>
-                <label style={{ display: "flex", gap: 4, alignItems: "center", fontSize: 12 }}>
-                  <input type="radio" checked={entryFlow === "auto"} onChange={() => setEntryFlow("auto")} />
-                  自動
-                </label>
-                <label style={{ display: "flex", gap: 4, alignItems: "center", fontSize: 12 }}>
-                  <input type="radio" checked={entryFlow === "up"} onChange={() => setEntryFlow("up")} />
-                  上り
-                </label>
-                <label style={{ display: "flex", gap: 4, alignItems: "center", fontSize: 12 }}>
-                  <input type="radio" checked={entryFlow === "down"} onChange={() => setEntryFlow("down")} />
-                  下り
-                </label>
-              </div>
-            ) : null}
-            <div className="text-xs text-gray-500">exits: {entry.exits?.length ?? 0}</div>
-
-          </div>
-
           <ShutokoMap
-            title={selectedRow ? `Map Preview: ${entryName} → ${selectedRow.exit}` : "Map Preview"}
+            title={mapTitle}
             entryName={entryName}
             exitName={selectedRow?.exit}
             activeSpotLabels={activeSpotLabels}
             highlightedRoutes={mapRouteFamilies}
             highlightedPath={selectedMapPath}
+            headerAction={
+              <button
+                onClick={resetHome}
+                style={{ padding: "8px 12px", border: "1px solid #d6d3d1", borderRadius: 12, background: "white" }}
+              >
+                ホームへ戻る
+              </button>
+            }
+            toolbar={
+              <div style={{ display: "grid", gap: 12 }}>
+                <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
+                  <div style={{ fontSize: 12, color: "#666", fontWeight: 700 }}>経由したいスポット</div>
+                  {SPOTS.map((s) => (
+                    <label key={s.key} style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 13 }}>
+                      <input
+                        type="checkbox"
+                        checked={!!spotOn[s.key]}
+                        onChange={(e) => setSpotOn((p) => ({ ...p, [s.key]: e.target.checked }))}
+                      />
+                      {s.label}
+                    </label>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center", fontSize: 12, color: "#666" }}>
+                  <span>入口: {entryName}</span>
+                  {entryHasUpDown ? (
+                    <>
+                      <span>入口方向:</span>
+                      <label style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                        <input type="radio" checked={entryFlow === "auto"} onChange={() => setEntryFlow("auto")} />
+                        自動
+                      </label>
+                      <label style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                        <input type="radio" checked={entryFlow === "up"} onChange={() => setEntryFlow("up")} />
+                        上り
+                      </label>
+                      <label style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                        <input type="radio" checked={entryFlow === "down"} onChange={() => setEntryFlow("down")} />
+                        下り
+                      </label>
+                    </>
+                  ) : null}
+                  <span>候補出口: {entry.exits?.length ?? 0}</span>
+                </div>
+              </div>
+            }
           />
 
           <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "1fr", gap: 10 }}>

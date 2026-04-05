@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
@@ -11,6 +11,8 @@ type ShutokoMapProps = {
   highlightedRoutes?: string[];
   highlightedPath?: string[];
   title?: string;
+  headerAction?: ReactNode;
+  toolbar?: ReactNode;
 };
 
 const PA_ID_BY_LABEL: Record<string, string> = {
@@ -186,6 +188,8 @@ export default function ShutokoMap({
   highlightedRoutes = [],
   highlightedPath = [],
   title = "Route Map",
+  headerAction,
+  toolbar,
 }: ShutokoMapProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [svgMarkup, setSvgMarkup] = useState<string>("");
@@ -238,9 +242,9 @@ export default function ShutokoMap({
         .map((node) => {
           const family = routeFamilyOfTail(routeTailOfNode(node));
           const pointId = svgNodeIdFromPathNode(node);
-          return family && pointId ? { family, pointId, raw: node } : null;
+          return family && pointId ? { family, pointId } : null;
         })
-        .filter((x): x is { family: string; pointId: string; raw: string } => !!x);
+        .filter((x): x is { family: string; pointId: string } => !!x);
 
       const segmentedFamilies = new Set<string>();
       for (let i = 0; i + 1 < usablePathPoints.length; i++) {
@@ -326,10 +330,24 @@ export default function ShutokoMap({
         overflow: "hidden",
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, marginBottom: 10 }}>
-        <div style={{ fontSize: 16, fontWeight: 800 }}>{title}</div>
-        <div style={{ fontSize: 12, color: "#6b7280" }}>SVG route map preview</div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 10 }}>
+        <div style={{ fontSize: 18, fontWeight: 800 }}>{title}</div>
+        {headerAction ? <div>{headerAction}</div> : null}
       </div>
+
+      {toolbar ? (
+        <div
+          style={{
+            marginBottom: 12,
+            padding: 12,
+            borderRadius: 14,
+            background: "rgba(255,255,255,0.78)",
+            border: "1px solid #e7e5e4",
+          }}
+        >
+          {toolbar}
+        </div>
+      ) : null}
 
       {svgMarkup ? (
         <div
@@ -343,10 +361,6 @@ export default function ShutokoMap({
       ) : (
         <div style={{ padding: 24, color: "#6b7280", fontSize: 13 }}>route SVG を読み込み中です。</div>
       )}
-
-      <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}>
-        今は path 上の最近点から区間ハイライトを作っています。点が入っている路線から順に精度が上がります。
-      </div>
     </div>
   );
 }
