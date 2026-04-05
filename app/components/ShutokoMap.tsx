@@ -233,7 +233,7 @@ export default function ShutokoMap({
 
     for (const group of routeGroups) {
       const isActive = activeRouteIds.size === 0 || activeRouteIds.has(group.id);
-      group.style.opacity = isActive ? "0.12" : "0.08";
+      group.style.opacity = isActive ? "1" : "0.18";
       const path = group.querySelector<SVGPathElement>("path");
       if (path) {
         path.style.strokeWidth = "10";
@@ -316,7 +316,7 @@ export default function ShutokoMap({
       for (const group of routeGroups) {
         const family = group.id.replace(/^route_/, "");
         if (segmentedFamilies.has(family)) {
-          group.style.opacity = "0.06";
+          group.style.opacity = "1";
         }
       }
     }

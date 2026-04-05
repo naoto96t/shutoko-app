@@ -558,13 +558,15 @@ export default function Page() {
       fetch(publicAsset("/allowed_turns_port.csv")).then((r) => r.text()),
       fetch(publicAsset("/connections_port.csv")).then((r) => r.text()),
       fetch(publicAsset("/special_switches_port.csv")).then((r) => r.text()),
+      fetch(publicAsset("/forbidden_turns.csv")).then((r) => r.text()),
       fetch(publicAsset("/route_sequence_v2.csv")).then((r) => r.text()),
     ])
-      .then(([allowedCsv, connCsv, specialCsv, seqCsv]) => {
+      .then(([allowedCsv, connCsv, specialCsv, forbiddenCsv, seqCsv]) => {
         const s = new Set<string>();
         for (const k of parseEdgeSetFromCsv(allowedCsv)) s.add(k);
         for (const k of parseEdgeSetFromCsv(connCsv)) s.add(k);
         for (const k of parseEdgeSetFromCsv(specialCsv)) s.add(k);
+        for (const k of parseEdgeSetFromCsv(forbiddenCsv)) s.delete(k);
         setTurnRules(s);
         setSeqInfo(parseRouteSequencePos(seqCsv));
       })
