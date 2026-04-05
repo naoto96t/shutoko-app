@@ -67,8 +67,8 @@ const ROUTE_IDS_BY_FAMILY: Record<string, string[]> = {
   K6: ["route_K6"],
   K7: ["route_K7"],
   S1: ["route_S1"],
-  S2: [],
-  S5: [],
+  S2: ["Route_S2"],
+  S5: ["Route_S5"],
 };
 
 function publicAsset(path: string) {
@@ -181,6 +181,14 @@ function setNodeHighlight(el: Element | null, tone: "entry" | "exit" | "spot") {
   }
 }
 
+function findSvgNode(host: Element, rawId: string | null) {
+  if (!rawId) return null;
+  const exact = host.querySelector<SVGElement>(`[id="${rawId}"]`);
+  if (exact) return exact;
+  const escaped = rawId.replace(/"/g, '\\"');
+  return host.querySelector<SVGElement>(`[id^="${escaped}_"]`);
+}
+
 export default function ShutokoMap({
   entryName,
   exitName,
@@ -195,7 +203,7 @@ export default function ShutokoMap({
   const [svgMarkup, setSvgMarkup] = useState<string>("");
 
   useEffect(() => {
-    fetch(publicAsset("/frame-2.svg"))
+    fetch(publicAsset("/shutoko.svg"))
       .then((r) => r.text())
       .then(setSvgMarkup)
       .catch(() => setSvgMarkup(""));
@@ -220,7 +228,7 @@ export default function ShutokoMap({
       rootSvg.style.display = "block";
     }
 
-    const routeGroups = Array.from(host.querySelectorAll<SVGGElement>('g[id^="route_"]'));
+    const routeGroups = Array.from(host.querySelectorAll<SVGGElement>('g[id^="route_"], g[id="Route_S2"], g[id="Route_S5"]'));
     host.querySelectorAll(".route-overlay-layer").forEach((el) => el.remove());
 
     for (const group of routeGroups) {
@@ -256,8 +264,8 @@ export default function ShutokoMap({
         if (!routeId) continue;
 
         const routePath = host.querySelector<SVGPathElement>(`#${routeId} path`);
-        const fromEl = host.querySelector<SVGGraphicsElement>(`[id="${from.pointId}"]`);
-        const toEl = host.querySelector<SVGGraphicsElement>(`[id="${to.pointId}"]`);
+        const fromEl = findSvgNode(host, from.pointId) as SVGGraphicsElement | null;
+        const toEl = findSvgNode(host, to.pointId) as SVGGraphicsElement | null;
         if (!routePath || !fromEl || !toEl) continue;
 
         const fromBox = fromEl.getBBox();
@@ -308,14 +316,14 @@ export default function ShutokoMap({
     }
 
     if (entryName) {
-      setNodeHighlight(host.querySelector<SVGElement>(`[id="${entryName}"]`), "entry");
+      setNodeHighlight(findSvgNode(host, entryName), "entry");
     }
     if (exitName) {
-      setNodeHighlight(host.querySelector<SVGElement>(`[id="${exitName}"]`), "exit");
+      setNodeHighlight(findSvgNode(host, exitName), "exit");
     }
     for (const label of activeSpotLabels) {
       const id = PA_ID_BY_LABEL[label];
-      if (id) setNodeHighlight(host.querySelector<SVGElement>(`[id="${id}"]`), "spot");
+      if (id) setNodeHighlight(findSvgNode(host, id), "spot");
     }
   }, [activeRouteIds, activeSpotLabels, entryName, exitName, highlightedPath, svgMarkup]);
 

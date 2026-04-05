@@ -833,21 +833,23 @@ export default function Page() {
         />
       </div>
 
-      <div style={{ marginTop: 10, padding: 12, border: "1px solid #ddd", borderRadius: 12, background: "white" }}>
-        <div style={{ fontSize: 12, color: "#666", marginBottom: 8, fontWeight: 700 }}>経由したいスポット</div>
-        <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-          {SPOTS.map((s) => (
-            <label key={s.key} style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 13 }}>
-              <input
-                type="checkbox"
-                checked={!!spotOn[s.key]}
-                onChange={(e) => setSpotOn((p) => ({ ...p, [s.key]: e.target.checked }))}
-              />
-              {s.label}
-            </label>
-          ))}
+      {!entryName ? (
+        <div style={{ marginTop: 10, padding: 12, border: "1px solid #ddd", borderRadius: 12, background: "white" }}>
+          <div style={{ fontSize: 12, color: "#666", marginBottom: 8, fontWeight: 700 }}>経由したいスポット</div>
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+            {SPOTS.map((s) => (
+              <label key={s.key} style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 13 }}>
+                <input
+                  type="checkbox"
+                  checked={!!spotOn[s.key]}
+                  onChange={(e) => setSpotOn((p) => ({ ...p, [s.key]: e.target.checked }))}
+                />
+                {s.label}
+              </label>
+            ))}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {!faresData && <div style={{ marginTop: 16, color: "#666" }}>plans.json を読み込めていません。</div>}
       {!graph && <div style={{ marginTop: 8, color: "#666" }}>graph.json を読み込めていません。</div>}
@@ -859,9 +861,16 @@ export default function Page() {
               <button
                 key={ic}
                 onClick={() => onPickEntry(ic)}
-                style={{ textAlign: "left", padding: 12, border: "1px solid #ddd", borderRadius: 12, background: "white" }}
+                style={{
+                  textAlign: "left",
+                  padding: 10,
+                  border: "1px solid #e7e5e4",
+                  borderRadius: 14,
+                  background: "linear-gradient(180deg, #ffffff 0%, #fafaf9 100%)",
+                  boxShadow: "0 4px 14px rgba(15,23,42,0.04)",
+                }}
               >
-                <div style={{ fontWeight: 700 }}>{ic}</div>
+                <div style={{ fontWeight: 800, fontSize: 15 }}>{ic}</div>
                 <div style={{ fontSize: 12, color: "#666", marginTop: 4 }}>
                   start: {fares[ic].start_nodes.map(prettyNode).join(", ")}
                 </div>
@@ -876,69 +885,80 @@ export default function Page() {
 
       {faresData && entryName && entry && (
         <div style={{ marginTop: 14 }}>
-          <ShutokoMap
-            title={mapTitle}
-            entryName={entryName}
-            exitName={selectedRow?.exit}
-            activeSpotLabels={activeSpotLabels}
-            highlightedRoutes={mapRouteFamilies}
-            highlightedPath={selectedMapPath}
-            headerAction={
-              <button
-                onClick={resetHome}
-                style={{ padding: "8px 12px", border: "1px solid #d6d3d1", borderRadius: 12, background: "white" }}
-              >
-                ホームへ戻る
-              </button>
-            }
-            toolbar={
-              <div style={{ display: "grid", gap: 12 }}>
-                <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
-                  <div style={{ fontSize: 12, color: "#666", fontWeight: 700 }}>経由したいスポット</div>
-                  {SPOTS.map((s) => (
-                    <label key={s.key} style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 13 }}>
-                      <input
-                        type="checkbox"
-                        checked={!!spotOn[s.key]}
-                        onChange={(e) => setSpotOn((p) => ({ ...p, [s.key]: e.target.checked }))}
-                      />
-                      {s.label}
-                    </label>
-                  ))}
-                </div>
-                <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center", fontSize: 12, color: "#666" }}>
-                  <span>入口: {entryName}</span>
-                  {entryHasUpDown ? (
-                    <>
-                      <span>入口方向:</span>
-                      <label style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                        <input type="radio" checked={entryFlow === "auto"} onChange={() => setEntryFlow("auto")} />
-                        自動
-                      </label>
-                      <label style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                        <input type="radio" checked={entryFlow === "up"} onChange={() => setEntryFlow("up")} />
-                        上り
-                      </label>
-                      <label style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                        <input type="radio" checked={entryFlow === "down"} onChange={() => setEntryFlow("down")} />
-                        下り
-                      </label>
-                    </>
-                  ) : null}
-                  <span>候補出口: {entry.exits?.length ?? 0}</span>
-                </div>
-              </div>
-            }
-          />
+          <div
+            style={{
+              marginTop: 12,
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+              gap: 14,
+              alignItems: "start",
+            }}
+          >
+            <div style={{ minWidth: 0 }}>
+              <ShutokoMap
+                title={mapTitle}
+                entryName={entryName}
+                exitName={selectedRow?.exit}
+                activeSpotLabels={activeSpotLabels}
+                highlightedRoutes={mapRouteFamilies}
+                highlightedPath={selectedMapPath}
+                headerAction={
+                  <button
+                    onClick={resetHome}
+                    style={{ padding: "8px 12px", border: "1px solid #d6d3d1", borderRadius: 12, background: "white" }}
+                  >
+                    ホームへ戻る
+                  </button>
+                }
+                toolbar={
+                  <div style={{ display: "grid", gap: 12 }}>
+                    <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
+                      <div style={{ fontSize: 12, color: "#666", fontWeight: 700 }}>経由したいスポット</div>
+                      {SPOTS.map((s) => (
+                        <label key={s.key} style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 13 }}>
+                          <input
+                            type="checkbox"
+                            checked={!!spotOn[s.key]}
+                            onChange={(e) => setSpotOn((p) => ({ ...p, [s.key]: e.target.checked }))}
+                          />
+                          {s.label}
+                        </label>
+                      ))}
+                    </div>
+                    <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center", fontSize: 12, color: "#666" }}>
+                      <span>入口: {entryName}</span>
+                      {entryHasUpDown ? (
+                        <>
+                          <span>入口方向:</span>
+                          <label style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                            <input type="radio" checked={entryFlow === "auto"} onChange={() => setEntryFlow("auto")} />
+                            自動
+                          </label>
+                          <label style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                            <input type="radio" checked={entryFlow === "up"} onChange={() => setEntryFlow("up")} />
+                            上り
+                          </label>
+                          <label style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                            <input type="radio" checked={entryFlow === "down"} onChange={() => setEntryFlow("down")} />
+                            下り
+                          </label>
+                        </>
+                      ) : null}
+                      <span>候補出口: {entry.exits?.length ?? 0}</span>
+                    </div>
+                  </div>
+                }
+              />
+            </div>
 
-          <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "1fr", gap: 10 }}>
-            {activeSpots.length > 0 ? (
-              <div style={{ fontSize: 12, color: "#666" }}>
-                成立ルート: {evaluatedDetours.filter((d) => d.detour.ok).length} / {fixedRows.length} 件
-              </div>
-            ) : null}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 10, alignContent: "start" }}>
+              {activeSpots.length > 0 ? (
+                <div style={{ fontSize: 12, color: "#666", padding: "4px 2px" }}>
+                  成立ルート: {evaluatedDetours.filter((d) => d.detour.ok).length} / {fixedRows.length} 件
+                </div>
+              ) : null}
 
-            {fixedRows.map((x, i) => {
+              {fixedRows.map((x, i) => {
               const detour = activeSpots.length > 0 ? evaluatedDetours[i]?.detour : null;
               const normalCalc = normalPaths[i];
               const normal = normalCalc?.ok ? prettyDetourPath(normalCalc.path).join(" → ") : "";
@@ -951,12 +971,12 @@ export default function Page() {
                     border: selectedRowIndex === i ? "2px solid #0ea5e9" : "1px solid #ddd",
                     boxShadow: selectedRowIndex === i ? "0 8px 24px rgba(14,165,233,0.12)" : "none",
                     borderRadius: 14,
-                    padding: 14,
+                    padding: 12,
                     cursor: "pointer",
-                    background: selectedRowIndex === i ? "#f8fdff" : "white",
+                    background: selectedRowIndex === i ? "#f8fdff" : "linear-gradient(180deg, #ffffff 0%, #fafaf9 100%)",
                   }}
                 >
-                  <div style={{ fontWeight: 800, fontSize: 16 }}>
+                  <div style={{ fontWeight: 800, fontSize: 15 }}>
                     {x.toll}円 / 出口：{x.exit} {x.dist ? ` / ${x.dist}km` : ""}
                   </div>
 
@@ -976,10 +996,11 @@ export default function Page() {
                   ) : null}
                 </div>
               );
-            })}
-            {activeSpots.length > 0 && evaluatedDetours.filter((d) => d.detour.ok).length === 0 ? (
-              <div style={{ color: "#888" }}>条件に合う周回ルートが見つかりませんでした。</div>
-            ) : null}
+              })}
+              {activeSpots.length > 0 && evaluatedDetours.filter((d) => d.detour.ok).length === 0 ? (
+                <div style={{ color: "#888" }}>条件に合う周回ルートが見つかりませんでした。</div>
+              ) : null}
+            </div>
           </div>
         </div>
       )}
