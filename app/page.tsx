@@ -416,14 +416,11 @@ function bfsPathAvoid(
           continue;
         }
         if (isIntraJunctionTurn(v, nxt)) {
-          const explicitlyAllowed = !!turnRules?.has(edgeKey(v, nxt));
-          if (!explicitlyAllowed) {
-            const j = junctionOf(v);
-            const fromHas = seqInfo.jcts.get(fromTail)?.has(j);
-            const toHas = seqInfo.jcts.get(toTail)?.has(j);
-            if (fromHas === false || toHas === false) {
-              continue;
-            }
+          const j = junctionOf(v);
+          const fromHas = seqInfo.jcts.get(fromTail)?.has(j);
+          const toHas = seqInfo.jcts.get(toTail)?.has(j);
+          if (fromHas === false || toHas === false) {
+            continue;
           }
         }
       }

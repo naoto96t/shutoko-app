@@ -47,6 +47,26 @@ function uniq<T>(arr: T[]) {
   return Array.from(new Set(arr));
 }
 
+function decodeHtmlEntities(text: string) {
+  return text.replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)));
+}
+
+function parseSvgPointMap(svgMarkup: string) {
+  const map = new Map<string, { x: number; y: number }>();
+  const circleRe = /<(circle|ellipse)\b[^>]*\sid="([^"]+)"[^>]*\scx="([^"]+)"[^>]*\scy="([^"]+)"[^>]*>/g;
+  let m: RegExpExecArray | null;
+  while ((m = circleRe.exec(svgMarkup))) {
+    const rawId = decodeHtmlEntities(m[2]);
+    const x = Number(m[3]);
+    const y = Number(m[4]);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+    map.set(rawId, { x, y });
+    const base = rawId.replace(/_\d+$/, "");
+    if (base && !map.has(base)) map.set(base, { x, y });
+  }
+  return map;
+}
+
 const DISPLAY_ROUTE_IDS_BY_FAMILY: Record<string, string[]> = {
   C1: ["route_C1"],
   C2: ["route_C2"],
@@ -273,6 +293,8 @@ export default function ShutokoMap({
     return runs;
   }, [entryName, exitName, highlightedPath]);
 
+  const pointMap = useMemo(() => parseSvgPointMap(svgMarkup), [svgMarkup]);
+
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
@@ -297,7 +319,10 @@ export default function ShutokoMap({
       if (routePaths.length === 0 || run.pointIds.length < 2) continue;
 
       const nodePoints = run.pointIds
-        .map((id) => ({ id, point: centerOf(findSvgNode(host, id) as SVGGraphicsElement | null) }))
+        .map((id) => ({
+          id,
+          point: pointMap.get(id) || centerOf(findSvgNode(host, id) as SVGGraphicsElement | null),
+        }))
         .filter((x): x is { id: string; point: { x: number; y: number } } => !!x.point);
       if (nodePoints.length < 2) continue;
 
@@ -341,15 +366,15 @@ export default function ShutokoMap({
       }
     }
 
-    const entryPoint = centerOf(findSvgNode(host, entryName) as SVGGraphicsElement | null) || firstProjectedPoint || null;
-    const exitPoint = centerOf(findSvgNode(host, exitName || null) as SVGGraphicsElement | null) || lastProjectedPoint || null;
+    const entryPoint = (entryName ? pointMap.get(entryName) : null) || centerOf(findSvgNode(host, entryName) as SVGGraphicsElement | null) || firstProjectedPoint || null;
+    const exitPoint = (exitName ? pointMap.get(exitName) : null) || centerOf(findSvgNode(host, exitName || null) as SVGGraphicsElement | null) || lastProjectedPoint || null;
     addMarker(markerLayer, entryPoint, "#2563eb", 7);
     addMarker(markerLayer, exitPoint, "#dc2626", 7);
     for (const label of activeSpotLabels) {
       const id = PA_ID_BY_LABEL[label];
-      if (id) addMarker(markerLayer, centerOf(findSvgNode(host, id) as SVGGraphicsElement | null), "#059669", 5);
+      if (id) addMarker(markerLayer, pointMap.get(id) || centerOf(findSvgNode(host, id) as SVGGraphicsElement | null), "#059669", 5);
     }
-  }, [activeSpotLabels, entryName, exitName, routeRuns, svgMarkup]);
+  }, [activeSpotLabels, entryName, exitName, pointMap, routeRuns, svgMarkup]);
 
   return (
     <div
