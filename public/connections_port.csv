@@ -1,8 +1,11 @@
 ﻿from,to,kind,notes
-EdobashiJCT:C1_CW,HakozakiRotary,link,江戸橋付近→箱崎ロータリー（アクセス）
-EdobashiJCT:C1_CCW,HakozakiRotary,link,江戸橋付近→箱崎ロータリー（アクセス）
-HakozakiRotary,EdobashiJCT:C1_CW,link,箱崎→江戸橋付近（復帰）
-HakozakiRotary,EdobashiJCT:C1_CCW,link,箱崎→江戸橋付近（復帰）
+HakozakiJCT:R9_UP,HakozakiRotary,link,箱崎ロータリー: 9号上りから進入
+HakozakiRotary,HakozakiJCT:R9_DOWN,link,箱崎ロータリー: 9号下りへ流出
+IC:箱崎:R6A_DOWN,HakozakiRotary,link,箱崎ロータリー: 6号下りから進入
+IC:箱崎:R6A_UP,HakozakiRotary,link,箱崎ロータリー: 6号上りから進入
+HakozakiRotary,IC:箱崎:R6A_DOWN,link,箱崎ロータリー: 6号下りへ流出
+HakozakiRotary,IC:箱崎:R6A_UP,link,箱崎ロータリー: 6号上りへ流出
+IC:浜町:R6A_UP,HakozakiRotary,link,箱崎ロータリー: 浜町入口から進入
 ShibauraJCT:R11_UP,ShibauraPA,link,芝浦PA（R11_UP上、芝浦JCT手前）
 ShibauraPA,ShibauraJCT:R11_UP,link,芝浦PA→R11_UPへ復帰（R1Hへは出さない）
 DaikokuJCT:BAY_E,DaikokuPA,link,大黒PA（大黒JCT同位置）

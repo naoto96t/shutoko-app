@@ -357,6 +357,12 @@ function main() {
   assert((graph["ShibauraJCT:R11_UP"] || []).includes("ShibauraJCT:R1H_UP"), "Reachability regression: ShibauraJCT:R11_UP should connect to ShibauraJCT:R1H_UP", failures);
   assert((graph["ShibauraJCT:R1H_UP"] || []).includes("HamasakibashiJCT:R1H_UP"), "Reachability regression: ShibauraJCT:R1H_UP should continue to HamasakibashiJCT:R1H_UP", failures);
   assert((graph["HamasakibashiJCT:R1H_UP"] || []).some((n) => n === "HamasakibashiJCT:C1_CW" || n === "HamasakibashiJCT:C1_CCW"), "Reachability regression: HamasakibashiJCT:R1H_UP should connect to C1", failures);
+  assert(!(graph["HakozakiRotary"] || []).includes("EdobashiJCT:C1_CW"), "Forbidden regression: HakozakiRotary should not connect directly to EdobashiJCT:C1_CW", failures);
+  assert(!(graph["HakozakiRotary"] || []).includes("EdobashiJCT:C1_CCW"), "Forbidden regression: HakozakiRotary should not connect directly to EdobashiJCT:C1_CCW", failures);
+  assert((graph["HakozakiJCT:R9_UP"] || []).includes("HakozakiRotary"), "Reachability regression: HakozakiJCT:R9_UP should enter HakozakiRotary", failures);
+  assert((graph["HakozakiRotary"] || []).includes("HakozakiJCT:R9_DOWN"), "Reachability regression: HakozakiRotary should exit to HakozakiJCT:R9_DOWN", failures);
+  assert((graph["HakozakiRotary"] || []).includes("IC:箱崎:R6A_DOWN"), "Reachability regression: HakozakiRotary should exit to IC:箱崎:R6A_DOWN", failures);
+  assert((graph["HakozakiRotary"] || []).includes("IC:箱崎:R6A_UP"), "Reachability regression: HakozakiRotary should exit to IC:箱崎:R6A_UP", failures);
 
   if (failures.length > 0) {
     console.error("Routing regression check failed:");
