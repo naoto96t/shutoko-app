@@ -214,6 +214,20 @@ function isCoreRingTail(tail: string) {
   return tail.startsWith("C1_") || tail.startsWith("C2_") || tail.startsWith("BAY_");
 }
 
+function isLoopNetworkTail(tail: string) {
+  return (
+    isCoreRingTail(tail) ||
+    tail.startsWith("R1H_") ||
+    tail.startsWith("R11_") ||
+    tail.startsWith("R9_") ||
+    tail.startsWith("R6A_") ||
+    tail.startsWith("K1_") ||
+    tail.startsWith("K3_") ||
+    tail.startsWith("K5_") ||
+    tail.startsWith("K6_")
+  );
+}
+
 type Spot = { key: string; label: string; node: string };
 const SPOTS: Spot[] = [
   { key: "hakozaki", label: "箱崎PA", node: "HakozakiRotary" },
@@ -664,7 +678,7 @@ export default function Page() {
 
   const ringTargets = useMemo(() => {
     if (!graph) return [] as string[];
-    return Object.keys(graph).filter((node) => isCoreRingTail(routeTailOfNode(node)));
+    return Object.keys(graph).filter((node) => isLoopNetworkTail(routeTailOfNode(node)));
   }, [graph]);
 
   const suggestions = useMemo(() => {
@@ -889,7 +903,7 @@ export default function Page() {
     if (!graph || !turnRules || !entry) return false;
     if (detourResult?.ok) return false;
     if (ringTargets.length === 0) return false;
-    if (normalResult?.ok && normalResult.path.some((node) => isCoreRingTail(routeTailOfNode(node)))) {
+    if (normalResult?.ok && normalResult.path.some((node) => isLoopNetworkTail(routeTailOfNode(node)))) {
       return false;
     }
 
