@@ -1020,6 +1020,15 @@ export default function Page() {
                       </div>
                     </div>
                   ) : null}
+
+                  {activeSpots.length > 0 && detour && !detour.ok ? (
+                    <div style={{ marginTop: 10, fontSize: 12 }}>
+                      <div style={{ color: "#111", fontWeight: 700 }}>周回不可能</div>
+                      <div style={{ color: "#666", marginTop: 4 }}>
+                        {detour.why || "条件に合う周回ルートが見つかりませんでした。"}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               );
               })}

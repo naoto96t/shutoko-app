@@ -116,34 +116,6 @@ function buildIcNameToSvgIdMap(host: Element) {
   return out;
 }
 
-const DISPLAY_ROUTE_IDS_BY_FAMILY: Record<string, string[]> = {
-  C1: ["route_C1"],
-  C2: ["route_C2"],
-  BAY: ["route_BAY"],
-  BAYX: ["route_BAYX"],
-  R1H: ["route_R1H"],
-  R1U: ["route_R1U"],
-  R2: ["route_R2", "route_R2_Togoshi"],
-  R3: ["route_R3A", "route_R3B"],
-  R4: ["route_R4A", "route_R4B"],
-  R5: ["route_R5A", "route_R5B"],
-  R6A: ["route_R6A"],
-  R6B: ["route_R6B"],
-  R7: ["route_R7A", "route_R7B"],
-  R9: ["route_R9"],
-  R10: ["route_R10"],
-  R11: ["route_R11"],
-  K1: ["route_K1"],
-  K2: ["route_K2"],
-  K3: ["route_K3"],
-  K5: ["route_K5"],
-  K6: ["route_K6"],
-  K7: ["route_K7"],
-  S1: ["route_S1"],
-  S2: ["Route_S2", "Route_S2_2"],
-  S5: ["Route_S5", "Route_S5_2"],
-};
-
 function publicAsset(path: string) {
   return `${BASE_PATH}${path}`;
 }
@@ -157,33 +129,37 @@ function routeTailOfNode(node: string) {
   return idx >= 0 ? node.slice(idx + 1) : node;
 }
 
-function displayFamilyOfTail(tail: string) {
+function routeConfigOfTail(tail: string): { routeIds: string[]; ring: boolean; forward: boolean | null } | null {
   if (!tail) return null;
-  if (tail.startsWith("C1_")) return "C1";
-  if (tail.startsWith("C2_")) return "C2";
-  if (tail.startsWith("BAYX_")) return "BAYX";
-  if (tail.startsWith("BAY_")) return "BAY";
-  if (tail.startsWith("R1H_")) return "R1H";
-  if (tail.startsWith("R1U_")) return "R1U";
-  if (tail.startsWith("R2")) return "R2";
-  if (tail.startsWith("R3A_") || tail.startsWith("R3B_")) return "R3";
-  if (tail.startsWith("R4A_") || tail.startsWith("R4B_")) return "R4";
-  if (tail.startsWith("R5A_") || tail.startsWith("R5B_")) return "R5";
-  if (tail.startsWith("R6A_") || tail.startsWith("R6_")) return "R6A";
-  if (tail.startsWith("R6B_") || tail.startsWith("R6_MISATO_")) return "R6B";
-  if (tail.startsWith("R7A_") || tail.startsWith("R7B_")) return "R7";
-  if (tail.startsWith("R9_")) return "R9";
-  if (tail.startsWith("R10_")) return "R10";
-  if (tail.startsWith("R11_")) return "R11";
-  if (tail.startsWith("K1_")) return "K1";
-  if (tail.startsWith("K2_")) return "K2";
-  if (tail.startsWith("K3_")) return "K3";
-  if (tail.startsWith("K5_")) return "K5";
-  if (tail.startsWith("K6_")) return "K6";
-  if (tail.startsWith("K7_")) return "K7";
-  if (tail.startsWith("S1_")) return "S1";
-  if (tail.startsWith("S2_")) return "S2";
-  if (tail.startsWith("S5_")) return "S5";
+  if (tail.startsWith("C1_")) return { routeIds: ["route_C1"], ring: true, forward: tail.endsWith("_CW") };
+  if (tail.startsWith("C2_")) return { routeIds: ["route_C2"], ring: true, forward: tail.endsWith("_CW") };
+  if (tail.startsWith("BAYX_")) return { routeIds: ["route_BAYX"], ring: false, forward: tail.endsWith("_E") };
+  if (tail.startsWith("BAY_")) return { routeIds: ["route_BAY"], ring: false, forward: tail.endsWith("_E") };
+  if (tail.startsWith("R1H_")) return { routeIds: ["route_R1H"], ring: false, forward: null };
+  if (tail.startsWith("R1U_")) return { routeIds: ["route_R1U"], ring: false, forward: null };
+  if (tail.startsWith("R2")) return { routeIds: ["route_R2", "route_R2_Togoshi"], ring: false, forward: null };
+  if (tail.startsWith("R3A_")) return { routeIds: ["route_R3A"], ring: false, forward: null };
+  if (tail.startsWith("R3B_")) return { routeIds: ["route_R3B"], ring: false, forward: null };
+  if (tail.startsWith("R4A_")) return { routeIds: ["route_R4A"], ring: false, forward: null };
+  if (tail.startsWith("R4B_")) return { routeIds: ["route_R4B"], ring: false, forward: null };
+  if (tail.startsWith("R5A_")) return { routeIds: ["route_R5A"], ring: false, forward: null };
+  if (tail.startsWith("R5B_")) return { routeIds: ["route_R5B"], ring: false, forward: null };
+  if (tail.startsWith("R6A_") || tail.startsWith("R6_")) return { routeIds: ["route_R6A"], ring: false, forward: null };
+  if (tail.startsWith("R6B_") || tail.startsWith("R6_MISATO_")) return { routeIds: ["route_R6B"], ring: false, forward: null };
+  if (tail.startsWith("R7A_")) return { routeIds: ["route_R7A"], ring: false, forward: null };
+  if (tail.startsWith("R7B_")) return { routeIds: ["route_R7B"], ring: false, forward: null };
+  if (tail.startsWith("R9_")) return { routeIds: ["route_R9"], ring: false, forward: null };
+  if (tail.startsWith("R10_")) return { routeIds: ["route_R10"], ring: false, forward: null };
+  if (tail.startsWith("R11_")) return { routeIds: ["route_R11"], ring: false, forward: null };
+  if (tail.startsWith("K1_")) return { routeIds: ["route_K1"], ring: false, forward: null };
+  if (tail.startsWith("K2_")) return { routeIds: ["route_K2"], ring: false, forward: null };
+  if (tail.startsWith("K3_")) return { routeIds: ["route_K3"], ring: false, forward: null };
+  if (tail.startsWith("K5_")) return { routeIds: ["route_K5"], ring: false, forward: null };
+  if (tail.startsWith("K6_")) return { routeIds: ["route_K6"], ring: false, forward: null };
+  if (tail.startsWith("K7_")) return { routeIds: ["route_K7"], ring: false, forward: null };
+  if (tail.startsWith("S1_")) return { routeIds: ["route_S1"], ring: false, forward: null };
+  if (tail.startsWith("S2_")) return { routeIds: ["Route_S2", "Route_S2_2"], ring: false, forward: null };
+  if (tail.startsWith("S5_")) return { routeIds: ["Route_S5", "Route_S5_2"], ring: false, forward: null };
   return null;
 }
 
@@ -312,16 +288,17 @@ export default function ShutokoMap({
   }, []);
 
   const routeRuns = useMemo(() => {
-    const runs: Array<{ family: string; pointIds: string[] }> = [];
-    let current: { family: string; pointIds: string[] } | null = null;
+    const runs: Array<{ tail: string; routeIds: string[]; ring: boolean; forward: boolean | null; pointIds: string[] }> = [];
+    let current: { tail: string; routeIds: string[]; ring: boolean; forward: boolean | null; pointIds: string[] } | null = null;
 
     for (const node of highlightedPath) {
-      const family = displayFamilyOfTail(routeTailOfNode(node));
+      const tail = routeTailOfNode(node);
+      const config = routeConfigOfTail(tail);
       const pointId = svgNodeIdFromPathNode(node);
-      if (!family) continue;
-      if (!current || current.family !== family) {
+      if (!config) continue;
+      if (!current || current.tail !== tail) {
         if (current) runs.push(current);
-        current = { family, pointIds: [] };
+        current = { tail, routeIds: config.routeIds, ring: config.ring, forward: config.forward, pointIds: [] };
       }
       if (pointId) current.pointIds.push(pointId);
     }
@@ -362,8 +339,7 @@ export default function ShutokoMap({
     let lastProjectedPoint: { x: number; y: number } | null = null;
 
     for (const run of routeRuns) {
-      const routeIds = DISPLAY_ROUTE_IDS_BY_FAMILY[run.family] || [];
-      const routePaths = routeIds
+      const routePaths = run.routeIds
         .map((id) => host.querySelector<SVGPathElement>(`#${id} path`))
         .filter((p): p is SVGPathElement => !!p);
       if (routePaths.length === 0 || run.pointIds.length < 2) continue;
@@ -403,17 +379,22 @@ export default function ShutokoMap({
         if (!best) continue;
         if (best.score > 160) continue;
 
-        const isRing = run.family === "C1" || run.family === "C2";
-        const start = Math.min(best.aLen, best.bLen);
-        const end = Math.max(best.aLen, best.bLen);
         if (!firstProjectedPoint) firstProjectedPoint = a;
         lastProjectedPoint = b;
-
-        if (isRing && end - start > best.total / 2) {
-          appendOverlay(overlayLayer, best.path, best.total, 0, start);
-          appendOverlay(overlayLayer, best.path, best.total, end, best.total);
+        const aLen = best.aLen;
+        const bLen = best.bLen;
+        if (run.ring && run.forward != null) {
+          const wraps = run.forward ? bLen < aLen : aLen < bLen;
+          if (wraps) {
+            const lo = Math.min(aLen, bLen);
+            const hi = Math.max(aLen, bLen);
+            appendOverlay(overlayLayer, best.path, best.total, 0, lo);
+            appendOverlay(overlayLayer, best.path, best.total, hi, best.total);
+          } else {
+            appendOverlay(overlayLayer, best.path, best.total, Math.min(aLen, bLen), Math.max(aLen, bLen));
+          }
         } else {
-          appendOverlay(overlayLayer, best.path, best.total, start, end);
+          appendOverlay(overlayLayer, best.path, best.total, Math.min(aLen, bLen), Math.max(aLen, bLen));
         }
       }
     }
