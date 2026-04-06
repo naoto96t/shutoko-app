@@ -3,8 +3,8 @@ route,dir,stops
 # まずはJCTだけでOK。ICは後で追加して精度を上げる。
 
 # --- C1 ---
-C1,CW,"MiyakezakaJCT,IC:代官町,IC:北の丸,TakebashiJCT,IC:神田橋,EdobashiJCT,IC:宝町,IC:京橋,IC:新富町,IC:銀座,ShiodomeJCT,IC:汐留,HamasakibashiJCT,IC:芝公園,IchinohashiJCT,IC:飯倉,TanimachiJCT,IC:霞が関"
-C1,CCW,"IC:霞が関,TanimachiJCT,IC:飯倉,IchinohashiJCT,IC:芝公園,HamasakibashiJCT,IC:汐留,ShiodomeJCT,IC:銀座,IC:新富町,IC:京橋,IC:宝町,EdobashiJCT,IC:神田橋,TakebashiJCT,IC:北の丸,IC:代官町,MiyakezakaJCT"
+C1,CW,"MiyakezakaJCT,IC:代官町,IC:北の丸,TakebashiJCT,IC:神田橋,EdobashiJCT,IC:宝町,IC:京橋,IC:新富町,IC:銀座,ShiodomeJCT,IC:汐留,HamasakibashiJCT,ShibauraJCT,IC:芝公園,IchinohashiJCT,IC:飯倉,TanimachiJCT,IC:霞が関"
+C1,CCW,"IC:霞が関,TanimachiJCT,IC:飯倉,IchinohashiJCT,IC:芝公園,ShibauraJCT,HamasakibashiJCT,IC:汐留,ShiodomeJCT,IC:銀座,IC:新富町,IC:京橋,IC:宝町,EdobashiJCT,IC:神田橋,TakebashiJCT,IC:北の丸,IC:代官町,MiyakezakaJCT"
 
 # --- C2 ---
 C2,CW,"OoiJCT,IC:中環大井南,IC:五反田,OhashiJCT,IC:富ヶ谷,IC:初台南,NishiShinjukuJCT,IC:中野長者橋,IC:西池袋,IC:高松,KumanochoJCT,ItabashiJCT,IC:新板橋,IC:滝野川,IC:王子南,IC:王子北,KouhokuJCT,IC:扇大橋,IC:千住新橋,KosugeJCT,IC:小菅,HorikiriJCT,IC:四つ木,IC:平井大橋,IC:中環小松川,KomatsugawaJCT,IC:船堀橋,IC:清新町,KasaiJCT"
