@@ -21,7 +21,7 @@ type TurnRuleSet = Set<string>;
 type SeqPosMap = Map<string, number>;
 type SeqJctMap = Map<string, Set<string>>;
 type ExitAllowMap = Map<string, Set<string>>;
-type IcMasterRow = { is_full?: boolean };
+type IcMasterRow = { is_full?: boolean; entry_dir?: string[]; exit_dir?: string[] };
 const EMPTY_ENTRIES: Record<string, EntryBlock> = {};
 
 const LABEL: Record<string, string> = {
@@ -180,6 +180,10 @@ function highlightedRouteFamilies(path: string[]) {
     if (family && !out.includes(family)) out.push(family);
   }
   return out;
+}
+
+function isCoreRingTail(tail: string) {
+  return tail.startsWith("C1_") || tail.startsWith("C2_") || tail.startsWith("BAY_");
 }
 
 type Spot = { key: string; label: string; node: string };
@@ -613,6 +617,11 @@ export default function Page() {
     return names.length > 0 ? names : entries;
   }, [entries, icMaster]);
 
+  const ringTargets = useMemo(() => {
+    if (!graph) return [] as string[];
+    return Object.keys(graph).filter((node) => isCoreRingTail(routeTailOfNode(node)));
+  }, [graph]);
+
   const suggestions = useMemo(() => {
     const qq = q.trim();
     if (!qq) return fullEntries.slice(0, 40);
@@ -660,15 +669,10 @@ export default function Page() {
 
   const activeSpots = useMemo(() => SPOTS.filter((s) => spotOn[s.key]), [spotOn]);
 
-  const startPorts = useMemo(() => {
-    if (!entry || !graph) return [];
-    const selectedStartNodes =
-      entryFlow === "auto"
-        ? entry.start_nodes
-        : entry.start_nodes.filter((n) => (entryFlow === "up" ? n.endsWith("_UP") : n.endsWith("_DOWN")));
-    const effectiveStartNodes = selectedStartNodes.length > 0 ? selectedStartNodes : entry.start_nodes;
+  function resolveStartPorts(startNodes: string[]) {
+    if (!graph || !entryName) return [] as string[];
     const strict: string[] = [];
-    for (const n of effectiveStartNodes) {
+    for (const n of startNodes) {
       const icin = `ICIN:${entryName}:${n}`;
       const ic = `IC:${entryName}:${n}`;
       const node = `${entryName}:${n}`;
@@ -678,13 +682,22 @@ export default function Page() {
     }
     if (strict.length > 0) return uniq(strict);
 
-    // フォールバック: 入口ICが特定できないデータだけ従来挙動を使う
     let ports: string[] = [];
-    for (const n of effectiveStartNodes) {
+    for (const n of startNodes) {
       ports = ports.concat(nodeToPorts.get(n) || []);
       if (graph[n]) ports.push(n);
     }
     return uniq(ports).filter((p) => !!graph[p]);
+  }
+
+  const startPorts = useMemo(() => {
+    if (!entry || !graph) return [];
+    const selectedStartNodes =
+      entryFlow === "auto"
+        ? entry.start_nodes
+        : entry.start_nodes.filter((n) => (entryFlow === "up" ? n.endsWith("_UP") : n.endsWith("_DOWN")));
+    const effectiveStartNodes = selectedStartNodes.length > 0 ? selectedStartNodes : entry.start_nodes;
+    return resolveStartPorts(effectiveStartNodes);
   }, [entry, graph, nodeToPorts, entryFlow, entryName]);
 
   const entryHasUpDown = useMemo(() => {
@@ -816,15 +829,56 @@ export default function Page() {
     return { ok: true, path: best || [] };
   }
 
+  function isStructurallyLoopImpossible(
+    exitName: string,
+    targetNodes: string[] | undefined,
+    normalPathNodes: string[] | undefined,
+    normalResult: { ok: boolean; path: string[]; why?: string } | undefined,
+    detourResult: { ok: boolean; path: string[]; why?: string } | undefined
+  ) {
+    if (!graph || !turnRules || !entry) return false;
+    if (detourResult?.ok) return false;
+    if (ringTargets.length === 0) return false;
+    if (normalResult?.ok && normalResult.path.some((node) => isCoreRingTail(routeTailOfNode(node)))) {
+      return false;
+    }
+
+    const entryMeta = entryName ? icMaster[entryName] : undefined;
+    const exitMeta = icMaster[exitName];
+
+    const startCandidates = resolveStartPorts(entryMeta?.is_full ? entry.start_nodes : entry.start_nodes.filter((n) => startPorts.includes(`ICIN:${entryName}:${n}`) || startPorts.includes(`IC:${entryName}:${n}`) || startPorts.includes(`${entryName}:${n}`)));
+    const exitCandidates = exitMeta?.is_full
+      ? (icoutByExit.get(exitName) || [])
+      : resolveIcoutTargets(exitName, targetNodes, normalPathNodes);
+
+    if (startCandidates.length === 0 || exitCandidates.length === 0) return true;
+
+    const avoidLoopDeadEnds = (node: string) => {
+      const t = tailOfPort(node);
+      return t.startsWith("R10_");
+    };
+
+    const toRing = bfsPathAvoid(graph, startCandidates, new Set(ringTargets), avoidLoopDeadEnds, turnRules, seqInfo);
+    if (!toRing) return true;
+
+    const fromRing = bfsPathAvoid(graph, ringTargets, new Set(exitCandidates), avoidLoopDeadEnds, turnRules, seqInfo);
+    return !fromRing;
+  }
+
   const fixedRows = useMemo(() => (entry?.exits || []).slice(0, 30), [entry]);
   const normalPaths = fixedRows.map((x) => computeNormalPath(x.exit, x.target_nodes, x.path_nodes));
 
   const evaluatedDetours =
     activeSpots.length > 0
-      ? fixedRows.map((x) => ({
-          row: x,
-          detour: computeDetour(x.exit, x.target_nodes, x.path_nodes),
-        }))
+      ? fixedRows.map((x, i) => {
+          const detour = computeDetour(x.exit, x.target_nodes, x.path_nodes);
+          const structurallyImpossible = isStructurallyLoopImpossible(x.exit, x.target_nodes, x.path_nodes, normalPaths[i], detour);
+          return {
+            row: x,
+            detour,
+            structurallyImpossible,
+          };
+        })
       : [];
 
   const selectedRow = fixedRows[selectedRowIndex] || null;
@@ -1023,9 +1077,13 @@ export default function Page() {
 
                   {activeSpots.length > 0 && detour && !detour.ok ? (
                     <div style={{ marginTop: 10, fontSize: 12 }}>
-                      <div style={{ color: "#111", fontWeight: 700 }}>周回不可能</div>
+                      <div style={{ color: "#111", fontWeight: 700 }}>
+                        {evaluatedDetours[i]?.structurallyImpossible ? "周回不可能" : "周回ルートなし"}
+                      </div>
                       <div style={{ color: "#666", marginTop: 4 }}>
-                        {detour.why || "条件に合う周回ルートが見つかりませんでした。"}
+                        {evaluatedDetours[i]?.structurallyImpossible
+                          ? "環状線に到達できないため、この出入口の組み合わせでは周回できません。"
+                          : detour.why || "条件に合う周回ルートが見つかりませんでした。"}
                       </div>
                     </div>
                   ) : null}
