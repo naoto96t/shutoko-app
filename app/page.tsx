@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import ShutokoMap from "./components/ShutokoMap";
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
@@ -179,6 +179,26 @@ function routeFamilyOfTail(tail: string) {
   if (tail.startsWith("S2_")) return "S2";
   if (tail.startsWith("S5_")) return "S5";
   return null;
+}
+
+function directionOfTail(tail: string) {
+  const m = tail.match(/_(UP|DOWN|CW|CCW|E|W)$/);
+  return m ? m[1] : null;
+}
+
+function routeBaseOfTail(tail: string) {
+  return tail.replace(/_(UP|DOWN|CW|CCW|E|W)$/, "");
+}
+
+function areOppositeDirections(a: string | null, b: string | null) {
+  return (
+    (a === "UP" && b === "DOWN") ||
+    (a === "DOWN" && b === "UP") ||
+    (a === "CW" && b === "CCW") ||
+    (a === "CCW" && b === "CW") ||
+    (a === "E" && b === "W") ||
+    (a === "W" && b === "E")
+  );
 }
 
 function highlightedRouteFamilies(path: string[]) {
@@ -543,6 +563,20 @@ function bfsPathAvoid(
         if (pj && pj === vj && vj === nj && isRing(pt) && isRing(vt) && isRing(nt) && pt !== vt && nt === pt) {
           continue;
         }
+        // 同一JCT内で、放射/環状/放射と2手使って同一路線の向きを反転する経路を禁止
+        // 例: AriakeJCT の R11_DOWN -> BAY_E -> R11_UP
+        if (
+          pj &&
+          pj === vj &&
+          vj === nj &&
+          isRadial(pt) &&
+          isRing(vt) &&
+          isRadial(nt) &&
+          routeBaseOfTail(pt) === routeBaseOfTail(nt) &&
+          areOppositeDirections(directionOfTail(pt), directionOfTail(nt))
+        ) {
+          continue;
+        }
       }
 
       if (avoid(nxt) && !targets.has(nxt)) continue;
@@ -677,7 +711,7 @@ export default function Page() {
 
   const activeSpots = useMemo(() => SPOTS.filter((s) => spotOn[s.key]), [spotOn]);
 
-  function resolveStartPorts(startNodes: string[]) {
+  const resolveStartPorts = useCallback((startNodes: string[]) => {
     if (!graph || !entryName) return [] as string[];
     const strict: string[] = [];
     for (const n of startNodes) {
@@ -696,7 +730,7 @@ export default function Page() {
       if (graph[n]) ports.push(n);
     }
     return uniq(ports).filter((p) => !!graph[p]);
-  }
+  }, [entryName, graph, nodeToPorts]);
 
   const startPorts = useMemo(() => {
     if (!entry || !graph) return [];
@@ -706,7 +740,7 @@ export default function Page() {
         : entry.start_nodes.filter((n) => (entryFlow === "up" ? n.endsWith("_UP") : n.endsWith("_DOWN")));
     const effectiveStartNodes = selectedStartNodes.length > 0 ? selectedStartNodes : entry.start_nodes;
     return resolveStartPorts(effectiveStartNodes);
-  }, [entry, graph, nodeToPorts, entryFlow, entryName]);
+  }, [entry, graph, entryFlow, resolveStartPorts]);
 
   const entryHasUpDown = useMemo(() => {
     if (!entry) return false;
