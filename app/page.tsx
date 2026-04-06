@@ -94,6 +94,14 @@ function prettyFacility(n: string) {
   }
 }
 
+function prettyNormalPath(pathNodes: string[] | undefined, exitName: string) {
+  if (!pathNodes || pathNodes.length === 0) return "";
+  const synthetic = pathNodes.slice();
+  const lastTail = pathNodes[pathNodes.length - 1] || "";
+  synthetic.push(`ICOUT:${exitName}:${lastTail}`);
+  return prettyDetourPath(synthetic).join(" → ");
+}
+
 function prettyDetourPath(path: string[]) {
   const out: string[] = [];
   let prev = "";
@@ -892,9 +900,11 @@ export default function Page() {
   const selectedMapPath =
     activeSpots.length > 0 && selectedDetour?.ok
       ? selectedDetour.path
-      : selectedNormal?.ok
-        ? selectedNormal.path
-        : [];
+      : selectedRow?.path_nodes && selectedRow.path_nodes.length > 0
+        ? selectedRow.path_nodes
+        : selectedNormal?.ok
+          ? selectedNormal.path
+          : [];
   const mapRouteFamilies = highlightedRouteFamilies(selectedMapPath);
   const activeSpotLabels = useMemo(() => activeSpots.map((s) => s.label), [activeSpots]);
   const mapTitle = entryName
@@ -1046,7 +1056,7 @@ export default function Page() {
               {fixedRows.map((x, i) => {
               const detour = activeSpots.length > 0 ? evaluatedDetours[i]?.detour : null;
               const normalCalc = normalPaths[i];
-              const normal = normalCalc?.ok ? prettyDetourPath(normalCalc.path).join(" → ") : "";
+              const normal = prettyNormalPath(x.path_nodes, x.exit) || (normalCalc?.ok ? prettyDetourPath(normalCalc.path).join(" → ") : "");
 
               return (
                 <div
