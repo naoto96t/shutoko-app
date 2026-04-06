@@ -351,6 +351,13 @@ function main() {
   );
   assert(!!gotandaToShibaura, "Reachability regression: ICIN:五反田:C2_CW should reach ShibauraPA", failures);
 
+  assert(!(graph["ShibauraJCT:R11_DOWN"] || []).includes("ShibauraJCT:R1H_UP"), "Forbidden regression: ShibauraJCT:R11_DOWN -> ShibauraJCT:R1H_UP", failures);
+  assert(!(graph["HamasakibashiJCT:R11_UP"] || []).includes("HamasakibashiJCT:C1_CW"), "Forbidden regression: HamasakibashiJCT:R11_UP -> HamasakibashiJCT:C1_CW", failures);
+  assert(!(graph["HamasakibashiJCT:R11_UP"] || []).includes("HamasakibashiJCT:C1_CCW"), "Forbidden regression: HamasakibashiJCT:R11_UP -> HamasakibashiJCT:C1_CCW", failures);
+  assert((graph["ShibauraJCT:R11_UP"] || []).includes("ShibauraJCT:R1H_UP"), "Reachability regression: ShibauraJCT:R11_UP should connect to ShibauraJCT:R1H_UP", failures);
+  assert((graph["ShibauraJCT:R1H_UP"] || []).includes("HamasakibashiJCT:R1H_UP"), "Reachability regression: ShibauraJCT:R1H_UP should continue to HamasakibashiJCT:R1H_UP", failures);
+  assert((graph["HamasakibashiJCT:R1H_UP"] || []).some((n) => n === "HamasakibashiJCT:C1_CW" || n === "HamasakibashiJCT:C1_CCW"), "Reachability regression: HamasakibashiJCT:R1H_UP should connect to C1", failures);
+
   if (failures.length > 0) {
     console.error("Routing regression check failed:");
     for (const f of failures) console.error(`- ${f}`);
