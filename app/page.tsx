@@ -415,14 +415,17 @@ function bfsPathAvoid(
   const isRadial = (t: string) => /^(R\d+|R1H|R1U|R2A|R2B|R3A|R3B|R4A|R4B|R5A|R5B|R6A|R6B|R7A|R7B|K\d|S\d)_/.test(t);
   const jctOf = (node: string) => (node.includes(":") ? node.split(":")[0] : "");
 
-  const q: string[] = [];
-  const prev = new Map<string, string | null>();
+  type BfsState = { node: string; prevNode: string | null };
+  const q: BfsState[] = [];
+  const prevState = new Map<string, string | null>();
+  const stateKey = (prevNode: string | null, node: string) => `${prevNode || ""}=>${node}`;
+  const stateNode = (key: string) => key.slice(key.indexOf("=>") + 2);
 
   for (const s of starts) {
     if (!graph[s]) continue;
     if (avoid(s) && !targets.has(s)) continue;
-    q.push(s);
-    prev.set(s, null);
+    q.push({ node: s, prevNode: null });
+    prevState.set(stateKey(null, s), null);
   }
   for (const s of starts) {
     if (targets.has(s)) return [s];
@@ -432,12 +435,11 @@ function bfsPathAvoid(
   let steps = 0;
 
   while (head < q.length && steps < maxSteps) {
-    const v = q[head++];
+    const { node: v, prevNode: pv } = q[head++];
     steps++;
 
     const ns = graph[v] || [];
     for (const nxt of ns) {
-      const pv = prev.get(v);
       const fromTail = routeTailOfNode(v);
       const toTail = routeTailOfNode(nxt);
 
@@ -580,20 +582,21 @@ function bfsPathAvoid(
       }
 
       if (avoid(nxt) && !targets.has(nxt)) continue;
-      if (prev.has(nxt)) continue;
-      prev.set(nxt, v);
+      const nextStateKey = stateKey(v, nxt);
+      if (prevState.has(nextStateKey)) continue;
+      prevState.set(nextStateKey, stateKey(pv, v));
 
       if (targets.has(nxt)) {
         const path: string[] = [];
-        let cur: string | null = nxt;
-        while (cur !== null) {
-          path.push(cur);
-          cur = prev.get(cur) ?? null;
+        let curState: string | null = nextStateKey;
+        while (curState !== null) {
+          path.push(stateNode(curState));
+          curState = prevState.get(curState) ?? null;
         }
         path.reverse();
         return path;
       }
-      q.push(nxt);
+      q.push({ node: nxt, prevNode: v });
     }
   }
   return null;

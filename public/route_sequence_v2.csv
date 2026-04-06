@@ -59,8 +59,8 @@ R9,DOWN,"EdobashiJCT,HakozakiJCT,IC:福住,IC:木場,IC:塩浜,IC:枝川,Tatsumi
 R10,DOWN,"IC:晴海,IC:豊洲,ShinonomeJCT"
 R10,UP,"ShinonomeJCT,IC:豊洲,IC:晴海"
 
-R11,UP,"AriakeJCT,IC:台場,ShibauraJCT"
-R11,DOWN,"ShibauraJCT,IC:台場,AriakeJCT"
+R11,UP,"AriakeJCT,IC:台場,ShibauraJCT,HamasakibashiJCT"
+R11,DOWN,"HamasakibashiJCT,ShibauraJCT,IC:台場,AriakeJCT"
 
 K1,UP,"IshikawachoJCT,IC:横浜公園,IC:みなとみらい,IC:横浜駅東口,KinkouJCT,IC:東神奈川,IC:子安,IC:守屋町,IC:生麦,NamamugiJCT,IC:汐入,IC:浜川崎,DaishiJCT,IC:大師,IC:浅田"
 K1,DOWN,"IC:浅田,IC:大師,DaishiJCT,IC:浜川崎,IC:汐入,NamamugiJCT,IC:生麦,IC:守屋町,IC:子安,IC:東神奈川,KinkouJCT,IC:横浜駅東口,IC:みなとみらい,IC:横浜公園,IshikawachoJCT"

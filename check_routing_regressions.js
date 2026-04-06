@@ -60,6 +60,52 @@ function assert(cond, msg, failures) {
   if (!cond) failures.push(msg);
 }
 
+function parseEdgeSetFromCsv(csvText) {
+  const set = new Set();
+  const rows = parseCsv(csvText);
+  for (const row of rows) {
+    const from = (row.from || "").trim();
+    const to = (row.to || "").trim();
+    if (from && to) set.add(`${from}=>${to}`);
+  }
+  return set;
+}
+
+function parseForbiddenEdgeSetFromCsv(csvText) {
+  const set = new Set();
+  const rows = parseCsv(csvText);
+  for (const row of rows) {
+    const { from, to } = normalizeForbiddenEdge(row);
+    if (from && to) set.add(`${from}=>${to}`);
+  }
+  return set;
+}
+
+function parseRouteSequencePos(csvText) {
+  const pos = new Map();
+  const jcts = new Map();
+  const rows = parseCsv(csvText);
+  for (const row of rows) {
+    const route = (row.route || "").trim();
+    const dir = (row.dir || "").trim();
+    const stopsRaw = (row.stops || "").trim();
+    if (!route || !dir || !stopsRaw || route.startsWith("#")) continue;
+
+    const tail = route === "BAY" ? `BAY_${dir}` : `${route}_${dir}`;
+    const stops = stopsRaw.split(",").map((s) => s.trim()).filter(Boolean);
+    if (!jcts.has(tail)) jcts.set(tail, new Set());
+    stops.forEach((s, idx) => {
+      if (s.startsWith("IC:")) {
+        pos.set(`IC:${s.slice(3).trim()}:${tail}`, idx);
+      } else {
+        pos.set(`${s}:${tail}`, idx);
+        jcts.get(tail).add(s);
+      }
+    });
+  }
+  return { pos, jcts };
+}
+
 function tailOfPort(p) {
   const idx = p.indexOf(":");
   return idx >= 0 ? p.slice(idx + 1) : p;
@@ -127,6 +173,146 @@ function runtimeBlocksTwoStep(a, b, c) {
   return false;
 }
 
+function routeTailOfNode(node) {
+  if (node.startsWith("ICIN:") || node.startsWith("ICOUT:") || node.startsWith("IC:")) {
+    const parts = node.split(":");
+    return parts[parts.length - 1] || "";
+  }
+  return tailOfPort(node);
+}
+
+function isTurnScopedNode(node) {
+  if (!node.includes(":")) return false;
+  if (node.startsWith("ICIN:") || node.startsWith("ICOUT:") || node.startsWith("IC:")) return false;
+  return true;
+}
+
+function isIntraJunctionTurn(from, to) {
+  if (!isTurnScopedNode(from) || !isTurnScopedNode(to)) return false;
+  const j1 = jctOf(from);
+  const j2 = jctOf(to);
+  return !!j1 && j1 === j2;
+}
+
+function bfsPathAvoid(graphObj, starts, targets, avoid, turnRules, seqInfo, maxSteps = 60000) {
+  const q = [];
+  const prevState = new Map();
+  const stateKey = (prevNode, node) => `${prevNode || ""}=>${node}`;
+  const stateNode = (key) => key.slice(key.indexOf("=>") + 2);
+
+  for (const s of starts) {
+    if (!graphObj[s]) continue;
+    if (avoid(s) && !targets.has(s)) continue;
+    q.push({ node: s, prevNode: null });
+    prevState.set(stateKey(null, s), null);
+  }
+  for (const s of starts) {
+    if (targets.has(s)) return [s];
+  }
+
+  let head = 0;
+  let steps = 0;
+  while (head < q.length && steps < maxSteps) {
+    const { node: v, prevNode: pv } = q[head++];
+    steps++;
+    for (const nxt of graphObj[v] || []) {
+      const fromTail = routeTailOfNode(v);
+      const toTail = routeTailOfNode(nxt);
+
+      if (seqInfo) {
+        const fromPos = seqInfo.pos.get(v);
+        const toPos = seqInfo.pos.get(nxt);
+        if (fromTail && toTail && fromTail === toTail && fromPos != null && toPos != null && toPos < fromPos) continue;
+        if (isIntraJunctionTurn(v, nxt)) {
+          const j = jctOf(v);
+          const fromHas = seqInfo.jcts.get(fromTail)?.has(j);
+          const toHas = seqInfo.jcts.get(toTail)?.has(j);
+          if (fromHas === false || toHas === false) continue;
+        }
+      }
+
+      if (turnRules && isIntraJunctionTurn(v, nxt) && !turnRules.has(`${v}=>${nxt}`)) continue;
+      if ((fromTail === "BAY_E" || fromTail === "BAY_W") && /_(DOWN)$/.test(toTail)) continue;
+      if ((fromTail === "BAY_E" && toTail === "BAY_W") || (fromTail === "BAY_W" && toTail === "BAY_E")) continue;
+      if (v === "DaikokuJCT:BAY_E" && nxt === "DaikokuPA") continue;
+      if (
+        (v === "KasaiJCT:BAY_E" && nxt === "KasaiJCT:C2_CW") ||
+        (v === "KasaiJCT:BAY_W" && nxt === "KasaiJCT:C2_CCW") ||
+        (v === "KasaiJCT:C2_CW" && nxt === "KasaiJCT:BAY_E") ||
+        (v === "KasaiJCT:C2_CCW" && nxt === "KasaiJCT:BAY_W")
+      ) continue;
+      if (/^R[3-7]A_UP$/.test(fromTail) && toTail.startsWith("C2_")) continue;
+      if (fromTail.startsWith("C2_") && /^R[3-7]B_UP$/.test(toTail)) continue;
+      if (/^R[3-7]B_DOWN$/.test(fromTail) && toTail.startsWith("C2_")) continue;
+
+      const radialTail = /^(R\d+(?:A|B)?|R1H|R1U|K\d|S\d)_(UP|DOWN)$/;
+      const fromRad = radialTail.exec(fromTail);
+      const toRad = radialTail.exec(toTail);
+      if (fromRad && fromRad[2] === "DOWN" && toTail.startsWith("C1_")) continue;
+      if (fromTail.startsWith("C1_") && toRad && toRad[2] === "UP") continue;
+
+      if (
+        (fromTail.startsWith("R7A_") || fromTail.startsWith("R7B_") || fromTail.startsWith("C2_")) &&
+        (toTail.startsWith("R7A_") || toTail.startsWith("R7B_") || toTail.startsWith("C2_"))
+      ) {
+        const sameLine =
+          (fromTail.startsWith("R7") && toTail.startsWith("R7")) ||
+          (fromTail.startsWith("C2") && toTail.startsWith("C2"));
+        const ok7c2 =
+          (fromTail === "R7B_UP" && toTail === "C2_CCW") ||
+          (fromTail === "C2_CW" && toTail === "R7B_DOWN");
+        if (!sameLine && !ok7c2) continue;
+      }
+
+      if (
+        (fromTail.startsWith("R4A_") && toTail.startsWith("C2_")) ||
+        (toTail.startsWith("R4A_") && fromTail.startsWith("C2_"))
+      ) continue;
+      if (fromTail.startsWith("C2_") && toTail === "R4B_UP") continue;
+      if (fromTail === "R4B_DOWN" && toTail.startsWith("C2_")) continue;
+
+      if (pv) {
+        const pj = jctOf(pv);
+        const vj = jctOf(v);
+        const nj = jctOf(nxt);
+        const pt = tailOfPort(pv);
+        const vt = tailOfPort(v);
+        const nt = tailOfPort(nxt);
+        if (pj && pj === vj && vj === nj && isRing(pt) && isRadial(vt) && isRing(nt)) continue;
+        if (pj && pj === vj && vj === nj && isRing(pt) && isRing(vt) && isRing(nt) && pt !== vt && nt === pt) continue;
+        if (
+          pj &&
+          pj === vj &&
+          vj === nj &&
+          isRadial(pt) &&
+          isRing(vt) &&
+          isRadial(nt) &&
+          routeBaseOfTail(pt) === routeBaseOfTail(nt) &&
+          areOppositeDirections(directionOfTail(pt), directionOfTail(nt))
+        ) continue;
+      }
+
+      if (avoid(nxt) && !targets.has(nxt)) continue;
+      const nextStateKey = stateKey(v, nxt);
+      if (prevState.has(nextStateKey)) continue;
+      prevState.set(nextStateKey, stateKey(pv, v));
+
+      if (targets.has(nxt)) {
+        const path = [];
+        let curState = nextStateKey;
+        while (curState !== null) {
+          path.push(stateNode(curState));
+          curState = prevState.get(curState) ?? null;
+        }
+        path.reverse();
+        return path;
+      }
+      q.push({ node: nxt, prevNode: v });
+    }
+  }
+  return null;
+}
+
 function main() {
   const failures = [];
 
@@ -146,6 +332,24 @@ function main() {
     const hasB = (graph[b] || []).includes(c);
     assert(!(hasA && hasB && !runtimeBlocksTwoStep(a, b, c)), `Two-step reversal still possible: ${a} -> ${b} -> ${c}`, failures);
   }
+
+  const turnRules = new Set();
+  for (const k of parseEdgeSetFromCsv(readCsv("allowed_turns_port.csv"))) turnRules.add(k);
+  for (const k of parseEdgeSetFromCsv(readCsv("connections_port.csv"))) turnRules.add(k);
+  for (const k of parseEdgeSetFromCsv(readCsv("special_switches_port.csv"))) turnRules.add(k);
+  for (const k of parseForbiddenEdgeSetFromCsv(readCsv("forbidden_turns.csv"))) turnRules.delete(k);
+  const seqInfo = parseRouteSequencePos(readCsv("route_sequence_v2.csv"));
+  const avoidLoopDeadEnds = (node) => tailOfPort(node).startsWith("R10_");
+
+  const gotandaToShibaura = bfsPathAvoid(
+    graph,
+    ["ICIN:五反田:C2_CW"],
+    new Set(["ShibauraPA"]),
+    avoidLoopDeadEnds,
+    turnRules,
+    seqInfo
+  );
+  assert(!!gotandaToShibaura, "Reachability regression: ICIN:五反田:C2_CW should reach ShibauraPA", failures);
 
   if (failures.length > 0) {
     console.error("Routing regression check failed:");
