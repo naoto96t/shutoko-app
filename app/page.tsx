@@ -805,7 +805,16 @@ export default function Page() {
         const tail = p[p.length - 1] || "";
         return tailAllowedByExitTag(tail, allow);
       });
-      if (filtered.length > 0) icoutTargets = filtered;
+      if (filtered.length > 0) {
+        icoutTargets = filtered;
+      } else {
+        const fallbackAll = (icoutByExit.get(exitName) || []).filter((k) => {
+          const p = k.split(":");
+          const tail = p[p.length - 1] || "";
+          return tailAllowedByExitTag(tail, allow);
+        });
+        if (fallbackAll.length > 0) icoutTargets = fallbackAll;
+      }
     }
     return icoutTargets;
   }

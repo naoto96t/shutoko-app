@@ -62,8 +62,8 @@ R10,UP,"ShinonomeJCT,IC:豊洲,IC:晴海"
 R11,UP,"AriakeJCT,IC:台場,ShibauraJCT,HamasakibashiJCT"
 R11,DOWN,"HamasakibashiJCT,ShibauraJCT,IC:台場,AriakeJCT"
 
-K1,UP,"IshikawachoJCT,IC:横浜公園,IC:みなとみらい,IC:横浜駅東口,KinkouJCT,IC:東神奈川,IC:子安,IC:守屋町,IC:生麦,NamamugiJCT,IC:汐入,IC:浜川崎,DaishiJCT,IC:大師,IC:浅田"
-K1,DOWN,"IC:浅田,IC:大師,DaishiJCT,IC:浜川崎,IC:汐入,NamamugiJCT,IC:生麦,IC:守屋町,IC:子安,IC:東神奈川,KinkouJCT,IC:横浜駅東口,IC:みなとみらい,IC:横浜公園,IshikawachoJCT"
+K1,UP,"IshikawachoJCT,IC:横浜公園,IC:みなとみらい,IC:横浜駅東口,KinkouJCT,IC:東神奈川,IC:子安,IC:守屋町,IC:生麦,NamamugiJCT,IC:汐入,IC:浜川崎,DaishiJCT,IC:大師,IC:浅田,ShowajimaJCT"
+K1,DOWN,"ShowajimaJCT,IC:浅田,IC:大師,DaishiJCT,IC:浜川崎,IC:汐入,NamamugiJCT,IC:生麦,IC:守屋町,IC:子安,IC:東神奈川,KinkouJCT,IC:横浜駅東口,IC:みなとみらい,IC:横浜公園,IshikawachoJCT"
 
 K2,UP,"IC:三ツ沢,IC:横浜駅西口,KinkouJCT"
 K2,DOWN,"KinkouJCT,IC:横浜駅西口,IC:三ツ沢"

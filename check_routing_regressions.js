@@ -364,6 +364,13 @@ function main() {
   assert((graph["HakozakiRotary"] || []).includes("IC:箱崎:R6A_DOWN"), "Reachability regression: HakozakiRotary should exit to IC:箱崎:R6A_DOWN", failures);
   assert((graph["HakozakiRotary"] || []).includes("IC:箱崎:R6A_UP"), "Reachability regression: HakozakiRotary should exit to IC:箱崎:R6A_UP", failures);
 
+  assert((graph["KouhokuJCT:S1_UP"] || []).includes("KouhokuJCT:C2_CW"), "Loop regression: KouhokuJCT:S1_UP should connect to C2_CW", failures);
+  assert((graph["KouhokuJCT:C2_CW"] || []).includes("KouhokuJCT:S1_DOWN"), "Loop regression: KouhokuJCT:C2_CW should connect to S1_DOWN", failures);
+  assert((graph["ShowajimaJCT:K1_UP"] || []).includes("ShowajimaJCT:R1H_UP"), "Loop regression: ShowajimaJCT:K1_UP should connect to R1H_UP", failures);
+  assert((graph["ShowajimaJCT:R1H_UP"] || []).includes("ShowajimaJCT:K1_UP"), "Loop regression: ShowajimaJCT:R1H_UP should connect to K1_UP", failures);
+  assert((graph["ShowajimaJCT:K1_DOWN"] || []).includes("ShowajimaJCT:R1H_DOWN"), "Loop regression: ShowajimaJCT:K1_DOWN should connect to R1H_DOWN", failures);
+  assert((graph["ShowajimaJCT:R1H_DOWN"] || []).includes("ShowajimaJCT:K1_DOWN"), "Loop regression: ShowajimaJCT:R1H_DOWN should connect to K1_DOWN", failures);
+
   if (failures.length > 0) {
     console.error("Routing regression check failed:");
     for (const f of failures) console.error(`- ${f}`);
