@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import ShutokoMap from "./components/ShutokoMap";
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
+const BUILD_LABEL = process.env.NEXT_PUBLIC_BUILD_LABEL || "local";
 
 type ExitRow = {
   exit: string;
@@ -976,6 +977,9 @@ export default function Page() {
           </button>
         ) : null}
         <h1 style={{ fontSize: 22, margin: 0 }}>首都高 周回ドライブプランナー</h1>
+      </div>
+      <div style={{ fontSize: 11, color: "#78716c", marginTop: 4, marginLeft: entryName ? 118 : 0 }}>
+        build {BUILD_LABEL}
       </div>
 
       <div style={{ marginTop: 12 }}>
