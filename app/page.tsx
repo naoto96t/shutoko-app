@@ -766,7 +766,12 @@ export default function Page() {
       const t = tailOfPort(node);
       return t.startsWith("R10_");
     };
-    const p = bfsPathAvoid(graph, startPorts, new Set(icoutTargets), avoidLoopDeadEnds, turnRules, seqInfo);
+    const preferredStartTail = (normalPathNodes && normalPathNodes.length > 0) ? normalPathNodes[0] : "";
+    const preferredStarts = preferredStartTail
+      ? startPorts.filter((port) => routeTailOfNode(port) === preferredStartTail)
+      : [];
+    const effectiveStarts = preferredStarts.length > 0 ? preferredStarts : startPorts;
+    const p = bfsPathAvoid(graph, effectiveStarts, new Set(icoutTargets), avoidLoopDeadEnds, turnRules, seqInfo);
     if (!p) return { ok: false, path: [], why: "出口へ到達不可" };
     return { ok: true, path: p };
   }
