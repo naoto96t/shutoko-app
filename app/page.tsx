@@ -563,6 +563,12 @@ function bfsPathAvoid(
       if (fromRad && fromRad[2] === "DOWN" && toTail.startsWith("C1_")) {
         continue;
       }
+      if (fromTail === "C1_CW" && toTail === "R1U_UP") {
+        continue;
+      }
+      if (fromTail === "R1U_DOWN" && toTail === "C1_CCW") {
+        continue;
+      }
 
       // 7号とC2の接続を厳格化
       // 許可: 7B_UP -> C2_CCW, C2_CW -> 7B_DOWN
