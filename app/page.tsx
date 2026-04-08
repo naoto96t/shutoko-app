@@ -958,10 +958,15 @@ export default function Page() {
   const selectedRow = fixedRows[selectedRowIndex] || null;
   const selectedNormal = selectedRow ? normalPaths[selectedRowIndex] : null;
   const selectedDetour = activeSpots.length > 0 ? evaluatedDetours[selectedRowIndex]?.detour || null : null;
+  const plansPathMatchesEntryFlow = (pathNodes: string[] | undefined) => {
+    if (!pathNodes || pathNodes.length === 0 || entryFlow === "auto") return true;
+    const first = pathNodes[0] || "";
+    return entryFlow === "up" ? first.endsWith("_UP") : first.endsWith("_DOWN");
+  };
   const selectedMapPath =
     activeSpots.length > 0 && selectedDetour?.ok
       ? selectedDetour.path
-      : selectedRow?.path_nodes && selectedRow.path_nodes.length > 0
+      : selectedRow?.path_nodes && selectedRow.path_nodes.length > 0 && plansPathMatchesEntryFlow(selectedRow.path_nodes)
         ? selectedRow.path_nodes
         : selectedNormal?.ok
           ? selectedNormal.path
@@ -1120,7 +1125,10 @@ export default function Page() {
               {fixedRows.map((x, i) => {
               const detour = activeSpots.length > 0 ? evaluatedDetours[i]?.detour : null;
               const normalCalc = normalPaths[i];
-              const normal = prettyNormalPath(x.path_nodes, x.exit) || (normalCalc?.ok ? prettyDetourPath(normalCalc.path).join(" → ") : "");
+              const usePlansNormal = plansPathMatchesEntryFlow(x.path_nodes);
+              const normal =
+                (usePlansNormal ? prettyNormalPath(x.path_nodes, x.exit) : "") ||
+                (normalCalc?.ok ? prettyDetourPath(normalCalc.path).join(" → ") : "");
 
               return (
                 <div

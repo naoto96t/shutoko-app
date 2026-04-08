@@ -431,6 +431,7 @@ function main() {
   assert((graph["ShowajimaJCT:R1H_DOWN"] || []).includes("ShowajimaJCT:K1_DOWN"), "Loop regression: ShowajimaJCT:R1H_DOWN should connect to K1_DOWN", failures);
   assert((graph["KawasakiUkishimaJCT:BAY_E"] || []).includes("KawasakiUkishimaJCT:K6_UP"), "Loop regression: KawasakiUkishimaJCT:BAY_E should connect to K6_UP", failures);
   assert((graph["KawasakiUkishimaJCT:K6_DOWN"] || []).includes("KawasakiUkishimaJCT:BAY_W"), "Loop regression: KawasakiUkishimaJCT:K6_DOWN should connect to BAY_W", failures);
+  assert((graph["IC:浅田:K1_UP"] || []).includes("ShowajimaJCT:K1_UP"), "Loop regression: IC:浅田:K1_UP should continue to ShowajimaJCT:K1_UP", failures);
 
   const loopCases = [
     ["大師", "浜川崎", "DaikokuPA"],
@@ -449,6 +450,10 @@ function main() {
       assert(!!backToExit, `Loop regression: ${spotNode} should reach exit ${exitName}`, failures);
     }
   }
+
+  const daishiUpStarts = resolveStartPorts("大師", ["K1_UP"]);
+  const daishiToDaikokuUp = bfsPathAvoid(graph, daishiUpStarts, new Set(["DaikokuPA"]), avoidLoopDeadEnds, turnRules, seqInfo);
+  assert(!!daishiToDaikokuUp, "Directional regression: 大師 up should reach DaikokuPA", failures);
 
   if (failures.length > 0) {
     console.error("Routing regression check failed:");
