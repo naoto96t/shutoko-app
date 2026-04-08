@@ -4,6 +4,7 @@ const path = require("path");
 
 const root = __dirname;
 const graph = require("./public/graph.json");
+const plans = require("./public/plans.json");
 
 function readCsv(file) {
   return fs.readFileSync(path.join(root, "public", file), "utf8");
@@ -13,6 +14,7 @@ function parseCsv(text) {
   const lines = text.split(/\r?\n/).filter(Boolean);
   if (lines.length === 0) return [];
   const header = splitCsvLine(lines[0]);
+  if (header.length > 0) header[0] = header[0].replace(/^\uFEFF/, "");
   return lines.slice(1).map((line) => {
     const cols = splitCsvLine(line);
     const row = {};
@@ -181,6 +183,62 @@ function routeTailOfNode(node) {
   return tailOfPort(node);
 }
 
+function parseIcExitAllow(csvText) {
+  const m = new Map();
+  const rows = parseCsv(csvText);
+  for (const row of rows) {
+    const name = (row["IC名"] || row[Object.keys(row)[0]] || "").trim();
+    const outTag = (row["出口タグ"] || row[Object.keys(row)[2]] || "").trim();
+    if (!name) continue;
+    if (!m.has(name)) m.set(name, new Set());
+    const allow = m.get(name);
+    if (outTag.includes("上り")) allow.add("UP");
+    if (outTag.includes("下り")) allow.add("DOWN");
+    if (outTag.includes("内回り")) allow.add("CCW");
+    if (outTag.includes("外回り")) allow.add("CW");
+    if (outTag.includes("東行き")) allow.add("E");
+    if (outTag.includes("西行き")) allow.add("W");
+  }
+  return m;
+}
+
+function tailAllowedByExitTag(tail, allow) {
+  if (!allow || allow.size === 0) return true;
+  const m = tail.match(/_(UP|DOWN|CW|CCW|E|W)$/);
+  return !!m && allow.has(m[1]);
+}
+
+function resolveStartPorts(entryName, startNodes) {
+  const out = [];
+  for (const n of startNodes) {
+    for (const k of [`ICIN:${entryName}:${n}`, `IC:${entryName}:${n}`, `${entryName}:${n}`]) {
+      if (graph[k]) {
+        out.push(k);
+        break;
+      }
+    }
+  }
+  return [...new Set(out)];
+}
+
+function resolveIcoutTargets(exitName, targetNodes, exitAllow) {
+  let icoutTargets = [...new Set((targetNodes || []).map((t) => `ICOUT:${exitName}:${t}`))].filter((k) => !!graph[k]);
+  if (icoutTargets.length === 0) icoutTargets = Object.keys(graph).filter((k) => k.startsWith(`ICOUT:${exitName}:`));
+  const allow = exitAllow.get(exitName);
+  if (allow && icoutTargets.length > 0) {
+    const filtered = icoutTargets.filter((k) => tailAllowedByExitTag(k.split(":").at(-1), allow));
+    if (filtered.length > 0) {
+      icoutTargets = filtered;
+    } else {
+      const fallbackAll = Object.keys(graph).filter(
+        (k) => k.startsWith(`ICOUT:${exitName}:`) && tailAllowedByExitTag(k.split(":").at(-1), allow)
+      );
+      if (fallbackAll.length > 0) icoutTargets = fallbackAll;
+    }
+  }
+  return icoutTargets;
+}
+
 function isTurnScopedNode(node) {
   if (!node.includes(":")) return false;
   if (node.startsWith("ICIN:") || node.startsWith("ICOUT:") || node.startsWith("IC:")) return false;
@@ -339,6 +397,7 @@ function main() {
   for (const k of parseEdgeSetFromCsv(readCsv("special_switches_port.csv"))) turnRules.add(k);
   for (const k of parseForbiddenEdgeSetFromCsv(readCsv("forbidden_turns.csv"))) turnRules.delete(k);
   const seqInfo = parseRouteSequencePos(readCsv("route_sequence_v2.csv"));
+  const exitAllow = parseIcExitAllow(readCsv("ic_tags.csv"));
   const avoidLoopDeadEnds = (node) => tailOfPort(node).startsWith("R10_");
 
   const gotandaToShibaura = bfsPathAvoid(
@@ -370,6 +429,26 @@ function main() {
   assert((graph["ShowajimaJCT:R1H_UP"] || []).includes("ShowajimaJCT:K1_UP"), "Loop regression: ShowajimaJCT:R1H_UP should connect to K1_UP", failures);
   assert((graph["ShowajimaJCT:K1_DOWN"] || []).includes("ShowajimaJCT:R1H_DOWN"), "Loop regression: ShowajimaJCT:K1_DOWN should connect to R1H_DOWN", failures);
   assert((graph["ShowajimaJCT:R1H_DOWN"] || []).includes("ShowajimaJCT:K1_DOWN"), "Loop regression: ShowajimaJCT:R1H_DOWN should connect to K1_DOWN", failures);
+  assert((graph["KawasakiUkishimaJCT:BAY_E"] || []).includes("KawasakiUkishimaJCT:K6_UP"), "Loop regression: KawasakiUkishimaJCT:BAY_E should connect to K6_UP", failures);
+  assert((graph["KawasakiUkishimaJCT:K6_DOWN"] || []).includes("KawasakiUkishimaJCT:BAY_W"), "Loop regression: KawasakiUkishimaJCT:K6_DOWN should connect to BAY_W", failures);
+
+  const loopCases = [
+    ["大師", "浜川崎", "DaikokuPA"],
+    ["浅田", "汐入", "DaikokuPA"],
+    ["新郷", "安行", "DaikokuPA"],
+  ];
+  for (const [entryName, exitName, spotNode] of loopCases) {
+    const entry = plans.entries[entryName];
+    const row = (entry?.exits || []).find((r) => r.exit === exitName);
+    const starts = resolveStartPorts(entryName, entry?.start_nodes || []);
+    const exits = resolveIcoutTargets(exitName, row?.target_nodes || [], exitAllow);
+    const toSpot = bfsPathAvoid(graph, starts, new Set([spotNode]), avoidLoopDeadEnds, turnRules, seqInfo);
+    assert(!!toSpot, `Loop regression: ${entryName} should reach ${spotNode}`, failures);
+    if (toSpot) {
+      const backToExit = bfsPathAvoid(graph, [toSpot[toSpot.length - 1]], new Set(exits), avoidLoopDeadEnds, turnRules, seqInfo);
+      assert(!!backToExit, `Loop regression: ${spotNode} should reach exit ${exitName}`, failures);
+    }
+  }
 
   if (failures.length > 0) {
     console.error("Routing regression check failed:");

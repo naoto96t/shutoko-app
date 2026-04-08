@@ -51,6 +51,8 @@ DaishiJCT:K1_DOWN,DaishiJCT:K6_UP,link,大師JCT: K1→K6
 DaishiJCT:K1_UP,DaishiJCT:K6_DOWN,link,大師JCT: K1→K6
 DaishiJCT:K6_UP,DaishiJCT:K1_DOWN,link,大師JCT: K6→K1
 DaishiJCT:K6_DOWN,DaishiJCT:K1_UP,link,大師JCT: K6→K1
+KawasakiUkishimaJCT:BAY_E,KawasakiUkishimaJCT:K6_UP,link,浮島JCT: BAY→K6
+KawasakiUkishimaJCT:K6_DOWN,KawasakiUkishimaJCT:BAY_W,link,浮島JCT: K6→BAY
 KouhokuJCT:C2_CW,KouhokuJCT:S1_DOWN,link,江北JCT: C2→S1
 KouhokuJCT:S1_UP,KouhokuJCT:C2_CW,link,江北JCT: S1→C2
 SaitamaJCT:S2_UP,SaitamaJCT:S5_UP,link,S2→S5 乗り入れ
