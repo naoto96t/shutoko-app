@@ -279,12 +279,17 @@ export default function ShutokoMap({
 }: ShutokoMapProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [svgMarkup, setSvgMarkup] = useState<string>("");
+  const [seqCsv, setSeqCsv] = useState<string>("");
 
   useEffect(() => {
     fetch(publicAsset("/shutoko.svg"))
       .then((r) => r.text())
       .then(setSvgMarkup)
       .catch(() => setSvgMarkup(""));
+    fetch(publicAsset("/route_sequence_v2.csv"))
+      .then((r) => r.text())
+      .then(setSeqCsv)
+      .catch(() => setSeqCsv(""));
   }, []);
 
   const routeRuns = useMemo(() => {
@@ -335,6 +340,76 @@ export default function ShutokoMap({
     const markerLayer = addLayer(rootSvg, "route-marker-layer");
     const icNameToSvgId = buildIcNameToSvgIdMap(host);
 
+    const parseSeq = (csvText: string) => {
+      const lines = csvText.split(/\r?\n/).filter(Boolean);
+      if (lines.length === 0) return new Map<string, string[]>();
+      const header = lines[0].split(",");
+      const routeIdx = header.indexOf("route");
+      const dirIdx = header.indexOf("dir");
+      const stopsIdx = header.indexOf("stops");
+      const map = new Map<string, string[]>();
+      for (const line of lines.slice(1)) {
+        const cols: string[] = [];
+        let cur = "";
+        let inQ = false;
+        for (let i = 0; i < line.length; i++) {
+          const ch = line[i];
+          if (ch === "\"") {
+            if (inQ && line[i + 1] === "\"") {
+              cur += "\"";
+              i++;
+            } else {
+              inQ = !inQ;
+            }
+          } else if (ch === "," && !inQ) {
+            cols.push(cur);
+            cur = "";
+          } else {
+            cur += ch;
+          }
+        }
+        cols.push(cur);
+        const route = (cols[routeIdx] || "").trim();
+        const dir = (cols[dirIdx] || "").trim();
+        const stopsRaw = (cols[stopsIdx] || "").trim();
+        if (!route || !dir || !stopsRaw || route.startsWith("#")) continue;
+        const tail = route === "BAY" ? `BAY_${dir}` : `${route}_${dir}`;
+        const stops = stopsRaw.split(",").map((s) => s.trim()).filter(Boolean).map((s) => (s.startsWith("IC:") ? s.slice(3).trim() : s));
+        map.set(tail, stops);
+      }
+      return map;
+    };
+
+    const seqMap = parseSeq(seqCsv);
+
+    const svgIdForStop = (stop: string) => {
+      if (PA_ID_BY_NODE[stop]) return PA_ID_BY_NODE[stop];
+      return icNameToSvgId.get(stop) || NODE_ID_ALIASES[stop] || stop;
+    };
+
+    const inferIncreasingDirection = (tail: string, routePath: SVGPathElement) => {
+      const stops = seqMap.get(tail) || [];
+      const lengths: number[] = [];
+      for (const stop of stops) {
+        const svgId = svgIdForStop(stop);
+        const point =
+          pointMap.get(svgId) ||
+          centerOf(findSvgNode(host, svgId) as SVGGraphicsElement | null);
+        if (!point) continue;
+        const near = nearestLengthOnPath(routePath, point.x, point.y);
+        if (near.dist <= 80) lengths.push(near.length);
+      }
+      if (lengths.length < 2) return null;
+      let inc = 0;
+      let dec = 0;
+      for (let i = 0; i + 1 < lengths.length; i++) {
+        if (lengths[i + 1] > lengths[i]) inc++;
+        if (lengths[i + 1] < lengths[i]) dec++;
+      }
+      if (inc === dec) return null;
+      return inc > dec;
+    };
+
     let firstProjectedPoint: { x: number; y: number } | null = null;
     let lastProjectedPoint: { x: number; y: number } | null = null;
 
@@ -383,13 +458,17 @@ export default function ShutokoMap({
         lastProjectedPoint = b;
         const aLen = best.aLen;
         const bLen = best.bLen;
-        if (run.ring && run.forward != null) {
-          const wraps = run.forward ? bLen < aLen : aLen < bLen;
+        const inferredIncreasing = inferIncreasingDirection(run.tail, best.path);
+        if (run.ring && inferredIncreasing != null) {
+          const wraps = inferredIncreasing ? bLen < aLen : aLen < bLen;
           if (wraps) {
-            const lo = Math.min(aLen, bLen);
-            const hi = Math.max(aLen, bLen);
-            appendOverlay(overlayLayer, best.path, best.total, 0, lo);
-            appendOverlay(overlayLayer, best.path, best.total, hi, best.total);
+            if (inferredIncreasing) {
+              appendOverlay(overlayLayer, best.path, best.total, aLen, best.total);
+              appendOverlay(overlayLayer, best.path, best.total, 0, bLen);
+            } else {
+              appendOverlay(overlayLayer, best.path, best.total, bLen, best.total);
+              appendOverlay(overlayLayer, best.path, best.total, 0, aLen);
+            }
           } else {
             appendOverlay(overlayLayer, best.path, best.total, Math.min(aLen, bLen), Math.max(aLen, bLen));
           }
@@ -409,7 +488,7 @@ export default function ShutokoMap({
       const id = PA_ID_BY_LABEL[label];
       if (id) addMarker(markerLayer, pointMap.get(id) || centerOf(findSvgNode(host, id) as SVGGraphicsElement | null), "#059669", 5);
     }
-  }, [activeSpotLabels, entryName, exitName, pointMap, routeRuns, svgMarkup]);
+  }, [activeSpotLabels, entryName, exitName, pointMap, routeRuns, seqCsv, svgMarkup]);
 
   return (
     <div
