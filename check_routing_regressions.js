@@ -437,6 +437,7 @@ function main() {
     ["大師", "浜川崎", "DaikokuPA"],
     ["浅田", "汐入", "DaikokuPA"],
     ["新郷", "安行", "DaikokuPA"],
+    ["浅田", "汐入", "ShibauraPA"],
   ];
   for (const [entryName, exitName, spotNode] of loopCases) {
     const entry = plans.entries[entryName];
