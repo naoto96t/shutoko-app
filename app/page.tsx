@@ -145,6 +145,40 @@ function prettyDetourPath(path: string[]) {
   return out;
 }
 
+function isPaNode(n: string) {
+  return n === "HakozakiRotary" || n === "DaikokuPA" || n === "TatsumiPA1" || n === "TatsumiPA2" || n === "ShibauraPA";
+}
+
+function scoreDetourPath(path: string[], selectedSpotNodes: Set<string>) {
+  let penalty = 0;
+  for (let i = 0; i < path.length; i++) {
+    const cur = path[i];
+    if (!isPaNode(cur)) continue;
+
+    const prevTail = i > 0 ? routeTailOfNode(path[i - 1]) : "";
+    const nextTail = i + 1 < path.length ? routeTailOfNode(path[i + 1]) : "";
+    const prevBase = routeBaseOfTail(prevTail);
+    const nextBase = routeBaseOfTail(nextTail);
+
+    if (!selectedSpotNodes.has(cur)) {
+      penalty += 10000;
+    }
+
+    if (prevBase && nextBase && prevBase === nextBase) {
+      penalty += 4000;
+    }
+
+    if (cur === "DaikokuPA" && ((prevTail.startsWith("BAY_") && nextTail.startsWith("BAY_")) || (prevTail.startsWith("K5_") && nextTail.startsWith("K5_")))) {
+      penalty += 6000;
+    }
+
+    if (cur === "HakozakiRotary" && prevTail.startsWith("R6A_") && nextTail.startsWith("R6A_")) {
+      penalty += 6000;
+    }
+  }
+  return penalty + path.length;
+}
+
 function publicAsset(path: string) {
   return `${BASE_PATH}${path}`;
 }
@@ -890,13 +924,19 @@ export default function Page() {
 
     const orders = activeSpots.length <= 1 ? [activeSpots] : permutations(activeSpots);
     let best: string[] | null = null;
+    let bestScore = Number.POSITIVE_INFINITY;
     let hitAnySpot = false;
+    const selectedSpotNodes = new Set(activeSpots.map((s) => s.node));
 
     for (const order of orders) {
       const one = tryOrder(order);
       if (!one) continue;
       hitAnySpot = true;
-      if (!best || one.length < best.length) best = one;
+      const score = scoreDetourPath(one, selectedSpotNodes);
+      if (!best || score < bestScore) {
+        best = one;
+        bestScore = score;
+      }
     }
 
     if (!hitAnySpot) return { ok: false, path: [], why: "スポット順序を変えても成立せず" };
@@ -999,7 +1039,15 @@ export default function Page() {
       <div style={{ marginTop: 12 }}>
         <input
           value={q}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={(e) => {
+            const next = e.target.value;
+            setQ(next);
+            if (entryName && next !== entryName) {
+              setEntryName(null);
+              setSelectedRowIndex(0);
+              setEntryFlow("auto");
+            }
+          }}
           placeholder="入口を検索（例：五反田 / 外苑 / 葛西）"
           style={{ width: "100%", padding: 12, fontSize: 16, border: "1px solid #bbb", borderRadius: 12 }}
         />
