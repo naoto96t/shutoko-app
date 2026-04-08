@@ -554,19 +554,14 @@ function bfsPathAvoid(
       }
 
       // C1の向き制約:
-      // Rx_DOWN -> C1 は不可
-      // C1 -> Rx_UP は、allowed/forbidden の実データで判定する。
-      // 1号羽田線・1号上野線・2/3/4/5/6号などへは C1 から入れる接続があるため、
-      // blanket に禁止すると芝浦・東京側ループの成立経路まで潰してしまう。
+      // Rx_DOWN -> C1 は不可、C1 -> Rx_UP は不可
       const radialTail = /^(R\d+(?:A|B)?|R1H|R1U|K\d|S\d)_(UP|DOWN)$/;
       const fromRad = radialTail.exec(fromTail);
+      const toRad = radialTail.exec(toTail);
       if (fromRad && fromRad[2] === "DOWN" && toTail.startsWith("C1_")) {
         continue;
       }
-      if (fromTail === "C1_CW" && toTail === "R1U_UP") {
-        continue;
-      }
-      if (fromTail === "R1U_DOWN" && toTail === "C1_CCW") {
+      if (fromTail.startsWith("C1_") && toRad && toRad[2] === "UP") {
         continue;
       }
 
