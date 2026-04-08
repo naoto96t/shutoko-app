@@ -656,6 +656,186 @@ function bfsPathAvoid(
   return null;
 }
 
+function dijkstraPathAvoid(
+  graph: GraphJson,
+  starts: string[],
+  targets: Set<string>,
+  avoid: (node: string) => boolean,
+  turnRules: TurnRuleSet | null,
+  seqInfo: { pos: SeqPosMap; jcts: SeqJctMap } | null,
+  edgeCost: (prevNode: string | null, node: string, nextNode: string) => number,
+  maxSteps = 120000
+): string[] | null {
+  const isRing = (t: string) => t.startsWith("C1_") || t.startsWith("C2_") || t.startsWith("BAY");
+  const isRadial = (t: string) => /^(R\d+|R1H|R1U|R2A|R2B|R3A|R3B|R4A|R4B|R5A|R5B|R6A|R6B|R7A|R7B|K\d|S\d)_/.test(t);
+  const jctOf = (node: string) => (node.includes(":") ? node.split(":")[0] : "");
+
+  type SearchState = { node: string; prevNode: string | null; cost: number };
+  const stateKey = (prevNode: string | null, node: string) => `${prevNode || ""}=>${node}`;
+  const stateNode = (key: string) => key.slice(key.indexOf("=>") + 2);
+  const frontier: SearchState[] = [];
+  const bestCost = new Map<string, number>();
+  const prevState = new Map<string, string | null>();
+
+  for (const s of starts) {
+    if (!graph[s]) continue;
+    if (avoid(s) && !targets.has(s)) continue;
+    const key = stateKey(null, s);
+    bestCost.set(key, 0);
+    prevState.set(key, null);
+    frontier.push({ node: s, prevNode: null, cost: 0 });
+    if (targets.has(s)) return [s];
+  }
+
+  let steps = 0;
+  while (frontier.length > 0 && steps < maxSteps) {
+    frontier.sort((a, b) => a.cost - b.cost);
+    const { node: v, prevNode: pv, cost } = frontier.shift()!;
+    steps++;
+    const currentKey = stateKey(pv, v);
+    if (cost !== bestCost.get(currentKey)) continue;
+    if (targets.has(v)) {
+      const path: string[] = [];
+      let curState: string | null = currentKey;
+      while (curState !== null) {
+        path.push(stateNode(curState));
+        curState = prevState.get(curState) ?? null;
+      }
+      path.reverse();
+      return path;
+    }
+
+    for (const nxt of graph[v] || []) {
+      const fromTail = routeTailOfNode(v);
+      const toTail = routeTailOfNode(nxt);
+
+      if (seqInfo) {
+        const fromPos = seqInfo.pos.get(v);
+        const toPos = seqInfo.pos.get(nxt);
+        if (fromTail && toTail && fromTail === toTail && fromPos != null && toPos != null && toPos < fromPos) {
+          continue;
+        }
+        if (isIntraJunctionTurn(v, nxt)) {
+          const j = junctionOf(v);
+          const fromHas = seqInfo.jcts.get(fromTail)?.has(j);
+          const toHas = seqInfo.jcts.get(toTail)?.has(j);
+          if (fromHas === false || toHas === false) {
+            continue;
+          }
+        }
+      }
+
+      if (turnRules && isIntraJunctionTurn(v, nxt) && !turnRules.has(edgeKey(v, nxt))) {
+        continue;
+      }
+
+      if ((fromTail === "BAY_E" || fromTail === "BAY_W") && /_(DOWN)$/.test(toTail)) {
+        continue;
+      }
+      if ((fromTail === "BAY_E" && toTail === "BAY_W") || (fromTail === "BAY_W" && toTail === "BAY_E")) {
+        continue;
+      }
+      if (v === "DaikokuJCT:BAY_E" && nxt === "DaikokuPA") {
+        continue;
+      }
+      if (
+        (v === "KasaiJCT:BAY_E" && nxt === "KasaiJCT:C2_CW") ||
+        (v === "KasaiJCT:BAY_W" && nxt === "KasaiJCT:C2_CCW") ||
+        (v === "KasaiJCT:C2_CW" && nxt === "KasaiJCT:BAY_E") ||
+        (v === "KasaiJCT:C2_CCW" && nxt === "KasaiJCT:BAY_W")
+      ) {
+        continue;
+      }
+      if (/^R[3-7]A_UP$/.test(fromTail) && toTail.startsWith("C2_")) {
+        continue;
+      }
+      if (fromTail.startsWith("C2_") && /^R[3-7]B_UP$/.test(toTail)) {
+        continue;
+      }
+      if (/^R[3-7]B_DOWN$/.test(fromTail) && toTail.startsWith("C2_")) {
+        continue;
+      }
+
+      const radialTail = /^(R\d+(?:A|B)?|R1H|R1U|K\d|S\d)_(UP|DOWN)$/;
+      const fromRad = radialTail.exec(fromTail);
+      if (fromRad && fromRad[2] === "DOWN" && toTail.startsWith("C1_")) {
+        continue;
+      }
+      if (fromTail === "C1_CW" && toTail === "R1U_UP") {
+        continue;
+      }
+      if (fromTail === "R1U_DOWN" && toTail === "C1_CCW") {
+        continue;
+      }
+
+      if (
+        (fromTail.startsWith("R7A_") || fromTail.startsWith("R7B_") || fromTail.startsWith("C2_")) &&
+        (toTail.startsWith("R7A_") || toTail.startsWith("R7B_") || toTail.startsWith("C2_"))
+      ) {
+        const sameLine =
+          (fromTail.startsWith("R7") && toTail.startsWith("R7")) ||
+          (fromTail.startsWith("C2") && toTail.startsWith("C2"));
+        const ok7c2 =
+          (fromTail === "R7B_UP" && toTail === "C2_CCW") ||
+          (fromTail === "C2_CW" && toTail === "R7B_DOWN");
+        if (!sameLine && !ok7c2) {
+          continue;
+        }
+      }
+
+      if (
+        (fromTail.startsWith("R4A_") && toTail.startsWith("C2_")) ||
+        (toTail.startsWith("R4A_") && fromTail.startsWith("C2_"))
+      ) {
+        continue;
+      }
+      if (fromTail.startsWith("C2_") && toTail === "R4B_UP") {
+        continue;
+      }
+      if (fromTail === "R4B_DOWN" && toTail.startsWith("C2_")) {
+        continue;
+      }
+
+      if (pv) {
+        const pj = jctOf(pv);
+        const vj = jctOf(v);
+        const nj = jctOf(nxt);
+        const pt = tailOfPort(pv);
+        const vt = tailOfPort(v);
+        const nt = tailOfPort(nxt);
+
+        if (pj && pj === vj && vj === nj && isRing(pt) && isRadial(vt) && isRing(nt)) {
+          continue;
+        }
+        if (pj && pj === vj && vj === nj && isRing(pt) && isRing(vt) && isRing(nt) && pt !== vt && nt === pt) {
+          continue;
+        }
+        if (
+          pj &&
+          pj === vj &&
+          vj === nj &&
+          isRadial(pt) &&
+          isRing(vt) &&
+          isRadial(nt) &&
+          routeBaseOfTail(pt) === routeBaseOfTail(nt) &&
+          areOppositeDirections(directionOfTail(pt), directionOfTail(nt))
+        ) {
+          continue;
+        }
+      }
+
+      if (avoid(nxt) && !targets.has(nxt)) continue;
+      const nextKey = stateKey(v, nxt);
+      const nextCost = cost + edgeCost(pv, v, nxt);
+      if (nextCost >= (bestCost.get(nextKey) ?? Number.POSITIVE_INFINITY)) continue;
+      bestCost.set(nextKey, nextCost);
+      prevState.set(nextKey, currentKey);
+      frontier.push({ node: nxt, prevNode: v, cost: nextCost });
+    }
+  }
+  return null;
+}
+
 export default function Page() {
   const [faresData, setFaresData] = useState<PlansJson | null>(null);
   const [graph, setGraph] = useState<GraphJson | null>(null);
@@ -903,7 +1083,42 @@ export default function Page() {
 
     const go = (starts: string[], targetsArr: string[]) => {
       const targets = new Set(targetsArr);
-      return bfsPathAvoid(graph, starts, targets, avoidLoopDeadEnds, turnRules, seqInfo);
+      return dijkstraPathAvoid(
+        graph,
+        starts,
+        targets,
+        avoidLoopDeadEnds,
+        turnRules,
+        seqInfo,
+        (_prevNode, node, nextNode) => {
+          let cost = 1;
+          if (isPaNode(nextNode) && !targets.has(nextNode)) {
+            cost += 10000;
+          }
+
+          const nodeTail = routeTailOfNode(node);
+          const nextTail = routeTailOfNode(nextNode);
+          const nodeBase = routeBaseOfTail(nodeTail);
+          const nextBase = routeBaseOfTail(nextTail);
+
+          if (nextNode === "DaikokuPA" && !targets.has(nextNode)) {
+            cost += 10000;
+          }
+          if (nextNode === "HakozakiRotary" && !targets.has(nextNode)) {
+            cost += 10000;
+          }
+          if (nextNode === "DaikokuPA" && nodeTail.startsWith("BAY_")) {
+            cost += 4000;
+          }
+          if (nextNode === "HakozakiRotary" && nodeTail.startsWith("R6A_")) {
+            cost += 4000;
+          }
+          if (nodeBase && nextBase && nodeBase === nextBase && areOppositeDirections(directionOfTail(nodeTail), directionOfTail(nextTail))) {
+            cost += 5000;
+          }
+          return cost;
+        }
+      );
     };
 
     if (activeSpots.length === 0) return { ok: false, path: [], why: "スポット未選択" };
