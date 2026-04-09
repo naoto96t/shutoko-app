@@ -1267,7 +1267,7 @@ export default function Page() {
     : "首都高 周回ドライブプランナー";
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: 16 }}>
+    <div style={{ maxWidth: 1320, margin: "0 auto", padding: 16 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
         {entryName ? (
           <button
@@ -1359,7 +1359,7 @@ export default function Page() {
             style={{
               marginTop: 12,
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+              gridTemplateColumns: "minmax(0, 1.65fr) minmax(360px, 1fr)",
               gap: 14,
               alignItems: "start",
             }}
