@@ -83,59 +83,44 @@ function normalizeRouteGroupId(id: string) {
   return id.replace(/^Route_/, "").replace(/^route_/, "");
 }
 
+const ROUTE_GROUP_IC_NAMES: Record<string, string[]> = {
+  C1: ["代官町", "北の丸", "神田橋", "宝町", "京橋", "新富町", "銀座", "汐留", "芝公園", "飯倉", "霞が関"],
+  C2: ["五反田", "富ヶ谷", "初台南", "中野長者橋", "西池袋", "高松", "新板橋", "滝野川", "王子南", "王子北", "扇大橋", "千住新橋", "小菅", "四つ木", "平井大橋", "中環小松川", "船堀橋", "清新町"],
+  R1H: ["芝浦", "勝島", "鈴ヶ森", "平和島", "空港西", "羽田"],
+  R1U: ["入谷", "上野", "本町"],
+  R3: ["高樹町", "渋谷", "池尻", "三軒茶屋", "用賀"],
+  R4: ["高井戸", "永福", "幡ヶ谷", "初台", "新宿", "代々木", "外苑"],
+  R5A: ["一ツ橋", "西神田", "飯田橋", "早稲田", "護国寺", "東池袋", "北池袋"],
+  R5B: ["板橋本町", "中台", "高島平", "戸田南", "戸田"],
+  R6A: ["堤通", "向島", "駒形", "清洲橋", "浜町", "箱崎"],
+  R6B: ["三郷", "八潮", "八潮南", "加平"],
+  R7: ["錦糸町", "小松川", "一之江"],
+  R9: ["福住", "木場", "塩浜", "枝川"],
+  R10: ["豊洲", "晴海"],
+  R11: ["台場"],
+  K1: ["大師", "浜川崎", "浅田", "汐入", "生麦", "守屋町", "子安", "東神奈川", "横浜駅東口", "みなとみらい", "横浜公園"],
+  K2: ["横浜駅西口", "三ツ沢"],
+  K3: ["新山下", "山下町", "石川町", "阪東橋", "花之木", "永田"],
+  S1: ["鹿浜橋", "東領家", "加賀", "足立入谷", "新郷", "安行", "新井宿"],
+};
+
 function buildIcNameToSvgIdMap(host: Element) {
   const out = new Map<string, string>();
   const nodesRoot = host.querySelector("#nodes_ic");
-  const namesRoot = host.querySelector("#ic_names");
-  if (!nodesRoot || !namesRoot) return out;
-
-  const centerOfElement = (el: Element | null) => {
-    if (!el) return null;
-    try {
-      const box = (el as SVGGraphicsElement).getBBox();
-      return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
-    } catch {
-      return null;
-    }
-  };
-
-  const nameGroups = new Map<string, Element>();
-  for (const el of Array.from(namesRoot.children)) {
-    if (!(el instanceof Element) || !el.id) continue;
-    nameGroups.set(normalizeRouteGroupId(el.id), el);
-  }
+  if (!nodesRoot) return out;
 
   for (const nodeGroup of Array.from(nodesRoot.children)) {
     if (!(nodeGroup instanceof Element) || !nodeGroup.id) continue;
     const key = normalizeRouteGroupId(nodeGroup.id);
-    const nameGroup = nameGroups.get(key);
-    if (!nameGroup) continue;
+    const names = ROUTE_GROUP_IC_NAMES[key];
+    if (!names?.length) continue;
 
-    const nodes = Array.from(nodeGroup.children)
+    const ids = Array.from(nodeGroup.children)
       .filter((el): el is Element => el instanceof Element && !!el.id && el.id.startsWith("ic_"))
-      .map((el) => ({ id: el.id, point: centerOfElement(el) }))
-      .filter((x): x is { id: string; point: { x: number; y: number } } => !!x.point);
+      .map((el) => el.id);
 
-    const names = Array.from(nameGroup.children)
-      .filter((el): el is Element => el instanceof Element && !!el.id)
-      .map((el) => ({
-        name: demojibakeUtf8(decodeHtmlEntities(el.id)).replace(/_\d+$/, ""),
-        point: centerOfElement(el),
-      }))
-      .filter((x): x is { name: string; point: { x: number; y: number } } => !!x.point);
-
-    const used = new Set<string>();
-    for (const name of names) {
-      let best: { id: string; dist: number } | null = null;
-      for (const node of nodes) {
-        if (used.has(node.id)) continue;
-        const dist = Math.hypot(node.point.x - name.point.x, node.point.y - name.point.y);
-        if (!best || dist < best.dist) best = { id: node.id, dist };
-      }
-      if (best) {
-        used.add(best.id);
-        out.set(name.name, best.id);
-      }
+    for (let i = 0; i < Math.min(names.length, ids.length); i++) {
+      out.set(names[i], ids[i]);
     }
   }
   return out;
