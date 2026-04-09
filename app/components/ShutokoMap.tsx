@@ -355,17 +355,28 @@ export default function ShutokoMap({
   const routeRuns = useMemo(() => {
     const runs: Array<{ tail: string; routeIds: string[]; ring: boolean; forward: boolean | null; pointIds: string[] }> = [];
     let current: { tail: string; routeIds: string[]; ring: boolean; forward: boolean | null; pointIds: string[] } | null = null;
+    let lastPointId: string | null = null;
 
     for (const node of highlightedPath) {
+      const pointId = svgNodeIdFromPathNode(node);
       const tail = routeTailOfNode(node);
       const config = routeConfigOfTail(tail);
-      const pointId = svgNodeIdFromPathNode(node);
-      if (!config) continue;
+
+      if (!config) {
+        if (current && pointId) current.pointIds.push(pointId);
+        if (pointId) lastPointId = pointId;
+        continue;
+      }
+
       if (!current || current.tail !== tail) {
         if (current) runs.push(current);
         current = { tail, routeIds: config.routeIds, ring: config.ring, forward: config.forward, pointIds: [] };
+        if (lastPointId) current.pointIds.push(lastPointId);
       }
-      if (pointId) current.pointIds.push(pointId);
+      if (pointId) {
+        current.pointIds.push(pointId);
+        lastPointId = pointId;
+      }
     }
     if (current) runs.push(current);
 
@@ -381,7 +392,7 @@ export default function ShutokoMap({
       run.pointIds = deduped;
     }
 
-    return runs;
+    return runs.filter((run) => run.pointIds.length >= 2);
   }, [entryName, exitName, highlightedPath]);
 
   const pointMap = useMemo(() => parseSvgPointMap(svgMarkup), [svgMarkup]);
@@ -538,7 +549,7 @@ export default function ShutokoMap({
       if (overlayEnds) {
         if (previousOverlayEnd) {
           const bridgeDist = Math.hypot(previousOverlayEnd.x - overlayEnds.start.x, previousOverlayEnd.y - overlayEnds.start.y);
-          if (bridgeDist <= 72) {
+          if (bridgeDist > 6 && bridgeDist <= 72) {
             drawOverlayPath(
               overlayLayer,
               smoothedPathData([previousOverlayEnd, overlayEnds.start]),
