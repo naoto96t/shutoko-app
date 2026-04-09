@@ -1226,11 +1226,12 @@ export default function Page() {
     const first = pathNodes[0] || "";
     return entryFlow === "up" ? first.endsWith("_UP") : first.endsWith("_DOWN");
   };
+  const canUsePlansNormal = !entryHasUpDown && selectedRow?.path_nodes && selectedRow.path_nodes.length > 0 && plansPathMatchesEntryFlow(selectedRow.path_nodes);
   const selectedMapPath =
     activeSpots.length > 0 && selectedDetour?.ok
       ? selectedDetour.path
-      : selectedRow?.path_nodes && selectedRow.path_nodes.length > 0 && plansPathMatchesEntryFlow(selectedRow.path_nodes)
-        ? selectedRow.path_nodes
+      : canUsePlansNormal
+        ? selectedRow!.path_nodes!
         : selectedNormal?.ok
           ? selectedNormal.path
           : [];
@@ -1399,7 +1400,7 @@ export default function Page() {
               {fixedRows.map((x, i) => {
               const detour = activeSpots.length > 0 ? evaluatedDetours[i]?.detour : null;
               const normalCalc = normalPaths[i];
-              const usePlansNormal = plansPathMatchesEntryFlow(x.path_nodes);
+              const usePlansNormal = !entryHasUpDown && plansPathMatchesEntryFlow(x.path_nodes);
               const normal =
                 (usePlansNormal ? prettyNormalPath(x.path_nodes, x.exit) : "") ||
                 (normalCalc?.ok ? prettyDetourPath(normalCalc.path).join(" → ") : "");

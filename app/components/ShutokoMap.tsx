@@ -523,7 +523,7 @@ export default function ShutokoMap({
         }
       }
 
-      if (!bestPath || bestPath.score > 260) continue;
+      if (!bestPath || bestPath.score / Math.max(nodePoints.length, 1) > 120) continue;
       if (!firstProjectedPoint) firstProjectedPoint = nodePoints[0].point;
       lastProjectedPoint = nodePoints[nodePoints.length - 1].point;
 
@@ -549,7 +549,7 @@ export default function ShutokoMap({
       if (overlayEnds) {
         if (previousOverlayEnd) {
           const bridgeDist = Math.hypot(previousOverlayEnd.x - overlayEnds.start.x, previousOverlayEnd.y - overlayEnds.start.y);
-          if (bridgeDist > 6 && bridgeDist <= 72) {
+          if (bridgeDist > 16 && bridgeDist <= 72) {
             drawOverlayPath(
               overlayLayer,
               smoothedPathData([previousOverlayEnd, overlayEnds.start]),
