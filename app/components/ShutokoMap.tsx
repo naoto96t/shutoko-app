@@ -365,7 +365,10 @@ export default function ShutokoMap({
       const config = routeConfigOfTail(tail);
 
       if (!config) {
-        if (current && pointId) current.pointIds.push(pointId);
+        if (current) {
+          if (pointId) current.pointIds.push(pointId);
+          if (PA_ID_BY_NODE[node]) current.rawNodes.push(node);
+        }
         if (pointId) lastPointId = pointId;
         continue;
       }
@@ -537,13 +540,30 @@ export default function ShutokoMap({
 
     let firstProjectedPoint: { x: number; y: number } | null = null;
     let lastProjectedPoint: { x: number; y: number } | null = null;
-    for (const run of routeRuns) {
+    for (let runIndex = 0; runIndex < routeRuns.length; runIndex++) {
+      const run = routeRuns[runIndex]!;
+      const prevRun = runIndex > 0 ? routeRuns[runIndex - 1] : null;
+      const nextRun = runIndex + 1 < routeRuns.length ? routeRuns[runIndex + 1] : null;
       const routePaths = run.routeIds
         .map((id) => host.querySelector<SVGPathElement>(`#${id} path`))
         .filter((p): p is SVGPathElement => !!p);
       if (routePaths.length === 0 || run.pointIds.length < 2) continue;
 
-      const expandedPointIds = expandRunPointIds(run);
+      let expandedPointIds = expandRunPointIds(run);
+      const prevFamily = prevRun ? routeFamilyOfTail(prevRun.tail) : null;
+      const curFamily = routeFamilyOfTail(run.tail);
+      const nextFamily = nextRun ? routeFamilyOfTail(nextRun.tail) : null;
+      const needsHanedaSwitch =
+        (curFamily === "K1" && (prevFamily === "R1H" || nextFamily === "R1H")) ||
+        (curFamily === "R1H" && (prevFamily === "K1" || nextFamily === "K1"));
+      if (needsHanedaSwitch && pointMap.has("haneda_switchJCT")) {
+        if ((run.tail === "K1_UP" || run.tail === "R1H_DOWN") && expandedPointIds[expandedPointIds.length - 1] !== "haneda_switchJCT") {
+          expandedPointIds = [...expandedPointIds, "haneda_switchJCT"];
+        }
+        if ((run.tail === "K1_DOWN" || run.tail === "R1H_UP") && expandedPointIds[0] !== "haneda_switchJCT") {
+          expandedPointIds = ["haneda_switchJCT", ...expandedPointIds];
+        }
+      }
       const nodePoints = expandedPointIds
         .map((id) => ({
           id,
@@ -596,6 +616,19 @@ export default function ShutokoMap({
           adjusted.push(cur);
         }
         lengths = adjusted;
+      }
+
+      const prevTail = prevRun?.tail || "";
+      const nextTail = nextRun?.tail || "";
+      const fullRingLoop =
+        (run.tail.startsWith("C1_") || run.tail.startsWith("C2_")) &&
+        routeBaseOfTail(prevTail) !== routeBaseOfTail(run.tail) &&
+        routeBaseOfTail(prevTail) === routeBaseOfTail(nextTail) &&
+        areOppositeDirections(directionOfTail(prevTail), directionOfTail(nextTail));
+      if (fullRingLoop && lengths.length >= 1) {
+        const start = lengths[0]!;
+        const delta = inferredIncreasing === false ? -bestPath.total : bestPath.total;
+        lengths = [start, start + delta];
       }
 
       const overlayEnds = appendOverlay(overlayLayer, bestPath.path, bestPath.total, lengths);

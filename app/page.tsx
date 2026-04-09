@@ -135,6 +135,22 @@ function prettyDetourPath(path: string[]) {
       }
       label = prettyFacility(raw);
     } else {
+      const prevRaw = i > 0 ? path[i - 1] : "";
+      const prevTail = tailOfPort(prevRaw);
+      const curTail = tailOfPort(raw);
+      if (prevTail.startsWith("R9_") && curTail.startsWith("C1_")) {
+        const via = "6号向島線 上り";
+        if (via !== prev) {
+          out.push(via);
+          prev = via;
+        }
+      } else if (prevTail.startsWith("C1_") && curTail.startsWith("R9_")) {
+        const via = "6号向島線 下り";
+        if (via !== prev) {
+          out.push(via);
+          prev = via;
+        }
+      }
       label = prettyNode(tailOfPort(raw));
     }
 
