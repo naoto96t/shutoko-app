@@ -361,8 +361,8 @@ export default function ShutokoMap({
   }, []);
 
   const routeRuns = useMemo(() => {
-    const runs: Array<{ tail: string; routeIds: string[]; ring: boolean; forward: boolean | null; pointIds: string[] }> = [];
-    let current: { tail: string; routeIds: string[]; ring: boolean; forward: boolean | null; pointIds: string[] } | null = null;
+    const runs: Array<{ tail: string; routeIds: string[]; ring: boolean; forward: boolean | null; pointIds: string[]; rawNodes: string[] }> = [];
+    let current: { tail: string; routeIds: string[]; ring: boolean; forward: boolean | null; pointIds: string[]; rawNodes: string[] } | null = null;
     let lastPointId: string | null = null;
 
     for (const node of highlightedPath) {
@@ -378,9 +378,10 @@ export default function ShutokoMap({
 
       if (!current || current.tail !== tail) {
         if (current) runs.push(current);
-        current = { tail, routeIds: config.routeIds, ring: config.ring, forward: config.forward, pointIds: [] };
+        current = { tail, routeIds: config.routeIds, ring: config.ring, forward: config.forward, pointIds: [], rawNodes: [] };
         if (lastPointId) current.pointIds.push(lastPointId);
       }
+      current.rawNodes.push(node);
       if (pointId) {
         current.pointIds.push(pointId);
         lastPointId = pointId;
@@ -398,6 +399,7 @@ export default function ShutokoMap({
         if (deduped[deduped.length - 1] !== id) deduped.push(id);
       }
       run.pointIds = deduped;
+      run.rawNodes = uniq(run.rawNodes);
     }
 
     return runs.filter((run) => run.pointIds.length >= 2);
@@ -466,6 +468,57 @@ export default function ShutokoMap({
       return icNameToSvgId.get(stop) || NODE_ID_ALIASES[stop] || stop;
     };
 
+    const stopTokenOfNode = (node: string) => {
+      if (node.startsWith("ICIN:") || node.startsWith("ICOUT:") || node.startsWith("IC:")) {
+        const parts = node.split(":");
+        return `IC:${parts[1] || ""}`;
+      }
+      if (PA_ID_BY_NODE[node]) return null;
+      if (node.includes(":")) return node.split(":")[0] || null;
+      return node || null;
+    };
+
+    const expandRunPointIds = (
+      run: { tail: string; pointIds: string[]; rawNodes: string[] }
+    ) => {
+      const stops = seqMap.get(run.tail) || [];
+      if (stops.length === 0 || run.rawNodes.length < 2) return run.pointIds;
+
+      const stopIndex = new Map<string, number>();
+      stops.forEach((stop, idx) => {
+        if (!stopIndex.has(stop)) stopIndex.set(stop, idx);
+      });
+
+      const expanded: string[] = [];
+      for (let i = 0; i < run.rawNodes.length; i++) {
+        const raw = run.rawNodes[i];
+        const token = stopTokenOfNode(raw);
+        if (!token) continue;
+        const idx = stopIndex.get(token);
+        if (idx == null) continue;
+
+        const stopName = stops[idx]!.replace(/^IC:/, "");
+        const svgId = svgIdForStop(stopName);
+        if (expanded[expanded.length - 1] !== svgId) expanded.push(svgId);
+
+        if (i + 1 >= run.rawNodes.length) continue;
+        const nextToken = stopTokenOfNode(run.rawNodes[i + 1]);
+        if (!nextToken) continue;
+        const nextIdx = stopIndex.get(nextToken);
+        if (nextIdx == null || nextIdx === idx) continue;
+
+        const step = nextIdx > idx ? 1 : -1;
+        for (let j = idx + step; j !== nextIdx; j += step) {
+          const midStop = stops[j];
+          if (!midStop) continue;
+          const midSvg = svgIdForStop(midStop.replace(/^IC:/, ""));
+          if (expanded[expanded.length - 1] !== midSvg) expanded.push(midSvg);
+        }
+      }
+
+      return expanded.length >= 2 ? expanded : run.pointIds;
+    };
+
     const inferIncreasingDirection = (tail: string, routePath: SVGPathElement) => {
       const stops = seqMap.get(tail) || [];
       const lengths: number[] = [];
@@ -497,7 +550,8 @@ export default function ShutokoMap({
         .filter((p): p is SVGPathElement => !!p);
       if (routePaths.length === 0 || run.pointIds.length < 2) continue;
 
-      const nodePoints = run.pointIds
+      const expandedPointIds = expandRunPointIds(run);
+      const nodePoints = expandedPointIds
         .map((id) => ({
           id,
           point:
