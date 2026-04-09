@@ -277,31 +277,42 @@ function nearestLengthOnPath(path: SVGPathElement, x: number, y: number) {
   return { length: bestLength, total, dist: bestDist };
 }
 
-function appendOverlay(overlayLayer: SVGGElement, routePath: SVGPathElement, total: number, start: number, end: number) {
-  const distance = Math.abs(end - start);
-  if (distance < 1) return;
-
-  const sign = end >= start ? 1 : -1;
-  const steps = Math.max(12, Math.ceil(distance / 10));
-  const offset = 6;
+function offsetPointAtLength(routePath: SVGPathElement, total: number, len: number, sign: number, offset: number) {
+  const clamped = Math.max(0, Math.min(total, len));
+  const pt = routePath.getPointAtLength(clamped);
   const tangentStep = Math.max(total / 800, 1.5);
+  const probeLen = Math.max(0, Math.min(total, clamped + sign * tangentStep));
+  const probe = routePath.getPointAtLength(probeLen);
+  let dx = probe.x - pt.x;
+  let dy = probe.y - pt.y;
+  const mag = Math.hypot(dx, dy) || 1;
+  dx /= mag;
+  dy /= mag;
+  const nx = dy;
+  const ny = -dx;
+  return { x: pt.x + nx * offset, y: pt.y + ny * offset };
+}
+
+function appendOverlay(overlayLayer: SVGGElement, routePath: SVGPathElement, total: number, lengths: number[]) {
+  if (lengths.length < 2) return;
+
+  const offset = 5;
   const points: Array<{ x: number; y: number }> = [];
 
-  for (let i = 0; i <= steps; i++) {
-    const t = i / steps;
-    const len = start + (end - start) * t;
-    const clamped = Math.max(0, Math.min(total, len));
-    const pt = routePath.getPointAtLength(clamped);
-    const probeLen = Math.max(0, Math.min(total, clamped + sign * tangentStep));
-    const probe = routePath.getPointAtLength(probeLen);
-    let dx = probe.x - pt.x;
-    let dy = probe.y - pt.y;
-    const mag = Math.hypot(dx, dy) || 1;
-    dx /= mag;
-    dy /= mag;
-    const nx = dy;
-    const ny = -dx;
-    points.push({ x: pt.x + nx * offset, y: pt.y + ny * offset });
+  for (let i = 0; i + 1 < lengths.length; i++) {
+    const start = lengths[i];
+    const end = lengths[i + 1];
+    const distance = Math.abs(end - start);
+    if (distance < 1) continue;
+    const sign = end >= start ? 1 : -1;
+    const steps = Math.max(10, Math.ceil(distance / 10));
+
+    for (let j = 0; j <= steps; j++) {
+      if (i > 0 && j === 0) continue;
+      const t = j / steps;
+      const len = start + (end - start) * t;
+      points.push(offsetPointAtLength(routePath, total, len, sign, offset));
+    }
   }
 
   if (points.length < 2) return;
@@ -310,11 +321,11 @@ function appendOverlay(overlayLayer: SVGGElement, routePath: SVGPathElement, tot
   overlay.setAttribute('d', d);
   overlay.setAttribute('fill', 'none');
   overlay.setAttribute('stroke', '#2FFF00');
-  overlay.setAttribute('stroke-width', '8');
+  overlay.setAttribute('stroke-width', '7');
   overlay.setAttribute('stroke-linecap', 'round');
   overlay.setAttribute('stroke-linejoin', 'round');
   overlay.setAttribute('opacity', '0.98');
-  overlay.style.filter = 'drop-shadow(0 0 6px rgba(47,255,0,0.55))';
+  overlay.style.filter = 'drop-shadow(0 0 5px rgba(47,255,0,0.5))';
   overlayLayer.appendChild(overlay);
 }
 
@@ -479,53 +490,51 @@ export default function ShutokoMap({
         .filter((x): x is { id: string; point: { x: number; y: number } } => !!x.point);
       if (nodePoints.length < 2) continue;
 
-      for (let i = 0; i + 1 < nodePoints.length; i++) {
-        const a = nodePoints[i].point;
-        const b = nodePoints[i + 1].point;
-        let best:
-          | {
-              path: SVGPathElement;
-              aLen: number;
-              bLen: number;
-              total: number;
-              score: number;
-            }
-          | null = null;
-
-        for (const routePath of routePaths) {
-          const pa = nearestLengthOnPath(routePath, a.x, a.y);
-          const pb = nearestLengthOnPath(routePath, b.x, b.y);
-          const score = pa.dist + pb.dist;
-          if (!best || score < best.score) {
-            best = { path: routePath, aLen: pa.length, bLen: pb.length, total: pa.total, score };
+      let bestPath:
+        | {
+            path: SVGPathElement;
+            total: number;
+            score: number;
+            lengths: number[];
           }
-        }
+        | null = null;
 
-        if (!best) continue;
-        if (best.score > 160) continue;
-
-        if (!firstProjectedPoint) firstProjectedPoint = a;
-        lastProjectedPoint = b;
-        const aLen = best.aLen;
-        const bLen = best.bLen;
-        const inferredIncreasing = inferIncreasingDirection(run.tail, best.path);
-        if (run.ring && inferredIncreasing != null) {
-          const wraps = inferredIncreasing ? bLen < aLen : aLen < bLen;
-          if (wraps) {
-            if (inferredIncreasing) {
-              appendOverlay(overlayLayer, best.path, best.total, aLen, best.total);
-              appendOverlay(overlayLayer, best.path, best.total, 0, bLen);
-            } else {
-              appendOverlay(overlayLayer, best.path, best.total, bLen, best.total);
-              appendOverlay(overlayLayer, best.path, best.total, 0, aLen);
-            }
-          } else {
-            appendOverlay(overlayLayer, best.path, best.total, aLen, bLen);
-          }
-        } else {
-          appendOverlay(overlayLayer, best.path, best.total, aLen, bLen);
+      for (const routePath of routePaths) {
+        const projections = nodePoints.map((np) => nearestLengthOnPath(routePath, np.point.x, np.point.y));
+        const score = projections.reduce((sum, p) => sum + p.dist, 0);
+        if (!bestPath || score < bestPath.score) {
+          bestPath = {
+            path: routePath,
+            total: projections[0]?.total || routePath.getTotalLength(),
+            score,
+            lengths: projections.map((p) => p.length),
+          };
         }
       }
+
+      if (!bestPath || bestPath.score > 260) continue;
+      if (!firstProjectedPoint) firstProjectedPoint = nodePoints[0].point;
+      lastProjectedPoint = nodePoints[nodePoints.length - 1].point;
+
+      const inferredIncreasing = inferIncreasingDirection(run.tail, bestPath.path);
+      let lengths = [...bestPath.lengths];
+
+      if (run.ring && inferredIncreasing != null && lengths.length > 1) {
+        const adjusted = [lengths[0]];
+        for (let i = 1; i < lengths.length; i++) {
+          let cur = lengths[i];
+          const prev = adjusted[i - 1];
+          if (inferredIncreasing) {
+            while (cur < prev) cur += bestPath.total;
+          } else {
+            while (cur > prev) cur -= bestPath.total;
+          }
+          adjusted.push(cur);
+        }
+        lengths = adjusted;
+      }
+
+      appendOverlay(overlayLayer, bestPath.path, bestPath.total, lengths);
     }
 
     const entrySvgId = entryName ? icNameToSvgId.get(entryName) || entryName : null;
