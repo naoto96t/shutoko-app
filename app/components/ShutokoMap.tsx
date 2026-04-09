@@ -279,19 +279,11 @@ function offsetPointAtLength(routePath: SVGPathElement, total: number, len: numb
 }
 
 function smoothedPathData(points: Array<{ x: number; y: number }>) {
-  if (points.length < 2) return '';
-  if (points.length === 2) return `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)} L ${points[1].x.toFixed(2)} ${points[1].y.toFixed(2)}`;
-
+  if (points.length < 2) return "";
   let d = `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`;
-  for (let i = 1; i < points.length - 1; i++) {
-    const curr = points[i];
-    const next = points[i + 1];
-    const mx = (curr.x + next.x) / 2;
-    const my = (curr.y + next.y) / 2;
-    d += ` Q ${curr.x.toFixed(2)} ${curr.y.toFixed(2)} ${mx.toFixed(2)} ${my.toFixed(2)}`;
+  for (let i = 1; i < points.length; i++) {
+    d += ` L ${points[i].x.toFixed(2)} ${points[i].y.toFixed(2)}`;
   }
-  const last = points[points.length - 1];
-  d += ` T ${last.x.toFixed(2)} ${last.y.toFixed(2)}`;
   return d;
 }
 
@@ -301,7 +293,7 @@ function drawOverlayPath(overlayLayer: SVGGElement, d: string) {
   overlay.setAttribute('d', d);
   overlay.setAttribute('fill', 'none');
   overlay.setAttribute('stroke', '#2FFF00');
-  overlay.setAttribute('stroke-width', '7');
+  overlay.setAttribute('stroke-width', '6');
   overlay.setAttribute('stroke-linecap', 'round');
   overlay.setAttribute('stroke-linejoin', 'round');
   overlay.setAttribute('opacity', '0.98');
@@ -312,7 +304,7 @@ function drawOverlayPath(overlayLayer: SVGGElement, d: string) {
 function appendOverlay(overlayLayer: SVGGElement, routePath: SVGPathElement, total: number, lengths: number[]) {
   if (lengths.length < 2) return null;
 
-  const offset = 5;
+  const offset = 4;
   const points: Array<{ x: number; y: number }> = [];
 
   for (let i = 0; i + 1 < lengths.length; i++) {
@@ -546,7 +538,7 @@ export default function ShutokoMap({
       if (overlayEnds) {
         if (previousOverlayEnd) {
           const bridgeDist = Math.hypot(previousOverlayEnd.x - overlayEnds.start.x, previousOverlayEnd.y - overlayEnds.start.y);
-          if (bridgeDist <= 36) {
+          if (bridgeDist <= 72) {
             drawOverlayPath(
               overlayLayer,
               smoothedPathData([previousOverlayEnd, overlayEnds.start]),
