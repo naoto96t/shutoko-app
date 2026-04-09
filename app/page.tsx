@@ -859,6 +859,7 @@ export default function Page() {
   const [entryName, setEntryName] = useState<string | null>(null);
   const [entryFlow, setEntryFlow] = useState<"auto" | "up" | "down">("auto");
   const [selectedRowIndex, setSelectedRowIndex] = useState(0);
+  const [aboutOpen, setAboutOpen] = useState(false);
 
   const fares = faresData?.entries ?? EMPTY_ENTRIES;
   const entries = useMemo(() => Object.keys(fares).sort(), [fares]);
@@ -1294,10 +1295,124 @@ export default function Page() {
           </button>
         ) : null}
         <h1 style={{ fontSize: 22, margin: 0 }}>首都高 周回ドライブプランナー</h1>
+        <button
+          onClick={() => setAboutOpen(true)}
+          style={{
+            padding: "8px 12px",
+            border: "1px solid #d6d3d1",
+            borderRadius: 12,
+            background: "white",
+            fontSize: 13,
+            color: "#44403c",
+          }}
+        >
+          このアプリについて
+        </button>
       </div>
       <div style={{ fontSize: 11, color: "#78716c", marginTop: 4, marginLeft: entryName ? 118 : 0 }}>
         build {BUILD_LABEL}
       </div>
+
+      {aboutOpen ? (
+        <div
+          onClick={() => setAboutOpen(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15, 23, 42, 0.42)",
+            display: "grid",
+            placeItems: "center",
+            padding: 16,
+            zIndex: 50,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "min(720px, 100%)",
+              maxHeight: "82vh",
+              overflowY: "auto",
+              borderRadius: 22,
+              background: "linear-gradient(180deg, #ffffff 0%, #fafaf9 100%)",
+              border: "1px solid #d6d3d1",
+              boxShadow: "0 24px 80px rgba(15, 23, 42, 0.18)",
+              padding: 20,
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
+              <div>
+                <div style={{ fontSize: 20, fontWeight: 800 }}>このアプリについて</div>
+                <div style={{ fontSize: 12, color: "#78716c", marginTop: 4 }}>
+                  首都高の周回ドライブを、なるべくわかりやすく計画するための参考ツールです。
+                </div>
+              </div>
+              <button
+                onClick={() => setAboutOpen(false)}
+                style={{
+                  padding: "8px 12px",
+                  border: "1px solid #d6d3d1",
+                  borderRadius: 12,
+                  background: "white",
+                }}
+              >
+                閉じる
+              </button>
+            </div>
+
+            <div style={{ marginTop: 18, display: "grid", gap: 14, color: "#292524", lineHeight: 1.8, fontSize: 14 }}>
+              <p style={{ margin: 0 }}>
+                このアプリは、首都高の特殊な料金計算と接続関係を使って、低料金で長く走れるドライブプランを探すためのものです。
+                首都高に慣れていない人でも、入口を選んで、通りたいPAを指定すると、成立しやすい周回ルートをざっくり確認できるようにしています。
+              </p>
+
+              <div>
+                <div style={{ fontWeight: 800, marginBottom: 6 }}>首都高の特徴</div>
+                <ul style={{ margin: 0, paddingLeft: 18 }}>
+                  <li>一度入ると、環状線や接続線を使って周回できる区間がある</li>
+                  <li>料金は実際の走行距離ではなく、入口と出口の組み合わせで決まる</li>
+                  <li>フルインターでは、入口・出口の向きが実務上かなり重要になる</li>
+                  <li>大黒PAや箱崎PAなど、ルートの組み方に大きく影響するPAがある</li>
+                </ul>
+              </div>
+
+              <p style={{ margin: 0 }}>
+                これらをうまく使うと、最低料金帯でかなり長く走ることもできます。
+                このアプリは、その条件を満たしやすいルートを計算して、ドライブプランを考える時の下調べに使う想定です。
+              </p>
+
+              <div>
+                <div style={{ fontWeight: 800, marginBottom: 6 }}>使い方のイメージ</div>
+                <ul style={{ margin: 0, paddingLeft: 18 }}>
+                  <li>入口を選ぶ</li>
+                  <li>通ってみたいPAをチェックする</li>
+                  <li>候補出口と周回ルートを見比べる</li>
+                  <li>クイックに回るか、長めに回るかの目安にする</li>
+                </ul>
+              </div>
+
+              <div>
+                <div style={{ fontWeight: 800, marginBottom: 6 }}>データについて</div>
+                <p style={{ margin: 0 }}>
+                  料金は、ローカルにある首都高料金表 PDF
+                  <span style={{ fontFamily: "monospace", marginLeft: 4 }}>2504_pamphlet_fee_table.pdf</span>
+                  を元に抽出したデータを参照しています。
+                  接続関係や向きの制約も、手元のCSV・SVGデータから構築しています。
+                </p>
+              </div>
+
+              <div>
+                <div style={{ fontWeight: 800, marginBottom: 6 }}>注意</div>
+                <ul style={{ margin: 0, paddingLeft: 18 }}>
+                  <li>このアプリの結果は参考用です。実際の案内・規制・現地標識を必ず優先してください</li>
+                  <li>データやロジックに誤りが残っている可能性があります</li>
+                  <li>ルートの成立や料金を保証するものではありません</li>
+                  <li>運転時は交通ルールを守り、安全第一で使ってください</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div style={{ marginTop: 12 }}>
         <input
