@@ -89,6 +89,16 @@ function buildIcNameToSvgIdMap(host: Element) {
   const namesRoot = host.querySelector("#ic_names");
   if (!nodesRoot || !namesRoot) return out;
 
+  const centerOfElement = (el: Element | null) => {
+    if (!el) return null;
+    try {
+      const box = (el as SVGGraphicsElement).getBBox();
+      return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    } catch {
+      return null;
+    }
+  };
+
   const nameGroups = new Map<string, Element>();
   for (const el of Array.from(namesRoot.children)) {
     if (!(el instanceof Element) || !el.id) continue;
@@ -101,16 +111,31 @@ function buildIcNameToSvgIdMap(host: Element) {
     const nameGroup = nameGroups.get(key);
     if (!nameGroup) continue;
 
-    const nodeIds = Array.from(nodeGroup.children)
+    const nodes = Array.from(nodeGroup.children)
       .filter((el): el is Element => el instanceof Element && !!el.id && el.id.startsWith("ic_"))
-      .map((el) => el.id);
-    const nameIds = Array.from(nameGroup.children)
-      .filter((el): el is Element => el instanceof Element && !!el.id)
-      .map((el) => demojibakeUtf8(decodeHtmlEntities(el.id)).replace(/_\d+$/, ""));
+      .map((el) => ({ id: el.id, point: centerOfElement(el) }))
+      .filter((x): x is { id: string; point: { x: number; y: number } } => !!x.point);
 
-    const count = Math.min(nodeIds.length, nameIds.length);
-    for (let i = 0; i < count; i++) {
-      out.set(nameIds[i], nodeIds[i]);
+    const names = Array.from(nameGroup.children)
+      .filter((el): el is Element => el instanceof Element && !!el.id)
+      .map((el) => ({
+        name: demojibakeUtf8(decodeHtmlEntities(el.id)).replace(/_\d+$/, ""),
+        point: centerOfElement(el),
+      }))
+      .filter((x): x is { name: string; point: { x: number; y: number } } => !!x.point);
+
+    const used = new Set<string>();
+    for (const name of names) {
+      let best: { id: string; dist: number } | null = null;
+      for (const node of nodes) {
+        if (used.has(node.id)) continue;
+        const dist = Math.hypot(node.point.x - name.point.x, node.point.y - name.point.y);
+        if (!best || dist < best.dist) best = { id: node.id, dist };
+      }
+      if (best) {
+        used.add(best.id);
+        out.set(name.name, best.id);
+      }
     }
   }
   return out;
