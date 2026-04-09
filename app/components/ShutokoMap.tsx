@@ -305,13 +305,17 @@ function appendOverlay(overlayLayer: SVGGElement, routePath: SVGPathElement, tot
   if (lengths.length < 2) return null;
 
   const offset = 4;
+  const segments = lengths
+    .slice(0, -1)
+    .map((start, i) => ({ start, end: lengths[i + 1], distance: Math.abs(lengths[i + 1] - start) }))
+    .filter((seg) => seg.distance >= 1);
+  const totalDistance = segments.reduce((sum, seg) => sum + seg.distance, 0);
+  if (totalDistance < 1) return null;
   const points: Array<{ x: number; y: number }> = [];
+  let traversed = 0;
 
-  for (let i = 0; i + 1 < lengths.length; i++) {
-    const start = lengths[i];
-    const end = lengths[i + 1];
-    const distance = Math.abs(end - start);
-    if (distance < 1) continue;
+  for (let i = 0; i < segments.length; i++) {
+    const { start, end, distance } = segments[i];
     const sign = end >= start ? 1 : -1;
     const steps = Math.max(10, Math.ceil(distance / 10));
 
@@ -319,8 +323,12 @@ function appendOverlay(overlayLayer: SVGGElement, routePath: SVGPathElement, tot
       if (i > 0 && j === 0) continue;
       const t = j / steps;
       const len = start + (end - start) * t;
-      points.push(offsetPointAtLength(routePath, total, len, sign, offset));
+      const progress = Math.max(0, Math.min(1, (traversed + distance * t) / totalDistance));
+      const endpointTaper = Math.min(progress, 1 - progress) * 6;
+      const dynamicOffset = offset * Math.max(0, Math.min(1, endpointTaper));
+      points.push(offsetPointAtLength(routePath, total, len, sign, dynamicOffset));
     }
+    traversed += distance;
   }
 
   if (points.length < 2) return null;
@@ -483,10 +491,6 @@ export default function ShutokoMap({
 
     let firstProjectedPoint: { x: number; y: number } | null = null;
     let lastProjectedPoint: { x: number; y: number } | null = null;
-    let previousOverlayEnd: { x: number; y: number } | null = null;
-    let previousRunEndPointId: string | null = null;
-    let previousRunRouteIds: string[] = [];
-
     for (const run of routeRuns) {
       const routePaths = run.routeIds
         .map((id) => host.querySelector<SVGPathElement>(`#${id} path`))
@@ -548,30 +552,7 @@ export default function ShutokoMap({
       }
 
       const overlayEnds = appendOverlay(overlayLayer, bestPath.path, bestPath.total, lengths);
-      if (overlayEnds) {
-        const currentStartPointId = run.pointIds[0] || null;
-        const sharesBoundaryPoint = !!previousRunEndPointId && !!currentStartPointId && previousRunEndPointId === currentStartPointId;
-        const changesRoute = !run.routeIds.every((id) => previousRunRouteIds.includes(id)) || !previousRunRouteIds.every((id) => run.routeIds.includes(id));
-        if (previousOverlayEnd && sharesBoundaryPoint && changesRoute && previousRunEndPointId) {
-          const boundaryPoint =
-            pointMap.get(icNameToSvgId.get(previousRunEndPointId) || previousRunEndPointId) ||
-            centerOf(findSvgNode(host, icNameToSvgId.get(previousRunEndPointId) || previousRunEndPointId) as SVGGraphicsElement | null);
-          const bridgeDist = Math.hypot(previousOverlayEnd.x - overlayEnds.start.x, previousOverlayEnd.y - overlayEnds.start.y);
-          if (boundaryPoint) {
-            const legA = Math.hypot(previousOverlayEnd.x - boundaryPoint.x, previousOverlayEnd.y - boundaryPoint.y);
-            const legB = Math.hypot(boundaryPoint.x - overlayEnds.start.x, boundaryPoint.y - overlayEnds.start.y);
-            if (bridgeDist > 8 && bridgeDist <= 64 && legA <= 40 && legB <= 40) {
-              drawOverlayPath(
-                overlayLayer,
-                smoothedPathData([previousOverlayEnd, boundaryPoint, overlayEnds.start]),
-              );
-            }
-          }
-        }
-        previousOverlayEnd = overlayEnds.end;
-        previousRunEndPointId = run.pointIds[run.pointIds.length - 1] || null;
-        previousRunRouteIds = run.routeIds.slice();
-      }
+      if (!overlayEnds) continue;
     }
 
     const entrySvgId = entryName ? icNameToSvgId.get(entryName) || entryName : null;
