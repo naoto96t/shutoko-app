@@ -484,6 +484,7 @@ export default function ShutokoMap({
     let firstProjectedPoint: { x: number; y: number } | null = null;
     let lastProjectedPoint: { x: number; y: number } | null = null;
     let previousOverlayEnd: { x: number; y: number } | null = null;
+    let previousRunEndPointId: string | null = null;
     let previousRunRouteIds: string[] = [];
 
     for (const run of routeRuns) {
@@ -548,8 +549,10 @@ export default function ShutokoMap({
 
       const overlayEnds = appendOverlay(overlayLayer, bestPath.path, bestPath.total, lengths);
       if (overlayEnds) {
-        const sharesRoute = run.routeIds.some((id) => previousRunRouteIds.includes(id));
-        if (previousOverlayEnd && sharesRoute) {
+        const currentStartPointId = run.pointIds[0] || null;
+        const sharesBoundaryPoint = !!previousRunEndPointId && !!currentStartPointId && previousRunEndPointId === currentStartPointId;
+        const changesRoute = !run.routeIds.every((id) => previousRunRouteIds.includes(id)) || !previousRunRouteIds.every((id) => run.routeIds.includes(id));
+        if (previousOverlayEnd && sharesBoundaryPoint && changesRoute) {
           const bridgeDist = Math.hypot(previousOverlayEnd.x - overlayEnds.start.x, previousOverlayEnd.y - overlayEnds.start.y);
           if (bridgeDist > 8 && bridgeDist <= 56) {
             drawOverlayPath(
@@ -559,6 +562,7 @@ export default function ShutokoMap({
           }
         }
         previousOverlayEnd = overlayEnds.end;
+        previousRunEndPointId = run.pointIds[run.pointIds.length - 1] || null;
         previousRunRouteIds = run.routeIds.slice();
       }
     }
