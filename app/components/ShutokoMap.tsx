@@ -473,7 +473,6 @@ export default function ShutokoMap({
         const parts = node.split(":");
         return `IC:${parts[1] || ""}`;
       }
-      if (PA_ID_BY_NODE[node]) return null;
       if (node.includes(":")) return node.split(":")[0] || null;
       return node || null;
     };
@@ -544,6 +543,7 @@ export default function ShutokoMap({
 
     let firstProjectedPoint: { x: number; y: number } | null = null;
     let lastProjectedPoint: { x: number; y: number } | null = null;
+    let previousBoundaryPointId: string | null = null;
     for (const run of routeRuns) {
       const routePaths = run.routeIds
         .map((id) => host.querySelector<SVGPathElement>(`#${id} path`))
@@ -607,6 +607,15 @@ export default function ShutokoMap({
 
       const overlayEnds = appendOverlay(overlayLayer, bestPath.path, bestPath.total, lengths);
       if (!overlayEnds) continue;
+
+      const boundaryPointId = run.pointIds[0] || null;
+      if (previousBoundaryPointId && boundaryPointId && previousBoundaryPointId === boundaryPointId) {
+        const boundaryPoint =
+          pointMap.get(icNameToSvgId.get(boundaryPointId) || boundaryPointId) ||
+          centerOf(findSvgNode(host, icNameToSvgId.get(boundaryPointId) || boundaryPointId) as SVGGraphicsElement | null);
+        if (boundaryPoint) addMarker(overlayLayer, boundaryPoint, "#2FFF00", 3.5);
+      }
+      previousBoundaryPointId = run.pointIds[run.pointIds.length - 1] || null;
     }
 
     const entrySvgId = entryName ? icNameToSvgId.get(entryName) || entryName : null;

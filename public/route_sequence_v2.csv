@@ -53,8 +53,8 @@ R7B,DOWN,"KomatsugawaJCT,IC:小松川,IC:一之江"
 R7B,UP,"IC:一之江,IC:小松川,KomatsugawaJCT"
 
 # 9号・11号は既存定義を維持（JCTのみ）
-R9,UP,"TatsumiJCT,IC:枝川,IC:塩浜,IC:木場,IC:福住,HakozakiJCT,EdobashiJCT"
-R9,DOWN,"EdobashiJCT,HakozakiJCT,IC:福住,IC:木場,IC:塩浜,IC:枝川,TatsumiJCT"
+R9,UP,"TatsumiJCT,TatsumiPA2,TatsumiR9UpAfterPA2,IC:枝川,IC:塩浜,IC:木場,IC:福住,HakozakiJCT,EdobashiJCT"
+R9,DOWN,"EdobashiJCT,HakozakiJCT,IC:福住,IC:木場,IC:塩浜,IC:枝川,TatsumiR9UpAfterPA2,TatsumiPA2,TatsumiJCT"
 
 R10,DOWN,"IC:晴海,IC:豊洲,ShinonomeJCT"
 R10,UP,"ShinonomeJCT,IC:豊洲,IC:晴海"
