@@ -278,18 +278,43 @@ function nearestLengthOnPath(path: SVGPathElement, x: number, y: number) {
 }
 
 function appendOverlay(overlayLayer: SVGGElement, routePath: SVGPathElement, total: number, start: number, end: number) {
-  const segmentLength = Math.max(end - start, 1);
-  const overlay = routePath.cloneNode(true) as SVGPathElement;
-  overlay.removeAttribute("filter");
-  overlay.setAttribute("fill", "none");
-  overlay.setAttribute("stroke", "#2FFF00");
-  overlay.setAttribute("stroke-width", "14");
-  overlay.setAttribute("stroke-linecap", "round");
-  overlay.setAttribute("stroke-linejoin", "round");
-  overlay.setAttribute("opacity", "0.98");
-  overlay.style.filter = "drop-shadow(0 0 8px rgba(47,255,0,0.55))";
-  overlay.style.strokeDasharray = `${segmentLength} ${total}`;
-  overlay.style.strokeDashoffset = `${-start}`;
+  const distance = Math.abs(end - start);
+  if (distance < 1) return;
+
+  const sign = end >= start ? 1 : -1;
+  const steps = Math.max(12, Math.ceil(distance / 10));
+  const offset = 6;
+  const tangentStep = Math.max(total / 800, 1.5);
+  const points: Array<{ x: number; y: number }> = [];
+
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const len = start + (end - start) * t;
+    const clamped = Math.max(0, Math.min(total, len));
+    const pt = routePath.getPointAtLength(clamped);
+    const probeLen = Math.max(0, Math.min(total, clamped + sign * tangentStep));
+    const probe = routePath.getPointAtLength(probeLen);
+    let dx = probe.x - pt.x;
+    let dy = probe.y - pt.y;
+    const mag = Math.hypot(dx, dy) || 1;
+    dx /= mag;
+    dy /= mag;
+    const nx = dy;
+    const ny = -dx;
+    points.push({ x: pt.x + nx * offset, y: pt.y + ny * offset });
+  }
+
+  if (points.length < 2) return;
+  const d = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ');
+  const overlay = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  overlay.setAttribute('d', d);
+  overlay.setAttribute('fill', 'none');
+  overlay.setAttribute('stroke', '#2FFF00');
+  overlay.setAttribute('stroke-width', '8');
+  overlay.setAttribute('stroke-linecap', 'round');
+  overlay.setAttribute('stroke-linejoin', 'round');
+  overlay.setAttribute('opacity', '0.98');
+  overlay.style.filter = 'drop-shadow(0 0 6px rgba(47,255,0,0.55))';
   overlayLayer.appendChild(overlay);
 }
 
@@ -495,10 +520,10 @@ export default function ShutokoMap({
               appendOverlay(overlayLayer, best.path, best.total, 0, aLen);
             }
           } else {
-            appendOverlay(overlayLayer, best.path, best.total, Math.min(aLen, bLen), Math.max(aLen, bLen));
+            appendOverlay(overlayLayer, best.path, best.total, aLen, bLen);
           }
         } else {
-          appendOverlay(overlayLayer, best.path, best.total, Math.min(aLen, bLen), Math.max(aLen, bLen));
+          appendOverlay(overlayLayer, best.path, best.total, aLen, bLen);
         }
       }
     }
