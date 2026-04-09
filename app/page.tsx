@@ -1414,7 +1414,7 @@ export default function Page() {
               />
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 10, alignContent: "start", alignSelf: "start", marginTop: 42 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 10, alignContent: "start", alignSelf: "start", marginTop: 68 }}>
               {activeSpots.length > 0 ? (
                 <div style={{ fontSize: 12, color: "#666", padding: "4px 2px" }}>
                   成立ルート: {evaluatedDetours.filter((d) => d.detour.ok).length} / {fixedRows.length} 件
