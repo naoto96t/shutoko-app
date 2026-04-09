@@ -552,13 +552,20 @@ export default function ShutokoMap({
         const currentStartPointId = run.pointIds[0] || null;
         const sharesBoundaryPoint = !!previousRunEndPointId && !!currentStartPointId && previousRunEndPointId === currentStartPointId;
         const changesRoute = !run.routeIds.every((id) => previousRunRouteIds.includes(id)) || !previousRunRouteIds.every((id) => run.routeIds.includes(id));
-        if (previousOverlayEnd && sharesBoundaryPoint && changesRoute) {
+        if (previousOverlayEnd && sharesBoundaryPoint && changesRoute && previousRunEndPointId) {
+          const boundaryPoint =
+            pointMap.get(icNameToSvgId.get(previousRunEndPointId) || previousRunEndPointId) ||
+            centerOf(findSvgNode(host, icNameToSvgId.get(previousRunEndPointId) || previousRunEndPointId) as SVGGraphicsElement | null);
           const bridgeDist = Math.hypot(previousOverlayEnd.x - overlayEnds.start.x, previousOverlayEnd.y - overlayEnds.start.y);
-          if (bridgeDist > 8 && bridgeDist <= 56) {
-            drawOverlayPath(
-              overlayLayer,
-              smoothedPathData([previousOverlayEnd, overlayEnds.start]),
-            );
+          if (boundaryPoint) {
+            const legA = Math.hypot(previousOverlayEnd.x - boundaryPoint.x, previousOverlayEnd.y - boundaryPoint.y);
+            const legB = Math.hypot(boundaryPoint.x - overlayEnds.start.x, boundaryPoint.y - overlayEnds.start.y);
+            if (bridgeDist > 8 && bridgeDist <= 64 && legA <= 40 && legB <= 40) {
+              drawOverlayPath(
+                overlayLayer,
+                smoothedPathData([previousOverlayEnd, boundaryPoint, overlayEnds.start]),
+              );
+            }
           }
         }
         previousOverlayEnd = overlayEnds.end;
