@@ -915,12 +915,20 @@ export default function Page() {
     setSelectedRowIndex(0);
   };
 
-  const onPickEntry = (name: string) => {
+  const onPickEntry = useCallback((name: string) => {
     setEntryName(name);
     setQ(name);
     setEntryFlow("auto");
     setSelectedRowIndex(0);
-  };
+  }, []);
+
+  const commitSearch = useCallback(() => {
+    const qq = q.trim();
+    if (!qq) return;
+    const exact = entries.find((name) => name === qq);
+    const next = exact || suggestions[0] || null;
+    if (next) onPickEntry(next);
+  }, [entries, onPickEntry, q, suggestions]);
 
   const entry = entryName ? fares[entryName] : null;
 
@@ -1254,13 +1262,16 @@ export default function Page() {
       <div style={{ marginTop: 12 }}>
         <input
           value={q}
+          onFocus={() => {
+            if (entryName && q === entryName) setQ("");
+          }}
           onChange={(e) => {
-            const next = e.target.value;
-            setQ(next);
-            if (entryName && next !== entryName) {
-              setEntryName(null);
-              setSelectedRowIndex(0);
-              setEntryFlow("auto");
+            setQ(e.target.value);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              commitSearch();
             }
           }}
           placeholder="入口を検索（例：五反田 / 外苑 / 葛西）"
