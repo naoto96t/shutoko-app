@@ -483,6 +483,8 @@ export default function ShutokoMap({
 
     let firstProjectedPoint: { x: number; y: number } | null = null;
     let lastProjectedPoint: { x: number; y: number } | null = null;
+    let previousOverlayEnd: { x: number; y: number } | null = null;
+    let previousRunTail: string | null = null;
 
     for (const run of routeRuns) {
       const routePaths = run.routeIds
@@ -544,7 +546,20 @@ export default function ShutokoMap({
         lengths = adjusted;
       }
 
-      appendOverlay(overlayLayer, bestPath.path, bestPath.total, lengths);
+      const overlayEnds = appendOverlay(overlayLayer, bestPath.path, bestPath.total, lengths);
+      if (overlayEnds) {
+        if (previousOverlayEnd && previousRunTail === run.tail) {
+          const bridgeDist = Math.hypot(previousOverlayEnd.x - overlayEnds.start.x, previousOverlayEnd.y - overlayEnds.start.y);
+          if (bridgeDist > 8 && bridgeDist <= 36) {
+            drawOverlayPath(
+              overlayLayer,
+              smoothedPathData([previousOverlayEnd, overlayEnds.start]),
+            );
+          }
+        }
+        previousOverlayEnd = overlayEnds.end;
+        previousRunTail = run.tail;
+      }
     }
 
     const entrySvgId = entryName ? icNameToSvgId.get(entryName) || entryName : null;

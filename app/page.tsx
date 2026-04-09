@@ -1225,7 +1225,7 @@ export default function Page() {
     return !fromRing;
   }
 
-  const fixedRows = useMemo(() => (entry?.exits || []).slice(0, 30), [entry]);
+  const fixedRows = useMemo(() => (entry?.exits || []).slice(0, 10), [entry]);
   const normalPaths = fixedRows.map((x) => computeNormalPath(x.exit, x.target_nodes, x.path_nodes));
 
   const evaluatedDetours =
@@ -1362,6 +1362,7 @@ export default function Page() {
               gridTemplateColumns: "minmax(0, 1.65fr) minmax(360px, 1fr)",
               gap: 14,
               alignItems: "start",
+              gridTemplateRows: "auto",
             }}
           >
             <div style={{ minWidth: 0 }}>
@@ -1413,7 +1414,7 @@ export default function Page() {
               />
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 10, alignContent: "start" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 10, alignContent: "start", alignSelf: "start", marginTop: 42 }}>
               {activeSpots.length > 0 ? (
                 <div style={{ fontSize: 12, color: "#666", padding: "4px 2px" }}>
                   成立ルート: {evaluatedDetours.filter((d) => d.detour.ok).length} / {fixedRows.length} 件
