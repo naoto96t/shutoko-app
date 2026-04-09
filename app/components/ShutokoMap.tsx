@@ -293,8 +293,39 @@ function offsetPointAtLength(routePath: SVGPathElement, total: number, len: numb
   return { x: pt.x + nx * offset, y: pt.y + ny * offset };
 }
 
+function smoothedPathData(points: Array<{ x: number; y: number }>) {
+  if (points.length < 2) return '';
+  if (points.length === 2) return `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)} L ${points[1].x.toFixed(2)} ${points[1].y.toFixed(2)}`;
+
+  let d = `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`;
+  for (let i = 1; i < points.length - 1; i++) {
+    const curr = points[i];
+    const next = points[i + 1];
+    const mx = (curr.x + next.x) / 2;
+    const my = (curr.y + next.y) / 2;
+    d += ` Q ${curr.x.toFixed(2)} ${curr.y.toFixed(2)} ${mx.toFixed(2)} ${my.toFixed(2)}`;
+  }
+  const last = points[points.length - 1];
+  d += ` T ${last.x.toFixed(2)} ${last.y.toFixed(2)}`;
+  return d;
+}
+
+function drawOverlayPath(overlayLayer: SVGGElement, d: string) {
+  if (!d) return;
+  const overlay = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  overlay.setAttribute('d', d);
+  overlay.setAttribute('fill', 'none');
+  overlay.setAttribute('stroke', '#2FFF00');
+  overlay.setAttribute('stroke-width', '7');
+  overlay.setAttribute('stroke-linecap', 'round');
+  overlay.setAttribute('stroke-linejoin', 'round');
+  overlay.setAttribute('opacity', '0.98');
+  overlay.style.filter = 'drop-shadow(0 0 5px rgba(47,255,0,0.5))';
+  overlayLayer.appendChild(overlay);
+}
+
 function appendOverlay(overlayLayer: SVGGElement, routePath: SVGPathElement, total: number, lengths: number[]) {
-  if (lengths.length < 2) return;
+  if (lengths.length < 2) return null;
 
   const offset = 5;
   const points: Array<{ x: number; y: number }> = [];
@@ -315,18 +346,9 @@ function appendOverlay(overlayLayer: SVGGElement, routePath: SVGPathElement, tot
     }
   }
 
-  if (points.length < 2) return;
-  const d = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ');
-  const overlay = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  overlay.setAttribute('d', d);
-  overlay.setAttribute('fill', 'none');
-  overlay.setAttribute('stroke', '#2FFF00');
-  overlay.setAttribute('stroke-width', '7');
-  overlay.setAttribute('stroke-linecap', 'round');
-  overlay.setAttribute('stroke-linejoin', 'round');
-  overlay.setAttribute('opacity', '0.98');
-  overlay.style.filter = 'drop-shadow(0 0 5px rgba(47,255,0,0.5))';
-  overlayLayer.appendChild(overlay);
+  if (points.length < 2) return null;
+  drawOverlayPath(overlayLayer, smoothedPathData(points));
+  return { start: points[0], end: points[points.length - 1] };
 }
 
 export default function ShutokoMap({
@@ -473,6 +495,7 @@ export default function ShutokoMap({
 
     let firstProjectedPoint: { x: number; y: number } | null = null;
     let lastProjectedPoint: { x: number; y: number } | null = null;
+    let previousOverlayEnd: { x: number; y: number } | null = null;
 
     for (const run of routeRuns) {
       const routePaths = run.routeIds
@@ -534,7 +557,19 @@ export default function ShutokoMap({
         lengths = adjusted;
       }
 
-      appendOverlay(overlayLayer, bestPath.path, bestPath.total, lengths);
+      const overlayEnds = appendOverlay(overlayLayer, bestPath.path, bestPath.total, lengths);
+      if (overlayEnds) {
+        if (previousOverlayEnd) {
+          const bridgeDist = Math.hypot(previousOverlayEnd.x - overlayEnds.start.x, previousOverlayEnd.y - overlayEnds.start.y);
+          if (bridgeDist <= 36) {
+            drawOverlayPath(
+              overlayLayer,
+              smoothedPathData([previousOverlayEnd, overlayEnds.start]),
+            );
+          }
+        }
+        previousOverlayEnd = overlayEnds.end;
+      }
     }
 
     const entrySvgId = entryName ? icNameToSvgId.get(entryName) || entryName : null;
