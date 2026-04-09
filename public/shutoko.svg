@@ -133,6 +133,7 @@
 <circle id="OhashiJCT" cx="233" cy="453" r="4.25" fill="#919191" stroke="white" stroke-width="1.5"/>
 <circle id="IchinohashiJCT" cx="326" cy="473" r="4.25" fill="#919191" stroke="white" stroke-width="1.5"/>
 <path id="ItabashiJCT" d="M273 231.75C275.347 231.75 277.25 233.653 277.25 236C277.25 238.347 275.347 240.25 273 240.25C270.653 240.25 268.75 238.347 268.75 236C268.75 233.653 270.653 231.75 273 231.75Z" fill="#919191" stroke="white" stroke-width="1.5"/>
+<circle id="haneda_switchJCT" cx="371" cy="622" r="5" fill="#919191" fill-opacity="0.05"/>
 </g>
 <g id="ic_names">
 <g id="R9">
