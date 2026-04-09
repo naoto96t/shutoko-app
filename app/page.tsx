@@ -1041,14 +1041,15 @@ export default function Page() {
     return icoutTargets;
   }
 
-  function computeNormalPath(
+  function computeNormalPathForStarts(
+    startCandidates: string[],
     exitName: string,
     targetNodes: string[] | undefined,
     normalPathNodes: string[] | undefined
   ): { ok: boolean; path: string[]; why?: string } {
     if (!graph) return { ok: false, path: [], why: "graph未読込" };
     if (!turnRules) return { ok: false, path: [], why: "遷移ルール読込中" };
-    if (startPorts.length === 0) return { ok: false, path: [], why: "start_portsなし" };
+    if (startCandidates.length === 0) return { ok: false, path: [], why: "start_portsなし" };
 
     const icoutTargets = resolveIcoutTargets(exitName, targetNodes, normalPathNodes);
     if (icoutTargets.length === 0) return { ok: false, path: [], why: "出口ノードが見つからない" };
@@ -1059,12 +1060,34 @@ export default function Page() {
     };
     const preferredStartTail = (normalPathNodes && normalPathNodes.length > 0) ? normalPathNodes[0] : "";
     const preferredStarts = preferredStartTail
-      ? startPorts.filter((port) => routeTailOfNode(port) === preferredStartTail)
+      ? startCandidates.filter((port) => routeTailOfNode(port) === preferredStartTail)
       : [];
-    const effectiveStarts = preferredStarts.length > 0 ? preferredStarts : startPorts;
+    const effectiveStarts = preferredStarts.length > 0 ? preferredStarts : startCandidates;
     const p = bfsPathAvoid(graph, effectiveStarts, new Set(icoutTargets), avoidLoopDeadEnds, turnRules, seqInfo);
     if (!p) return { ok: false, path: [], why: "出口へ到達不可" };
     return { ok: true, path: p };
+  }
+
+  function computeNormalPath(
+    exitName: string,
+    targetNodes: string[] | undefined,
+    normalPathNodes: string[] | undefined
+  ): { ok: boolean; path: string[]; why?: string } {
+    if (!entry) return { ok: false, path: [], why: "入口なし" };
+    if (!entryHasUpDown) return computeNormalPathForStarts(startPorts, exitName, targetNodes, normalPathNodes);
+
+    const upStarts = resolveStartPorts(entry.start_nodes.filter((n) => n.endsWith("_UP")));
+    const downStarts = resolveStartPorts(entry.start_nodes.filter((n) => n.endsWith("_DOWN")));
+
+    if (entryFlow === "up") return computeNormalPathForStarts(upStarts, exitName, targetNodes, normalPathNodes);
+    if (entryFlow === "down") return computeNormalPathForStarts(downStarts, exitName, targetNodes, normalPathNodes);
+
+    const upResult = computeNormalPathForStarts(upStarts, exitName, targetNodes, normalPathNodes);
+    const downResult = computeNormalPathForStarts(downStarts, exitName, targetNodes, normalPathNodes);
+    if (upResult.ok && downResult.ok) return upResult.path.length <= downResult.path.length ? upResult : downResult;
+    if (upResult.ok) return upResult;
+    if (downResult.ok) return downResult;
+    return upResult.why === "start_portsなし" ? downResult : upResult;
   }
 
   function computeDetour(

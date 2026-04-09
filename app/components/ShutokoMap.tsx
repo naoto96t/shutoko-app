@@ -484,6 +484,7 @@ export default function ShutokoMap({
     let firstProjectedPoint: { x: number; y: number } | null = null;
     let lastProjectedPoint: { x: number; y: number } | null = null;
     let previousOverlayEnd: { x: number; y: number } | null = null;
+    let previousRunLastPointId: string | null = null;
 
     for (const run of routeRuns) {
       const routePaths = run.routeIds
@@ -523,7 +524,7 @@ export default function ShutokoMap({
         }
       }
 
-      if (!bestPath || bestPath.score / Math.max(nodePoints.length, 1) > 120) continue;
+      if (!bestPath || bestPath.score / Math.max(nodePoints.length, 1) > 180) continue;
       if (!firstProjectedPoint) firstProjectedPoint = nodePoints[0].point;
       lastProjectedPoint = nodePoints[nodePoints.length - 1].point;
 
@@ -547,9 +548,10 @@ export default function ShutokoMap({
 
       const overlayEnds = appendOverlay(overlayLayer, bestPath.path, bestPath.total, lengths);
       if (overlayEnds) {
-        if (previousOverlayEnd) {
+        const currentFirstPointId = run.pointIds[0] || null;
+        if (previousOverlayEnd && previousRunLastPointId && currentFirstPointId && previousRunLastPointId !== currentFirstPointId) {
           const bridgeDist = Math.hypot(previousOverlayEnd.x - overlayEnds.start.x, previousOverlayEnd.y - overlayEnds.start.y);
-          if (bridgeDist > 16 && bridgeDist <= 72) {
+          if (bridgeDist > 16 && bridgeDist <= 48) {
             drawOverlayPath(
               overlayLayer,
               smoothedPathData([previousOverlayEnd, overlayEnds.start]),
@@ -557,6 +559,7 @@ export default function ShutokoMap({
           }
         }
         previousOverlayEnd = overlayEnds.end;
+        previousRunLastPointId = run.pointIds[run.pointIds.length - 1] || null;
       }
     }
 
