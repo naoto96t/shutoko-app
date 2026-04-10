@@ -1370,8 +1370,8 @@ export default function Page() {
                 <ul style={{ margin: 0, paddingLeft: 18 }}>
                   <li>一度入ると、環状線や接続線を使って周回できる区間がある</li>
                   <li>料金は実際の走行距離ではなく、入口と出口の組み合わせで決まる</li>
-                  <li>フルインターでは、入口・出口の向きが実務上かなり重要になる</li>
-                  <li>大黒PAや箱崎PAなど、ルートの組み方に大きく影響するPAがある</li>
+                  <li>フルインターでは、実際に通った向きがそのまま記録されるわけではなく、出口を出た後に入口・出口の最短ルートで料金判断される</li>
+                  <li>大黒PAや箱崎PAなど、多路線から進入でき、そこから別の路線へ出られるPAがある</li>
                   <li>ただし、接続できない方向や、周回を素直には作れない向きも一部に存在する</li>
                   <li>同じIC名でも、入口と出口で実際の位置や使い方が異なる例外がある</li>
                 </ul>
@@ -1395,10 +1395,16 @@ export default function Page() {
               <div>
                 <div style={{ fontWeight: 800, marginBottom: 6 }}>データについて</div>
                 <p style={{ margin: 0 }}>
-                  料金は、ローカルにある首都高料金表 PDF
-                  <span style={{ fontFamily: "monospace", marginLeft: 4 }}>2504_pamphlet_fee_table.pdf</span>
-                  を元に抽出したデータを参照しています。
-                  接続関係や向きの制約も、手元のCSV・SVGデータから構築しています。
+                  料金は、首都高公式サイトの料金表
+                  <a
+                    href="https://www.shutoko.jp/fee/fee-info/about/#:~:text=%E9%A6%96%E9%83%BD%E9%AB%98%E6%96%99%E9%87%91%E8%A1%A8_2025%E5%B9%B44%E6%9C%88%E6%94%B9%E8%A8%82%E7%89%88%EF%BC%88PDF/3.0MB%EF%BC%89"
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ marginLeft: 4 }}
+                  >
+                    令和7年（2025年）4月改訂版
+                  </a>
+                  を元にした普通車料金データを参照しています。接続関係や向きの制約は、2026年4月時点の手元データをもとに構築しています。
                 </p>
               </div>
 
