@@ -46,6 +46,11 @@ const IC_NAME_ID_OVERRIDES: Record<string, string> = {
   "八潮南": "ic_yashiominami",
   "八潮": "ic_yashio",
   "箱崎": "ic_hakozaki",
+  "大師": "ic_daishi",
+  "浜川崎": "ic_hamakawasaki",
+  "浅田": "ic_asada",
+  "汐入": "ic_shioiri",
+  "生麦": "ic_namamugi",
 };
 
 function mojibakeId(s: string) {
@@ -55,6 +60,14 @@ function mojibakeId(s: string) {
 
 function uniq<T>(arr: T[]) {
   return Array.from(new Set(arr));
+}
+
+function dedupeConsecutive<T>(arr: T[]) {
+  const out: T[] = [];
+  for (const item of arr) {
+    if (out[out.length - 1] !== item) out.push(item);
+  }
+  return out;
 }
 
 function decodeHtmlEntities(text: string) {
@@ -568,9 +581,9 @@ export default function ShutokoMap({
         const lastRawPoint = run.pointIds[run.pointIds.length - 1];
         if (firstRawPoint && expanded[0] !== firstRawPoint) expanded.unshift(firstRawPoint);
         if (lastRawPoint && expanded[expanded.length - 1] !== lastRawPoint) expanded.push(lastRawPoint);
-        return expanded;
+        return dedupeConsecutive(expanded);
       }
-      return run.pointIds;
+      return dedupeConsecutive(run.pointIds);
     };
 
     const inferIncreasingDirection = (tail: string, routePath: SVGPathElement) => {
