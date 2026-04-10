@@ -38,6 +38,16 @@ const NODE_ID_ALIASES: Record<string, string> = {
   HonmokuJCT: "HonmakiJCT",
 };
 
+const IC_NAME_ID_OVERRIDES: Record<string, string> = {
+  "堤通": "ic_tsutsumidori",
+  "向島": "ic_mukoujima",
+  "千住新橋": "ic_senjushinbashi",
+  "加平": "ic_kahei",
+  "八潮南": "ic_yashiominami",
+  "八潮": "ic_yashio",
+  "箱崎": "ic_hakozaki",
+};
+
 function mojibakeId(s: string) {
   // Some SVG ids were exported with UTF-8 bytes interpreted as Latin-1.
   return Array.from(new TextEncoder().encode(s), (b) => String.fromCharCode(b)).join("");
@@ -105,7 +115,7 @@ const ROUTE_GROUP_IC_NAMES: Record<string, string[]> = {
 };
 
 function buildIcNameToSvgIdMap(host: Element) {
-  const out = new Map<string, string>();
+  const out = new Map<string, string>(Object.entries(IC_NAME_ID_OVERRIDES));
   const nodesRoot = host.querySelector("#nodes_ic");
   if (!nodesRoot) return out;
 
@@ -490,7 +500,7 @@ export default function ShutokoMap({
 
     const svgIdForStop = (stop: string) => {
       if (PA_ID_BY_NODE[stop]) return PA_ID_BY_NODE[stop];
-      return icNameToSvgId.get(stop) || NODE_ID_ALIASES[stop] || stop;
+      return IC_NAME_ID_OVERRIDES[stop] || icNameToSvgId.get(stop) || NODE_ID_ALIASES[stop] || stop;
     };
 
     const stopTokenOfNode = (node: string) => {
@@ -664,8 +674,10 @@ export default function ShutokoMap({
         lengths = [start, start + delta];
       }
 
-      const startAnchor = nodePoints[0]?.point || null;
-      const endAnchor = nodePoints[nodePoints.length - 1]?.point || null;
+      const firstId = nodePoints[0]?.id || "";
+      const lastId = nodePoints[nodePoints.length - 1]?.id || "";
+      const startAnchor = firstId.startsWith("pa_") ? null : nodePoints[0]?.point || null;
+      const endAnchor = lastId.startsWith("pa_") ? null : nodePoints[nodePoints.length - 1]?.point || null;
       const overlayEnds = (() => {
         if (lengths.length < 2) return null;
         const offset = 3.5;
