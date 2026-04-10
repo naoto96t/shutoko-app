@@ -355,33 +355,8 @@ function drawOverlayPath(overlayLayer: SVGGElement, d: string) {
   overlayLayer.appendChild(overlay);
 }
 
-function appendOverlay(overlayLayer: SVGGElement, routePath: SVGPathElement, total: number, lengths: number[]) {
-  if (lengths.length < 2) return null;
-
-  const offset = 3.5;
-  const segments = lengths
-    .slice(0, -1)
-    .map((start, i) => ({ start, end: lengths[i + 1], distance: Math.abs(lengths[i + 1] - start) }))
-    .filter((seg) => seg.distance >= 1);
-  const totalDistance = segments.reduce((sum, seg) => sum + seg.distance, 0);
-  if (totalDistance < 1) return null;
-  const points: Array<{ x: number; y: number }> = [];
-  for (let i = 0; i < segments.length; i++) {
-    const { start, end, distance } = segments[i];
-    const sign = end >= start ? 1 : -1;
-    const steps = Math.max(10, Math.ceil(distance / 10));
-
-    for (let j = 0; j <= steps; j++) {
-      if (i > 0 && j === 0) continue;
-      const t = j / steps;
-      const len = start + (end - start) * t;
-      points.push(offsetPointAtLength(routePath, total, len, sign, offset));
-    }
-  }
-
-  if (points.length < 2) return null;
-  drawOverlayPath(overlayLayer, smoothedPathData(points));
-  return { start: points[0], end: points[points.length - 1] };
+function isSequenceHelperNode(node: string) {
+  return /^TatsumiR9UpAfterPA[12]$/.test(node);
 }
 
 export default function ShutokoMap({
@@ -421,7 +396,7 @@ export default function ShutokoMap({
       if (!config) {
         if (current) {
           if (pointId) current.pointIds.push(pointId);
-          if (PA_ID_BY_NODE[node]) current.rawNodes.push(node);
+          if (PA_ID_BY_NODE[node] || isSequenceHelperNode(node)) current.rawNodes.push(node);
         }
         if (pointId) lastPointId = pointId;
         continue;
@@ -685,7 +660,35 @@ export default function ShutokoMap({
         lengths = [start, start + delta];
       }
 
-      const overlayEnds = appendOverlay(overlayLayer, bestPath.path, bestPath.total, lengths);
+      const startAnchor = nodePoints[0]?.point || null;
+      const endAnchor = nodePoints[nodePoints.length - 1]?.point || null;
+      const overlayEnds = (() => {
+        if (lengths.length < 2) return null;
+        const offset = 3.5;
+        const segments = lengths
+          .slice(0, -1)
+          .map((start, i) => ({ start, end: lengths[i + 1], distance: Math.abs(lengths[i + 1] - start) }))
+          .filter((seg) => seg.distance >= 1);
+        const totalDistance = segments.reduce((sum, seg) => sum + seg.distance, 0);
+        if (totalDistance < 1) return null;
+        const points: Array<{ x: number; y: number }> = [];
+        for (let i = 0; i < segments.length; i++) {
+          const { start, end, distance } = segments[i];
+          const sign = end >= start ? 1 : -1;
+          const steps = Math.max(10, Math.ceil(distance / 10));
+          for (let j = 0; j <= steps; j++) {
+            if (i > 0 && j === 0) continue;
+            const t = j / steps;
+            const len = start + (end - start) * t;
+            points.push(offsetPointAtLength(bestPath.path, bestPath.total, len, sign, offset));
+          }
+        }
+        if (points.length < 2) return null;
+        if (startAnchor) points[0] = startAnchor;
+        if (endAnchor) points[points.length - 1] = endAnchor;
+        drawOverlayPath(overlayLayer, smoothedPathData(points));
+        return { start: points[0], end: points[points.length - 1] };
+      })();
       if (!overlayEnds) continue;
     }
 
