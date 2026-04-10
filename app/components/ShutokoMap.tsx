@@ -365,6 +365,23 @@ function drawOverlayPath(overlayLayer: SVGGElement, d: string) {
   overlayLayer.appendChild(overlay);
 }
 
+function shouldCarryOverlayAnchor(
+  prevRun: { tail: string; rawNodes: string[] } | null,
+  run: { tail: string; rawNodes: string[] },
+) {
+  const prevLast = prevRun?.rawNodes[prevRun.rawNodes.length - 1] || "";
+  if ((prevLast === "TatsumiPA1" || prevLast === "TatsumiPA2" || prevLast === "TatsumiR9UpAfterPA1" || prevLast === "TatsumiR9UpAfterPA2") && run.tail.startsWith("R9_")) {
+    return true;
+  }
+  if (prevLast === "HakozakiRotary" && run.tail.startsWith("R6A_")) {
+    return true;
+  }
+  if (prevLast === "DaikokuPA" && (run.tail.startsWith("BAY_") || run.tail.startsWith("K5_"))) {
+    return true;
+  }
+  return false;
+}
+
 function isSequenceHelperNode(node: string) {
   return /^TatsumiR9UpAfterPA[12]$/.test(node);
 }
@@ -396,7 +413,6 @@ export default function ShutokoMap({
   const routeRuns = useMemo(() => {
     const runs: Array<{ tail: string; routeIds: string[]; ring: boolean; forward: boolean | null; pointIds: string[]; rawNodes: string[] }> = [];
     let current: { tail: string; routeIds: string[]; ring: boolean; forward: boolean | null; pointIds: string[]; rawNodes: string[] } | null = null;
-    let lastPointId: string | null = null;
 
     for (const node of highlightedPath) {
       const pointId = svgNodeIdFromPathNode(node);
@@ -408,19 +424,16 @@ export default function ShutokoMap({
           if (pointId) current.pointIds.push(pointId);
           if (PA_ID_BY_NODE[node] || isSequenceHelperNode(node)) current.rawNodes.push(node);
         }
-        if (pointId) lastPointId = pointId;
         continue;
       }
 
       if (!current || current.tail !== tail) {
         if (current) runs.push(current);
         current = { tail, routeIds: config.routeIds, ring: config.ring, forward: config.forward, pointIds: [], rawNodes: [] };
-        if (lastPointId) current.pointIds.push(lastPointId);
       }
       current.rawNodes.push(node);
       if (pointId) {
         current.pointIds.push(pointId);
-        lastPointId = pointId;
       }
     }
     if (current) runs.push(current);
@@ -550,7 +563,14 @@ export default function ShutokoMap({
         }
       }
 
-      return expanded.length >= 2 ? expanded : run.pointIds;
+      if (expanded.length >= 2) {
+        const firstRawPoint = run.pointIds[0];
+        const lastRawPoint = run.pointIds[run.pointIds.length - 1];
+        if (firstRawPoint && expanded[0] !== firstRawPoint) expanded.unshift(firstRawPoint);
+        if (lastRawPoint && expanded[expanded.length - 1] !== lastRawPoint) expanded.push(lastRawPoint);
+        return expanded;
+      }
+      return run.pointIds;
     };
 
     const inferIncreasingDirection = (tail: string, routePath: SVGPathElement) => {
@@ -578,6 +598,7 @@ export default function ShutokoMap({
 
     let firstProjectedPoint: { x: number; y: number } | null = null;
     let lastProjectedPoint: { x: number; y: number } | null = null;
+    let previousOverlayEnd: { x: number; y: number } | null = null;
     for (let runIndex = 0; runIndex < routeRuns.length; runIndex++) {
       const run = routeRuns[runIndex]!;
       const prevRun = runIndex > 0 ? routeRuns[runIndex - 1] : null;
@@ -676,7 +697,8 @@ export default function ShutokoMap({
 
       const firstId = nodePoints[0]?.id || "";
       const lastId = nodePoints[nodePoints.length - 1]?.id || "";
-      const startAnchor = firstId.startsWith("pa_") ? null : nodePoints[0]?.point || null;
+      const inheritedStartAnchor = shouldCarryOverlayAnchor(prevRun, run) ? previousOverlayEnd : null;
+      const startAnchor = inheritedStartAnchor || (firstId.startsWith("pa_") ? null : nodePoints[0]?.point || null);
       const endAnchor = lastId.startsWith("pa_") ? null : nodePoints[nodePoints.length - 1]?.point || null;
       const overlayEnds = (() => {
         if (lengths.length < 2) return null;
@@ -706,6 +728,7 @@ export default function ShutokoMap({
         return { start: points[0], end: points[points.length - 1] };
       })();
       if (!overlayEnds) continue;
+      previousOverlayEnd = overlayEnds.end;
     }
 
     const entrySvgId = entryName ? icNameToSvgId.get(entryName) || entryName : null;
