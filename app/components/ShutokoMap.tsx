@@ -364,6 +364,39 @@ function smoothedPathData(points: Array<{ x: number; y: number }>) {
   return d;
 }
 
+function offsetPolylinePoints(points: Array<{ x: number; y: number }>, offset: number) {
+  if (points.length < 2) return points;
+  const out = points.map((pt, i) => {
+    const prev = points[Math.max(0, i - 1)]!;
+    const next = points[Math.min(points.length - 1, i + 1)]!;
+    let tx = 0;
+    let ty = 0;
+    if (i > 0) {
+      const dx = pt.x - prev.x;
+      const dy = pt.y - prev.y;
+      const mag = Math.hypot(dx, dy) || 1;
+      tx += dx / mag;
+      ty += dy / mag;
+    }
+    if (i + 1 < points.length) {
+      const dx = next.x - pt.x;
+      const dy = next.y - pt.y;
+      const mag = Math.hypot(dx, dy) || 1;
+      tx += dx / mag;
+      ty += dy / mag;
+    }
+    const mag = Math.hypot(tx, ty) || 1;
+    tx /= mag;
+    ty /= mag;
+    const nx = ty;
+    const ny = -tx;
+    return { x: pt.x + nx * offset, y: pt.y + ny * offset };
+  });
+  out[0] = points[0]!;
+  out[out.length - 1] = points[points.length - 1]!;
+  return out;
+}
+
 function drawOverlayPath(overlayLayer: SVGGElement, d: string) {
   if (!d) return;
   const overlay = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -680,42 +713,50 @@ export default function ShutokoMap({
         }
       }
 
-      if (!bestPath || bestPath.score / Math.max(nodePoints.length, 1) > 180) continue;
-      if (!firstProjectedPoint) firstProjectedPoint = nodePoints[0].point;
-      lastProjectedPoint = nodePoints[nodePoints.length - 1].point;
-
-      const inferredIncreasing = inferIncreasingDirection(run.tail, bestPath.path);
-      let lengths = [...bestPath.lengths];
-
-      if (run.ring && inferredIncreasing != null && lengths.length > 1) {
-        const adjusted = [lengths[0]];
-        for (let i = 1; i < lengths.length; i++) {
-          let cur = lengths[i];
-          const prev = adjusted[i - 1];
-          if (inferredIncreasing) {
-            while (cur < prev) cur += bestPath.total;
-          } else {
-            while (cur > prev) cur -= bestPath.total;
-          }
-          adjusted.push(cur);
-        }
-        lengths = adjusted;
-      }
-
-      if (fullRingLoop && lengths.length >= 1) {
-        const start = lengths[0]!;
-        const delta = inferredIncreasing === false ? -bestPath.total : bestPath.total;
-        lengths = [start, start + delta];
-      }
-
       const firstId = nodePoints[0]?.id || "";
       const lastId = nodePoints[nodePoints.length - 1]?.id || "";
       const inheritedStartAnchor = shouldCarryOverlayAnchor(prevRun, run) ? previousOverlayEnd : null;
       const startAnchor = inheritedStartAnchor || (firstId.startsWith("pa_") ? null : nodePoints[0]?.point || null);
       const endAnchor = lastId.startsWith("pa_") ? null : nodePoints[nodePoints.length - 1]?.point || null;
+      if (!firstProjectedPoint) firstProjectedPoint = nodePoints[0].point;
+      lastProjectedPoint = nodePoints[nodePoints.length - 1].point;
+
       const overlayEnds = (() => {
-        if (lengths.length < 2) return null;
         const offset = 3.5;
+        if (!run.ring) {
+          let points = offsetPolylinePoints(nodePoints.map((np) => np.point), offset);
+          if (points.length < 2) return null;
+          if (startAnchor) points[0] = startAnchor;
+          if (endAnchor) points[points.length - 1] = endAnchor;
+          drawOverlayPath(overlayLayer, smoothedPathData(points));
+          return { start: points[0], end: points[points.length - 1] };
+        }
+        if (!bestPath || bestPath.score / Math.max(nodePoints.length, 1) > 180) return null;
+
+        const inferredIncreasing = inferIncreasingDirection(run.tail, bestPath.path);
+        let lengths = [...bestPath.lengths];
+
+        if (run.ring && inferredIncreasing != null && lengths.length > 1) {
+          const adjusted = [lengths[0]];
+          for (let i = 1; i < lengths.length; i++) {
+            let cur = lengths[i];
+            const prev = adjusted[i - 1];
+            if (inferredIncreasing) {
+              while (cur < prev) cur += bestPath.total;
+            } else {
+              while (cur > prev) cur -= bestPath.total;
+            }
+            adjusted.push(cur);
+          }
+          lengths = adjusted;
+        }
+
+        if (fullRingLoop && lengths.length >= 1) {
+          const start = lengths[0]!;
+          const delta = inferredIncreasing === false ? -bestPath.total : bestPath.total;
+          lengths = [start, start + delta];
+        }
+        if (lengths.length < 2) return null;
         const segments = lengths
           .slice(0, -1)
           .map((start, i) => ({ start, end: lengths[i + 1], distance: Math.abs(lengths[i + 1] - start) }))
