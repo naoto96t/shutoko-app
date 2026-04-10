@@ -427,7 +427,7 @@ export default function ShutokoMap({
       run.pointIds = deduped;
     }
 
-    return runs.filter((run) => run.pointIds.length >= 2);
+    return runs.filter((run) => run.pointIds.length >= 1 || run.rawNodes.length >= 1);
   }, [entryName, exitName, highlightedPath]);
 
   const pointMap = useMemo(() => parseSvgPointMap(svgMarkup), [svgMarkup]);
@@ -592,6 +592,18 @@ export default function ShutokoMap({
           expandedPointIds = ["haneda_switchJCT", ...expandedPointIds];
         }
       }
+      const prevTail = prevRun?.tail || "";
+      const nextTail = nextRun?.tail || "";
+      const fullRingLoop =
+        (run.tail.startsWith("C1_") || run.tail.startsWith("C2_")) &&
+        routeBaseOfTail(prevTail) === routeBaseOfTail(nextTail) &&
+        areOppositeDirections(directionOfTail(prevTail), directionOfTail(nextTail));
+      if (fullRingLoop && expandedPointIds.length < 2) {
+        expandedPointIds = (seqMap.get(run.tail) || [])
+          .map((stop) => svgIdForStop(stop))
+          .filter(Boolean);
+      }
+
       const nodePoints = expandedPointIds
         .map((id) => ({
           id,
@@ -646,12 +658,6 @@ export default function ShutokoMap({
         lengths = adjusted;
       }
 
-      const prevTail = prevRun?.tail || "";
-      const nextTail = nextRun?.tail || "";
-      const fullRingLoop =
-        (run.tail.startsWith("C1_") || run.tail.startsWith("C2_")) &&
-        routeBaseOfTail(prevTail) === routeBaseOfTail(nextTail) &&
-        areOppositeDirections(directionOfTail(prevTail), directionOfTail(nextTail));
       if (fullRingLoop && lengths.length >= 1) {
         const start = lengths[0]!;
         const delta = inferredIncreasing === false ? -bestPath.total : bestPath.total;
