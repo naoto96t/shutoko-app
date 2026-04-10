@@ -1507,6 +1507,7 @@ export default function Page() {
           >
             <div style={{ minWidth: 0 }}>
               <ShutokoMap
+                key={`${entryName || ""}|${selectedRow?.exit || ""}|${entryFlow}|${activeSpotLabels.join("|")}|${selectedMapPath.join(">")}`}
                 title={mapTitle}
                 entryName={entryName}
                 exitName={selectedRow?.exit}

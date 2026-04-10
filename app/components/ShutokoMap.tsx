@@ -425,7 +425,6 @@ export default function ShutokoMap({
         if (deduped[deduped.length - 1] !== id) deduped.push(id);
       }
       run.pointIds = deduped;
-      run.rawNodes = uniq(run.rawNodes);
     }
 
     return runs.filter((run) => run.pointIds.length >= 2);
@@ -651,7 +650,6 @@ export default function ShutokoMap({
       const nextTail = nextRun?.tail || "";
       const fullRingLoop =
         (run.tail.startsWith("C1_") || run.tail.startsWith("C2_")) &&
-        routeBaseOfTail(prevTail) !== routeBaseOfTail(run.tail) &&
         routeBaseOfTail(prevTail) === routeBaseOfTail(nextTail) &&
         areOppositeDirections(directionOfTail(prevTail), directionOfTail(nextTail));
       if (fullRingLoop && lengths.length >= 1) {
