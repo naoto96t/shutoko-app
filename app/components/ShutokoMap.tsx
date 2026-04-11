@@ -587,7 +587,7 @@ export default function ShutokoMap({
     const stopTokenOfNode = (node: string) => {
       if (node.startsWith("ICIN:") || node.startsWith("ICOUT:") || node.startsWith("IC:")) {
         const parts = node.split(":");
-        return `IC:${parts[1] || ""}`;
+        return parts[1] || null;
       }
       if (node.includes(":")) return node.split(":")[0] || null;
       return node || null;
