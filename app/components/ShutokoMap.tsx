@@ -53,6 +53,8 @@ const IC_NAME_ID_OVERRIDES: Record<string, string> = {
   "生麦": "ic_namamugi",
 };
 
+const POLYLINE_FAMILIES = new Set(["R1H", "K1", "K2", "K3", "K5", "K6"]);
+
 function mojibakeId(s: string) {
   // Some SVG ids were exported with UTF-8 bytes interpreted as Latin-1.
   return Array.from(new TextEncoder().encode(s), (b) => String.fromCharCode(b)).join("");
@@ -746,6 +748,14 @@ export default function ShutokoMap({
       const overlayEnds = (() => {
         const offset = 3.5;
         if (!run.ring) {
+          if (curFamily && POLYLINE_FAMILIES.has(curFamily)) {
+            let fallbackPoints = offsetPolylinePoints(nodePoints.map((np) => np.point), offset);
+            if (fallbackPoints.length < 2) return null;
+            if (startAnchor) fallbackPoints[0] = startAnchor;
+            if (endAnchor) fallbackPoints[fallbackPoints.length - 1] = endAnchor;
+            drawOverlayPath(overlayLayer, smoothedPathData(fallbackPoints));
+            return { start: fallbackPoints[0], end: fallbackPoints[fallbackPoints.length - 1] };
+          }
           if (bestPath && bestPath.score / Math.max(nodePoints.length, 1) <= 120) {
             let lengths = [...bestPath.lengths];
             let inc = 0;
