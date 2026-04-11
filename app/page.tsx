@@ -199,6 +199,12 @@ function publicAsset(path: string) {
   return `${BASE_PATH}${path}`;
 }
 
+function normalizeIcName(name: string) {
+  return name
+    .trim()
+    .replace(/埠頭/g, "ふ頭");
+}
+
 function routeFamilyOfTail(tail: string) {
   if (!tail) return null;
   if (tail.startsWith("C1_")) return "C1";
@@ -857,6 +863,14 @@ export default function Page() {
 
   const fares = faresData?.entries ?? EMPTY_ENTRIES;
   const entries = useMemo(() => Object.keys(fares).sort(), [fares]);
+  const normalizedEntryMap = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const name of entries) {
+      const key = normalizeIcName(name);
+      if (!m.has(key)) m.set(key, name);
+    }
+    return m;
+  }, [entries]);
 
   const [spotOn, setSpotOn] = useState<Record<string, boolean>>(() => {
     const o: Record<string, boolean> = {};
@@ -910,9 +924,9 @@ export default function Page() {
   const suggestions = useMemo(() => {
     const qq = q.trim();
     if (!qq) return fullEntries.slice(0, 40);
-    const lower = qq.toLowerCase();
+    const lower = normalizeIcName(qq).toLowerCase();
     return entries
-      .filter((x) => x.toLowerCase().includes(lower))
+      .filter((x) => normalizeIcName(x).toLowerCase().includes(lower))
       .slice(0, 40);
   }, [q, entries, fullEntries]);
 
@@ -927,19 +941,21 @@ export default function Page() {
   };
 
   const onPickEntry = useCallback((name: string) => {
-    setEntryName(name);
-    setQ(name);
+    const resolved = normalizedEntryMap.get(normalizeIcName(name)) || name;
+    setEntryName(resolved);
+    setQ(resolved);
     setEntryFlow("auto");
     setSelectedRowIndex(0);
-  }, []);
+  }, [normalizedEntryMap]);
 
   const commitSearch = useCallback(() => {
     const qq = q.trim();
     if (!qq) return;
-    const exact = entries.find((name) => name === qq);
+    const normalized = normalizeIcName(qq);
+    const exact = normalizedEntryMap.get(normalized) || entries.find((name) => normalizeIcName(name) === normalized);
     const next = exact || suggestions[0] || null;
     if (next) onPickEntry(next);
-  }, [entries, onPickEntry, q, suggestions]);
+  }, [entries, normalizedEntryMap, onPickEntry, q, suggestions]);
 
   const entry = entryName ? fares[entryName] : null;
 

@@ -53,6 +53,12 @@ const IC_NAME_ID_OVERRIDES: Record<string, string> = {
   "生麦": "ic_namamugi",
 };
 
+function normalizeIcName(name: string) {
+  return name
+    .trim()
+    .replace(/埠頭/g, "ふ頭");
+}
+
 const POLYLINE_FAMILIES = new Set(["K5", "K6", "R6A", "R9"]);
 
 function mojibakeId(s: string) {
@@ -169,6 +175,7 @@ function buildIcNameToSvgIdMap(host: Element) {
 
     for (let i = 0; i < Math.min(names.length, ids.length); i++) {
       out.set(names[i], ids[i]);
+      out.set(normalizeIcName(names[i]), ids[i]);
     }
   }
   return out;
@@ -595,8 +602,9 @@ export default function ShutokoMap({
     const seqMap = parseSeq(seqCsv);
 
     const svgIdForStop = (stop: string) => {
+      const normalized = normalizeIcName(stop);
       if (PA_ID_BY_NODE[stop]) return PA_ID_BY_NODE[stop];
-      return IC_NAME_ID_OVERRIDES[stop] || icNameToSvgId.get(stop) || NODE_ID_ALIASES[stop] || stop;
+      return IC_NAME_ID_OVERRIDES[stop] || IC_NAME_ID_OVERRIDES[normalized] || icNameToSvgId.get(stop) || icNameToSvgId.get(normalized) || NODE_ID_ALIASES[stop] || stop;
     };
 
     const stopTokenOfNode = (node: string) => {
@@ -876,8 +884,8 @@ export default function ShutokoMap({
       previousOverlayEnd = overlayEnds.end;
     }
 
-    const entrySvgId = entryName ? icNameToSvgId.get(entryName) || entryName : null;
-    const exitSvgId = exitName ? icNameToSvgId.get(exitName) || exitName : null;
+    const entrySvgId = entryName ? icNameToSvgId.get(entryName) || icNameToSvgId.get(normalizeIcName(entryName)) || entryName : null;
+    const exitSvgId = exitName ? icNameToSvgId.get(exitName) || icNameToSvgId.get(normalizeIcName(exitName)) || exitName : null;
     const entryPoint = (entrySvgId ? pointMap.get(entrySvgId) : null) || centerOf(findSvgNode(host, entrySvgId) as SVGGraphicsElement | null) || firstProjectedPoint || null;
     const exitPoint = (exitSvgId ? pointMap.get(exitSvgId) : null) || centerOf(findSvgNode(host, exitSvgId || null) as SVGGraphicsElement | null) || lastProjectedPoint || null;
     addMarker(markerLayer, entryPoint, "#2563eb", 7);
