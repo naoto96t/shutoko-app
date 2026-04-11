@@ -67,10 +67,10 @@ IshikawachoJCT:K3_UP,IshikawachoJCT:K1_UP,link,石川町JCT: K3→K1
 IshikawachoJCT:K1_DOWN,IshikawachoJCT:K3_DOWN,link,石川町JCT: K1→K3
 IshikawachoJCT:K1_UP,IshikawachoJCT:K3_UP,link,石川町JCT: K1→K3
 IshikawachoJCT:K3_DOWN,IshikawachoJCT:K1_DOWN,link,石川町JCT: K3→K1
-HonmokuJCT:K3_UP,HonmokuJCT:BAY_E,link,本牧JCT: K3→BAY
-HonmokuJCT:BAY_W,HonmokuJCT:K3_DOWN,link,本牧JCT: BAY→K3
-HonmokuJCT:BAY_E,HonmokuJCT:K3_UP,link,本牧JCT: BAY→K3
-HonmokuJCT:K3_DOWN,HonmokuJCT:BAY_W,link,本牧JCT: K3→BAY
+HonmokuJCT:K3_UP,HonmokuJCT:BAY_W,link,本牧JCT: K3→BAY
+HonmokuJCT:BAY_E,HonmokuJCT:K3_DOWN,link,本牧JCT: BAY→K3
+HonmokuJCT:BAY_W,HonmokuJCT:K3_UP,link,本牧JCT: BAY→K3
+HonmokuJCT:K3_DOWN,HonmokuJCT:BAY_E,link,本牧JCT: K3→BAY
 NamamugiJCT:K7_UP,NamamugiJCT:K1_UP,link,生麦JCT: K7→K1
 NamamugiJCT:K1_DOWN,NamamugiJCT:K7_DOWN,link,生麦JCT: K1→K7
 NamamugiJCT:K1_UP,NamamugiJCT:K7_UP,link,生麦JCT: K1→K7

@@ -539,9 +539,6 @@ function bfsPathAvoid(
       }
 
       // 東側MVP制約: 大黒PAはBAY_W側からのみ進入可（有明側の方向感と整合）
-      if (v === "DaikokuJCT:BAY_E" && nxt === "DaikokuPA") {
-        continue;
-      }
 
       // 葛西JCTの向き制約（指定ルール）
       // 許可: BAY_W <-> C2_CW, BAY_E <-> C2_CCW
@@ -744,9 +741,6 @@ function dijkstraPathAvoid(
         continue;
       }
       if ((fromTail === "BAY_E" && toTail === "BAY_W") || (fromTail === "BAY_W" && toTail === "BAY_E")) {
-        continue;
-      }
-      if (v === "DaikokuJCT:BAY_E" && nxt === "DaikokuPA") {
         continue;
       }
       if (

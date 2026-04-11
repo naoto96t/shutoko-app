@@ -292,7 +292,6 @@ function bfsPathAvoid(graphObj, starts, targets, avoid, turnRules, seqInfo, maxS
       if (turnRules && isIntraJunctionTurn(v, nxt) && !turnRules.has(`${v}=>${nxt}`)) continue;
       if ((fromTail === "BAY_E" || fromTail === "BAY_W") && /_(DOWN)$/.test(toTail)) continue;
       if ((fromTail === "BAY_E" && toTail === "BAY_W") || (fromTail === "BAY_W" && toTail === "BAY_E")) continue;
-      if (v === "DaikokuJCT:BAY_E" && nxt === "DaikokuPA") continue;
       if (
         (v === "KasaiJCT:BAY_E" && nxt === "KasaiJCT:C2_CW") ||
         (v === "KasaiJCT:BAY_W" && nxt === "KasaiJCT:C2_CCW") ||
@@ -438,6 +437,9 @@ function main() {
     ["浅田", "汐入", "DaikokuPA"],
     ["新郷", "安行", "DaikokuPA"],
     ["浅田", "汐入", "ShibauraPA"],
+    ["生麦", "子安", "DaikokuPA"],
+    ["磯子", "本牧ふ頭", "DaikokuPA"],
+    ["磯子", "大黒ふ頭", "DaikokuPA"],
   ];
   for (const [entryName, exitName, spotNode] of loopCases) {
     const entry = plans.entries[entryName];
