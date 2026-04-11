@@ -388,33 +388,45 @@ function smoothedPathData(points: Array<{ x: number; y: number }>) {
   return d;
 }
 
-function offsetPolylinePoints(points: Array<{ x: number; y: number }>, offset: number) {
+function offsetPolylinePoints(points: Array<{ x: number; y: number }>, offset: number, ids: string[] = []) {
   if (points.length < 2) return points;
   const out = points.map((pt, i) => {
     const prev = points[Math.max(0, i - 1)]!;
     const next = points[Math.min(points.length - 1, i + 1)]!;
+    const prevSeg = { x: pt.x - prev.x, y: pt.y - prev.y };
+    const nextSeg = { x: next.x - pt.x, y: next.y - pt.y };
+    const prevLen = i > 0 ? Math.hypot(prevSeg.x, prevSeg.y) : 0;
+    const nextLen = i + 1 < points.length ? Math.hypot(nextSeg.x, nextSeg.y) : 0;
     let tx = 0;
     let ty = 0;
     if (i > 0) {
-      const dx = pt.x - prev.x;
-      const dy = pt.y - prev.y;
-      const mag = Math.hypot(dx, dy) || 1;
-      tx += dx / mag;
-      ty += dy / mag;
+      const mag = prevLen || 1;
+      tx += prevSeg.x / mag;
+      ty += prevSeg.y / mag;
     }
     if (i + 1 < points.length) {
-      const dx = next.x - pt.x;
-      const dy = next.y - pt.y;
-      const mag = Math.hypot(dx, dy) || 1;
-      tx += dx / mag;
-      ty += dy / mag;
+      const mag = nextLen || 1;
+      tx += nextSeg.x / mag;
+      ty += nextSeg.y / mag;
     }
     const mag = Math.hypot(tx, ty) || 1;
     tx /= mag;
     ty /= mag;
     const nx = ty;
     const ny = -tx;
-    return { x: pt.x + nx * offset, y: pt.y + ny * offset };
+    let effectiveOffset = offset;
+    const id = ids[i] || "";
+    if (id === "haneda_switchJCT") effectiveOffset = 0;
+    if (i > 0 && i + 1 < points.length) {
+      const prevUx = prevSeg.x / (prevLen || 1);
+      const prevUy = prevSeg.y / (prevLen || 1);
+      const nextUx = nextSeg.x / (nextLen || 1);
+      const nextUy = nextSeg.y / (nextLen || 1);
+      const dot = prevUx * nextUx + prevUy * nextUy;
+      if (dot < 0.25 || prevLen < 26 || nextLen < 26) effectiveOffset *= 0.25;
+      if (ids[i - 1] === "haneda_switchJCT" || ids[i + 1] === "haneda_switchJCT") effectiveOffset *= 0.1;
+    }
+    return { x: pt.x + nx * effectiveOffset, y: pt.y + ny * effectiveOffset };
   });
   out[0] = points[0]!;
   out[out.length - 1] = points[points.length - 1]!;
@@ -749,7 +761,7 @@ export default function ShutokoMap({
         const offset = 3.5;
         if (!run.ring) {
           if (curFamily && POLYLINE_FAMILIES.has(curFamily)) {
-            let fallbackPoints = offsetPolylinePoints(nodePoints.map((np) => np.point), offset);
+            let fallbackPoints = offsetPolylinePoints(nodePoints.map((np) => np.point), offset, nodePoints.map((np) => np.id));
             if (fallbackPoints.length < 2) return null;
             if (startAnchor) fallbackPoints[0] = startAnchor;
             if (endAnchor) fallbackPoints[fallbackPoints.length - 1] = endAnchor;
@@ -802,7 +814,7 @@ export default function ShutokoMap({
               }
             }
           }
-          let fallbackPoints = offsetPolylinePoints(nodePoints.map((np) => np.point), offset);
+          let fallbackPoints = offsetPolylinePoints(nodePoints.map((np) => np.point), offset, nodePoints.map((np) => np.id));
           if (fallbackPoints.length < 2) return null;
           if (startAnchor) fallbackPoints[0] = startAnchor;
           if (endAnchor) fallbackPoints[fallbackPoints.length - 1] = endAnchor;
