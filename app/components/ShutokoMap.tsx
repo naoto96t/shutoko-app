@@ -53,7 +53,7 @@ const IC_NAME_ID_OVERRIDES: Record<string, string> = {
   "生麦": "ic_namamugi",
 };
 
-const POLYLINE_FAMILIES = new Set(["R1H", "K1", "K2", "K3", "K5", "K6"]);
+const POLYLINE_FAMILIES = new Set(["K5", "K6"]);
 
 function mojibakeId(s: string) {
   // Some SVG ids were exported with UTF-8 bytes interpreted as Latin-1.
