@@ -85,13 +85,35 @@ function demojibakeUtf8(text: string) {
 
 function parseSvgPointMap(svgMarkup: string) {
   const map = new Map<string, { x: number; y: number }>();
-  const circleRe = /<(circle|ellipse)\b[^>]*\sid="([^"]+)"[^>]*\scx="([^"]+)"[^>]*\scy="([^"]+)"[^>]*>/g;
+  const circleRe = /<(circle|ellipse)\b([^>]*)>/g;
+  const attr = (chunk: string, name: string) => {
+    const m = chunk.match(new RegExp(`\\b${name}="([^"]+)"`));
+    return m ? m[1] : null;
+  };
+  const applyMatrix = (x: number, y: number, transform: string | null) => {
+    if (!transform) return { x, y };
+    const m = transform.match(/matrix\(([-\d.\s,]+)\)/);
+    if (!m) return { x, y };
+    const nums = m[1]!
+      .split(/[,\s]+/)
+      .map((n) => Number(n))
+      .filter((n) => Number.isFinite(n));
+    if (nums.length !== 6) return { x, y };
+    const [a, b, c, d, e, f] = nums;
+    return { x: a * x + c * y + e, y: b * x + d * y + f };
+  };
   let m: RegExpExecArray | null;
   while ((m = circleRe.exec(svgMarkup))) {
-    const rawId = decodeHtmlEntities(m[2]);
+    const chunk = m[2] || "";
+    const idAttr = attr(chunk, "id");
+    const cxAttr = attr(chunk, "cx");
+    const cyAttr = attr(chunk, "cy");
+    if (!idAttr || !cxAttr || !cyAttr) continue;
+    const rawId = decodeHtmlEntities(idAttr);
     const repairedId = demojibakeUtf8(rawId);
-    const x = Number(m[3]);
-    const y = Number(m[4]);
+    const cx = Number(cxAttr);
+    const cy = Number(cyAttr);
+    const { x, y } = applyMatrix(cx, cy, attr(chunk, "transform"));
     if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
     for (const id of uniq([rawId, repairedId])) {
       map.set(id, { x, y });
