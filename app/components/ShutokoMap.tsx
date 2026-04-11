@@ -746,12 +746,58 @@ export default function ShutokoMap({
       const overlayEnds = (() => {
         const offset = 3.5;
         if (!run.ring) {
-          let points = offsetPolylinePoints(nodePoints.map((np) => np.point), offset);
-          if (points.length < 2) return null;
-          if (startAnchor) points[0] = startAnchor;
-          if (endAnchor) points[points.length - 1] = endAnchor;
-          drawOverlayPath(overlayLayer, smoothedPathData(points));
-          return { start: points[0], end: points[points.length - 1] };
+          if (bestPath && bestPath.score / Math.max(nodePoints.length, 1) <= 120) {
+            let lengths = [...bestPath.lengths];
+            let inc = 0;
+            let dec = 0;
+            for (let i = 0; i + 1 < lengths.length; i++) {
+              if (lengths[i + 1] > lengths[i]) inc++;
+              if (lengths[i + 1] < lengths[i]) dec++;
+            }
+            const increasing = inc === dec ? lengths[lengths.length - 1] >= lengths[0] : inc > dec;
+            const adjusted = [lengths[0]];
+            for (let i = 1; i < lengths.length; i++) {
+              let cur = lengths[i];
+              const prev = adjusted[i - 1];
+              if (increasing) {
+                while (cur < prev) cur += bestPath.total;
+              } else {
+                while (cur > prev) cur -= bestPath.total;
+              }
+              adjusted.push(cur);
+            }
+            lengths = adjusted;
+            const segments = lengths
+              .slice(0, -1)
+              .map((start, i) => ({ start, end: lengths[i + 1], distance: Math.abs(lengths[i + 1] - start) }))
+              .filter((seg) => seg.distance >= 1);
+            if (segments.length > 0) {
+              const points: Array<{ x: number; y: number }> = [];
+              for (let i = 0; i < segments.length; i++) {
+                const { start, end, distance } = segments[i];
+                const sign = end >= start ? 1 : -1;
+                const steps = Math.max(10, Math.ceil(distance / 10));
+                for (let j = 0; j <= steps; j++) {
+                  if (i > 0 && j === 0) continue;
+                  const t = j / steps;
+                  const len = start + (end - start) * t;
+                  points.push(offsetPointAtLength(bestPath.path, bestPath.total, len, sign, offset));
+                }
+              }
+              if (points.length >= 2) {
+                if (startAnchor) points[0] = startAnchor;
+                if (endAnchor) points[points.length - 1] = endAnchor;
+                drawOverlayPath(overlayLayer, smoothedPathData(points));
+                return { start: points[0], end: points[points.length - 1] };
+              }
+            }
+          }
+          let fallbackPoints = offsetPolylinePoints(nodePoints.map((np) => np.point), offset);
+          if (fallbackPoints.length < 2) return null;
+          if (startAnchor) fallbackPoints[0] = startAnchor;
+          if (endAnchor) fallbackPoints[fallbackPoints.length - 1] = endAnchor;
+          drawOverlayPath(overlayLayer, smoothedPathData(fallbackPoints));
+          return { start: fallbackPoints[0], end: fallbackPoints[fallbackPoints.length - 1] };
         }
         if (!bestPath || bestPath.score / Math.max(nodePoints.length, 1) > 180) return null;
 
