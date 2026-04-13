@@ -62,7 +62,7 @@ function normalizeIcName(name: string) {
 // Families listed here are rendered from expanded stop polylines instead of
 // SVG path projection. This is more stable for routes whose SVG path geometry
 // tends to "shortcut" across the map even when the sequence data is correct.
-const POLYLINE_FAMILIES = new Set(["K1", "K3", "K5", "K6", "R6A", "R9"]);
+const POLYLINE_FAMILIES = new Set(["K1", "K3", "K5", "K6", "R6A", "R9", "S2", "S5"]);
 
 function mojibakeId(s: string) {
   // Some SVG ids were exported with UTF-8 bytes interpreted as Latin-1.
@@ -484,17 +484,7 @@ function isSequenceHelperNode(node: string) {
 function shouldUsePolylineRun(family: string | null, pointIds: string[]) {
   if (!family) return false;
   if (!POLYLINE_FAMILIES.has(family)) return false;
-  if (family !== "K1") return true;
-  const hanedaSide = new Set([
-    "haneda_switchJCT",
-    "ShowajimaJCT",
-    "ic_asada",
-    "ic_daishi",
-    "ic_hamakawasaki",
-    "ic_shioiri",
-    "ic_namamugi",
-  ]);
-  return !pointIds.some((id) => hanedaSide.has(id));
+  return true;
 }
 
 export default function ShutokoMap({
