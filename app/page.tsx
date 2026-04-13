@@ -1280,11 +1280,13 @@ export default function Page() {
   const selectedMapPath =
     activeSpots.length > 0 && selectedDetour?.ok
       ? selectedDetour.path
-      : canUsePlansNormal
-        ? selectedRow!.path_nodes!
-        : selectedNormal?.ok
-          ? selectedNormal.path
-          : [];
+      : selectedNormal?.ok
+        ? selectedNormal.path
+        : selectedRow?.path_ports && selectedRow.path_ports.length > 0
+          ? selectedRow.path_ports
+          : canUsePlansNormal
+            ? selectedRow!.path_nodes!
+            : [];
   const mapRouteFamilies = highlightedRouteFamilies(selectedMapPath);
   const activeSpotLabels = useMemo(() => activeSpots.map((s) => s.label), [activeSpots]);
   const mapTitle = entryName
