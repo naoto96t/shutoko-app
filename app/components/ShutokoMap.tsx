@@ -159,6 +159,8 @@ const ROUTE_GROUP_IC_NAMES: Record<string, string[]> = {
   K2: ["横浜駅西口", "三ツ沢"],
   K3: ["新山下", "山下町", "石川町", "阪東橋", "花之木", "永田"],
   S1: ["鹿浜橋", "東領家", "加賀", "足立入谷", "新郷", "安行", "新井宿"],
+  S2: ["さいたま見沼", "新都心", "新都心西"],
+  S5: ["与野", "浦和北", "浦和南"],
 };
 
 function buildIcNameToSvgIdMap(host: Element) {
@@ -479,6 +481,22 @@ function isSequenceHelperNode(node: string) {
   return /^TatsumiR9UpAfterPA[12]$/.test(node);
 }
 
+function shouldUsePolylineRun(family: string | null, pointIds: string[]) {
+  if (!family) return false;
+  if (!POLYLINE_FAMILIES.has(family)) return false;
+  if (family !== "K1") return true;
+  const hanedaSide = new Set([
+    "haneda_switchJCT",
+    "ShowajimaJCT",
+    "ic_asada",
+    "ic_daishi",
+    "ic_hamakawasaki",
+    "ic_shioiri",
+    "ic_namamugi",
+  ]);
+  return !pointIds.some((id) => hanedaSide.has(id));
+}
+
 export default function ShutokoMap({
   entryName,
   exitName,
@@ -772,7 +790,7 @@ export default function ShutokoMap({
       const overlayEnds = (() => {
         const offset = 3.5;
         if (!run.ring) {
-          if (curFamily && POLYLINE_FAMILIES.has(curFamily)) {
+          if (shouldUsePolylineRun(curFamily, expandedPointIds)) {
             let fallbackPoints = offsetPolylinePoints(nodePoints.map((np) => np.point), offset, nodePoints.map((np) => np.id));
             if (fallbackPoints.length < 2) return null;
             if (startAnchor) fallbackPoints[0] = startAnchor;
