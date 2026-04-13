@@ -59,7 +59,10 @@ function normalizeIcName(name: string) {
     .replace(/埠頭/g, "ふ頭");
 }
 
-const POLYLINE_FAMILIES = new Set(["K5", "K6", "R6A", "R9"]);
+// Families listed here are rendered from expanded stop polylines instead of
+// SVG path projection. This is more stable for routes whose SVG path geometry
+// tends to "shortcut" across the map even when the sequence data is correct.
+const POLYLINE_FAMILIES = new Set(["BAY", "K3", "K5", "K6", "R6A", "R9"]);
 
 function mojibakeId(s: string) {
   // Some SVG ids were exported with UTF-8 bytes interpreted as Latin-1.
