@@ -51,6 +51,27 @@ const IC_NAME_ID_OVERRIDES: Record<string, string> = {
   "浅田": "ic_asada",
   "汐入": "ic_shioiri",
   "生麦": "ic_namamugi",
+  "みなとみらい": "ic_minatomirai",
+  "横浜駅東口": "ic_yokohamaekihigashiguchi",
+  "東神奈川": "ic_higashikanagawa",
+  "子安": "ic_koyasu",
+  "守屋町": "ic_moriyacho",
+  "横浜公園": "ic_yokohamakoen",
+  "山下町": "ic_yamashitacho",
+  "新山下": "ic_shinyamashita",
+  "南本牧ふ頭": "ic_minamihonmokufuto",
+  "南本牧埠頭": "ic_minamihonmokufuto",
+  "本牧ふ頭": "ic_honmokufuto",
+  "大黒ふ頭": "ic_daikokufuto",
+  "東扇島": "ic_higashioogishima",
+  "浮島": "ic_ukishima",
+  "空港中央": "ic_kukouchuo",
+  "さいたま見沼": "ic_saitamaminuma",
+  "新都心": "ic_shintoshin",
+  "新都心西": "ic_shintoshinnishi",
+  "与野": "ic_yono",
+  "浦和北": "ic_urawakita",
+  "浦和南": "ic_urawaminami",
 };
 
 function normalizeIcName(name: string) {
@@ -569,6 +590,16 @@ export default function ShutokoMap({
     const overlayLayer = addLayer(rootSvg, "route-overlay-layer");
     const markerLayer = addLayer(rootSvg, "route-marker-layer");
     const icNameToSvgId = buildIcNameToSvgIdMap(host);
+    const pointForSvgId = (rawId: string | null) => {
+      if (!rawId) return null;
+      const resolved = icNameToSvgId.get(rawId) || icNameToSvgId.get(normalizeIcName(rawId)) || rawId;
+      return (
+        centerOf(findSvgNode(host, resolved) as SVGGraphicsElement | null) ||
+        pointMap.get(resolved) ||
+        pointMap.get(rawId) ||
+        null
+      );
+    };
 
     const parseSeq = (csvText: string) => {
       const lines = csvText.split(/\r?\n/).filter(Boolean);
@@ -613,9 +644,17 @@ export default function ShutokoMap({
     const seqMap = parseSeq(seqCsv);
 
     const svgIdForStop = (stop: string) => {
-      const normalized = normalizeIcName(stop);
-      if (PA_ID_BY_NODE[stop]) return PA_ID_BY_NODE[stop];
-      return IC_NAME_ID_OVERRIDES[stop] || IC_NAME_ID_OVERRIDES[normalized] || icNameToSvgId.get(stop) || icNameToSvgId.get(normalized) || NODE_ID_ALIASES[stop] || stop;
+      const bareStop = stop.startsWith("IC:") ? stop.slice(3).trim() : stop;
+      const normalized = normalizeIcName(bareStop);
+      if (PA_ID_BY_NODE[bareStop]) return PA_ID_BY_NODE[bareStop];
+      return (
+        IC_NAME_ID_OVERRIDES[bareStop] ||
+        IC_NAME_ID_OVERRIDES[normalized] ||
+        icNameToSvgId.get(bareStop) ||
+        icNameToSvgId.get(normalized) ||
+        NODE_ID_ALIASES[bareStop] ||
+        bareStop
+      );
     };
 
     const stopTokenOfNode = (node: string) => {
@@ -727,9 +766,7 @@ export default function ShutokoMap({
 
       for (const stop of stops) {
         const svgId = svgIdForStop(stop);
-        const point =
-          pointMap.get(svgId) ||
-          centerOf(findSvgNode(host, svgId) as SVGGraphicsElement | null);
+        const point = pointForSvgId(svgId);
         if (!point) continue;
         const near = nearestLengthOnPath(routePath, point.x, point.y);
         rawLengths.push({ stop, length: near.length, dist: near.dist });
@@ -777,9 +814,7 @@ export default function ShutokoMap({
       const lengths: number[] = [];
       for (const stop of stops) {
         const svgId = svgIdForStop(stop);
-        const point =
-          pointMap.get(svgId) ||
-          centerOf(findSvgNode(host, svgId) as SVGGraphicsElement | null);
+        const point = pointForSvgId(svgId);
         if (!point) continue;
         const near = nearestLengthOnPath(routePath, point.x, point.y);
         if (near.dist <= 80) lengths.push(near.length);
@@ -837,9 +872,7 @@ export default function ShutokoMap({
       const nodePoints = expandedPointIds
         .map((id) => ({
           id,
-          point:
-            pointMap.get(icNameToSvgId.get(id) || id) ||
-            centerOf(findSvgNode(host, icNameToSvgId.get(id) || id) as SVGGraphicsElement | null),
+          point: pointForSvgId(id),
         }))
         .filter((x): x is { id: string; point: { x: number; y: number } } => !!x.point);
       if (nodePoints.length < 2) continue;
@@ -1042,13 +1075,13 @@ export default function ShutokoMap({
 
     const entrySvgId = entryName ? icNameToSvgId.get(entryName) || icNameToSvgId.get(normalizeIcName(entryName)) || entryName : null;
     const exitSvgId = exitName ? icNameToSvgId.get(exitName) || icNameToSvgId.get(normalizeIcName(exitName)) || exitName : null;
-    const entryPoint = (entrySvgId ? pointMap.get(entrySvgId) : null) || centerOf(findSvgNode(host, entrySvgId) as SVGGraphicsElement | null) || firstProjectedPoint || null;
-    const exitPoint = (exitSvgId ? pointMap.get(exitSvgId) : null) || centerOf(findSvgNode(host, exitSvgId || null) as SVGGraphicsElement | null) || lastProjectedPoint || null;
+    const entryPoint = pointForSvgId(entrySvgId) || firstProjectedPoint || null;
+    const exitPoint = pointForSvgId(exitSvgId) || lastProjectedPoint || null;
     addMarker(markerLayer, entryPoint, "#2563eb", 7);
     addMarker(markerLayer, exitPoint, "#dc2626", 7);
     for (const label of activeSpotLabels) {
       const id = PA_ID_BY_LABEL[label];
-      if (id) addMarker(markerLayer, pointMap.get(id) || centerOf(findSvgNode(host, id) as SVGGraphicsElement | null), "#059669", 5);
+      if (id) addMarker(markerLayer, pointForSvgId(id), "#059669", 5);
     }
   }, [activeSpotLabels, entryName, exitName, pointMap, routeRuns, seqCsv, svgMarkup]);
 
