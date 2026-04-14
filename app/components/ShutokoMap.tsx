@@ -675,6 +675,103 @@ export default function ShutokoMap({
       return dedupeConsecutive(run.pointIds);
     };
 
+    const expandRunStops = (
+      run: { tail: string; rawNodes: string[] }
+    ) => {
+      const stops = seqMap.get(run.tail) || [];
+      if (stops.length === 0 || run.rawNodes.length < 2) return [];
+
+      const stopIndex = new Map<string, number>();
+      stops.forEach((stop, idx) => {
+        if (!stopIndex.has(stop)) stopIndex.set(stop, idx);
+      });
+
+      const expanded: string[] = [];
+      for (let i = 0; i < run.rawNodes.length; i++) {
+        const raw = run.rawNodes[i];
+        const token = stopTokenOfNode(raw);
+        if (!token) continue;
+        const idx = stopIndex.get(token);
+        if (idx == null) continue;
+        const stopName = stops[idx]!;
+        if (expanded[expanded.length - 1] !== stopName) expanded.push(stopName);
+
+        if (i + 1 >= run.rawNodes.length) continue;
+        const nextToken = stopTokenOfNode(run.rawNodes[i + 1]);
+        if (!nextToken) continue;
+        const nextIdx = stopIndex.get(nextToken);
+        if (nextIdx == null || nextIdx === idx) continue;
+        const step = nextIdx > idx ? 1 : -1;
+        for (let j = idx + step; j !== nextIdx; j += step) {
+          const midStop = stops[j];
+          if (!midStop) continue;
+          if (expanded[expanded.length - 1] !== midStop) expanded.push(midStop);
+        }
+      }
+      return dedupeConsecutive(expanded);
+    };
+
+    const stopPathProjectionCache = new Map<string, { total: number; lengths: Map<string, number>; avgDist: number }>();
+
+    const stopProjectionForPath = (routePath: SVGPathElement, tail: string) => {
+      const cacheKey = `${routePath.id}|${tail}`;
+      const cached = stopPathProjectionCache.get(cacheKey);
+      if (cached) return cached;
+
+      const stops = seqMap.get(tail) || [];
+      const lengths = new Map<string, number>();
+      let totalDist = 0;
+      let count = 0;
+      const total = routePath.getTotalLength();
+      let rawLengths: Array<{ stop: string; length: number; dist: number }> = [];
+
+      for (const stop of stops) {
+        const svgId = svgIdForStop(stop);
+        const point =
+          pointMap.get(svgId) ||
+          centerOf(findSvgNode(host, svgId) as SVGGraphicsElement | null);
+        if (!point) continue;
+        const near = nearestLengthOnPath(routePath, point.x, point.y);
+        rawLengths.push({ stop, length: near.length, dist: near.dist });
+      }
+
+      let inferredIncreasing: boolean | null = null;
+      if (rawLengths.length >= 2) {
+        let inc = 0;
+        let dec = 0;
+        for (let i = 0; i + 1 < rawLengths.length; i++) {
+          if (rawLengths[i + 1]!.length > rawLengths[i]!.length) inc++;
+          if (rawLengths[i + 1]!.length < rawLengths[i]!.length) dec++;
+        }
+        if (inc !== dec) inferredIncreasing = inc > dec;
+      }
+
+      let adjusted: typeof rawLengths = [];
+      if (rawLengths.length > 0) {
+        adjusted = [rawLengths[0]!];
+        for (let i = 1; i < rawLengths.length; i++) {
+          let cur = { ...rawLengths[i]! };
+          const prev = adjusted[i - 1]!;
+          if (inferredIncreasing === true) {
+            while (cur.length < prev.length) cur.length += total;
+          } else if (inferredIncreasing === false) {
+            while (cur.length > prev.length) cur.length -= total;
+          }
+          adjusted.push(cur);
+        }
+      }
+
+      for (const item of adjusted) {
+        if (!lengths.has(item.stop)) lengths.set(item.stop, item.length);
+        totalDist += item.dist;
+        count += 1;
+      }
+
+      const result = { total, lengths, avgDist: count > 0 ? totalDist / count : Number.POSITIVE_INFINITY };
+      stopPathProjectionCache.set(cacheKey, result);
+      return result;
+    };
+
     const inferIncreasingDirection = (tail: string, routePath: SVGPathElement) => {
       const stops = seqMap.get(tail) || [];
       const lengths: number[] = [];
@@ -780,6 +877,7 @@ export default function ShutokoMap({
       const overlayEnds = (() => {
         const offset = 3.5;
         if (!run.ring) {
+          const expandedStops = expandRunStops(run);
           if (shouldUsePolylineRun(curFamily, expandedPointIds)) {
             let fallbackPoints = offsetPolylinePoints(nodePoints.map((np) => np.point), offset, nodePoints.map((np) => np.id));
             if (fallbackPoints.length < 2) return null;
@@ -788,19 +886,66 @@ export default function ShutokoMap({
             drawOverlayPath(overlayLayer, smoothedPathData(fallbackPoints));
             return { start: fallbackPoints[0], end: fallbackPoints[fallbackPoints.length - 1] };
           }
+          if (routePaths.length > 0 && expandedStops.length >= 2) {
+            let bestStopPath:
+              | {
+                  path: SVGPathElement;
+                  total: number;
+                  avgDist: number;
+                  lengths: number[];
+                }
+              | null = null;
+            for (const routePath of routePaths) {
+              const proj = stopProjectionForPath(routePath, run.tail);
+              const stopLengths = expandedStops
+                .map((stop) => proj.lengths.get(stop))
+                .filter((x): x is number => typeof x === "number");
+              if (stopLengths.length < 2) continue;
+              if (!bestStopPath || proj.avgDist < bestStopPath.avgDist) {
+                bestStopPath = { path: routePath, total: proj.total, avgDist: proj.avgDist, lengths: stopLengths };
+              }
+            }
+            if (bestStopPath && bestStopPath.avgDist <= 120) {
+              const lengths = [...bestStopPath.lengths];
+              const segments = lengths
+                .slice(0, -1)
+                .map((start, i) => ({ start, end: lengths[i + 1], distance: Math.abs(lengths[i + 1] - start) }))
+                .filter((seg) => seg.distance >= 1);
+              if (segments.length > 0) {
+                const points: Array<{ x: number; y: number }> = [];
+                for (let i = 0; i < segments.length; i++) {
+                  const { start, end, distance } = segments[i]!;
+                  const sign = end >= start ? 1 : -1;
+                  const steps = Math.max(10, Math.ceil(distance / 10));
+                  for (let j = 0; j <= steps; j++) {
+                    if (i > 0 && j === 0) continue;
+                    const t = j / steps;
+                    const len = start + (end - start) * t;
+                    points.push(offsetPointAtLength(bestStopPath.path, bestStopPath.total, len, sign, offset));
+                  }
+                }
+                if (points.length >= 2) {
+                  if (startAnchor) points[0] = startAnchor;
+                  if (endAnchor) points[points.length - 1] = endAnchor;
+                  drawOverlayPath(overlayLayer, smoothedPathData(points));
+                  return { start: points[0], end: points[points.length - 1] };
+                }
+              }
+            }
+          }
           if (bestPath && bestPath.score / Math.max(nodePoints.length, 1) <= 120) {
             let lengths = [...bestPath.lengths];
             let inc = 0;
             let dec = 0;
             for (let i = 0; i + 1 < lengths.length; i++) {
-              if (lengths[i + 1] > lengths[i]) inc++;
-              if (lengths[i + 1] < lengths[i]) dec++;
+              if (lengths[i + 1]! > lengths[i]!) inc++;
+              if (lengths[i + 1]! < lengths[i]!) dec++;
             }
-            const increasing = inc === dec ? lengths[lengths.length - 1] >= lengths[0] : inc > dec;
-            const adjusted = [lengths[0]];
+            const increasing = inc === dec ? lengths[lengths.length - 1]! >= lengths[0]! : inc > dec;
+            const adjusted = [lengths[0]!];
             for (let i = 1; i < lengths.length; i++) {
-              let cur = lengths[i];
-              const prev = adjusted[i - 1];
+              let cur = lengths[i]!;
+              const prev = adjusted[i - 1]!;
               if (increasing) {
                 while (cur < prev) cur += bestPath.total;
               } else {
@@ -811,7 +956,7 @@ export default function ShutokoMap({
             lengths = adjusted;
             const segments = lengths
               .slice(0, -1)
-              .map((start, i) => ({ start, end: lengths[i + 1], distance: Math.abs(lengths[i + 1] - start) }))
+              .map((start, i) => ({ start, end: lengths[i + 1]!, distance: Math.abs(lengths[i + 1]! - start) }))
               .filter((seg) => seg.distance >= 1);
             if (segments.length > 0) {
               const points: Array<{ x: number; y: number }> = [];
