@@ -8,12 +8,13 @@ type ShutokoMapProps = {
   entryName: string | null;
   exitName?: string;
   activeSpotLabels?: string[];
-  highlightedRoutes?: string[];
   highlightedPath?: string[];
   title?: string;
   headerAction?: ReactNode;
   toolbar?: ReactNode;
 };
+
+// --- 定数 ---
 
 const PA_ID_BY_LABEL: Record<string, string> = {
   "箱崎PA": "pa_Hakozaki",
@@ -31,11 +32,12 @@ const PA_ID_BY_NODE: Record<string, string> = {
   ShibauraPA: "pa_Shibaura",
 };
 
-const NODE_ID_ALIASES: Record<string, string> = {
-  RyogokuJCT: "RyougokuJCT",
-  OohashiJCT: "OhashiJCT",
+// SVG上のJCT IDとCSV上のJCT名の表記ゆれを吸収
+const JCT_ID_ALIASES: Record<string, string> = {
+  NishiShinjukuJCT: "NishishinjukuJCT",
   KawasakiUkishimaJCT: "KawasakiukishimaJCT",
   HonmokuJCT: "HonmakiJCT",
+  RyogokuJCT: "RyougokuJCT",
 };
 
 const IC_NAME_ID_OVERRIDES: Record<string, string> = {
@@ -74,32 +76,81 @@ const IC_NAME_ID_OVERRIDES: Record<string, string> = {
   "浦和南": "ic_urawaminami",
 };
 
+// tail → SVGのルートグループID（複数パスを持つ場合もあり）
+const TAIL_TO_ROUTE_IDS: Record<string, string[]> = {
+  C1_CW: ["route_C1"],
+  C1_CCW: ["route_C1"],
+  C2_CW: ["route_C2"],
+  C2_CCW: ["route_C2"],
+  BAY_E: ["route_BAY"],
+  BAY_W: ["route_BAY"],
+  BAYX_E: ["route_BAYX"],
+  BAYX_W: ["route_BAYX"],
+  R1H_UP: ["route_R1H"],
+  R1H_DOWN: ["route_R1H"],
+  R1U_UP: ["route_R1U"],
+  R1U_DOWN: ["route_R1U"],
+  R2A_UP: ["route_R2", "route_R2_Togoshi"],
+  R2A_DOWN: ["route_R2", "route_R2_Togoshi"],
+  R2B_UP: ["route_R2", "route_R2_Togoshi"],
+  R2B_DOWN: ["route_R2", "route_R2_Togoshi"],
+  R3A_UP: ["route_R3A"],
+  R3A_DOWN: ["route_R3A"],
+  R3B_UP: ["route_R3B"],
+  R3B_DOWN: ["route_R3B"],
+  R4A_UP: ["route_R4A"],
+  R4A_DOWN: ["route_R4A"],
+  R4B_UP: ["route_R4B"],
+  R4B_DOWN: ["route_R4B"],
+  R5A_UP: ["route_R5A"],
+  R5A_DOWN: ["route_R5A"],
+  R5B_UP: ["route_R5B"],
+  R5B_DOWN: ["route_R5B"],
+  R6A_UP: ["route_R6A"],
+  R6A_DOWN: ["route_R6A"],
+  R6B_UP: ["route_R6B"],
+  R6B_DOWN: ["route_R6B"],
+  R7A_UP: ["route_R7A"],
+  R7A_DOWN: ["route_R7A"],
+  R7B_UP: ["route_R7B"],
+  R7B_DOWN: ["route_R7B"],
+  R9_UP: ["route_R9"],
+  R9_DOWN: ["route_R9"],
+  R10_UP: ["route_R10"],
+  R10_DOWN: ["route_R10"],
+  R11_UP: ["route_R11"],
+  R11_DOWN: ["route_R11"],
+  K1_UP: ["route_K1"],
+  K1_DOWN: ["route_K1"],
+  K2_UP: ["route_K2"],
+  K2_DOWN: ["route_K2"],
+  K3_UP: ["route_K3"],
+  K3_DOWN: ["route_K3"],
+  K5_UP: ["route_K5"],
+  K5_DOWN: ["route_K5"],
+  K6_UP: ["route_K6"],
+  K6_DOWN: ["route_K6"],
+  K7_UP: ["route_K7"],
+  K7_DOWN: ["route_K7"],
+  S1_UP: ["route_S1"],
+  S1_DOWN: ["route_S1"],
+  S2_UP: ["Route_S2", "Route_S2_2"],
+  S2_DOWN: ["Route_S2", "Route_S2_2"],
+  S5_UP: ["Route_S5", "Route_S5_2"],
+  S5_DOWN: ["Route_S5", "Route_S5_2"],
+};
+
+// リング路線かどうか
+const RING_TAILS = new Set(["C1_CW", "C1_CCW", "C2_CW", "C2_CCW"]);
+
+// --- ユーティリティ ---
+
+function publicAsset(path: string) {
+  return `${BASE_PATH}${path}`;
+}
+
 function normalizeIcName(name: string) {
-  return name
-    .trim()
-    .replace(/埠頭/g, "ふ頭");
-}
-
-// Families listed here are rendered from expanded stop polylines instead of
-// SVG path projection. This is more stable for routes whose SVG path geometry
-// tends to "shortcut" across the map even when the sequence data is correct.
-const POLYLINE_FAMILIES = new Set(["K1", "K3", "K5", "K6", "R6A", "R9", "S2", "S5"]);
-
-function mojibakeId(s: string) {
-  // Some SVG ids were exported with UTF-8 bytes interpreted as Latin-1.
-  return Array.from(new TextEncoder().encode(s), (b) => String.fromCharCode(b)).join("");
-}
-
-function uniq<T>(arr: T[]) {
-  return Array.from(new Set(arr));
-}
-
-function dedupeConsecutive<T>(arr: T[]) {
-  const out: T[] = [];
-  for (const item of arr) {
-    if (out[out.length - 1] !== item) out.push(item);
-  }
-  return out;
+  return name.trim().replace(/埠頭/g, "ふ頭");
 }
 
 function decodeHtmlEntities(text: string) {
@@ -115,7 +166,46 @@ function demojibakeUtf8(text: string) {
   }
 }
 
-function parseSvgPointMap(svgMarkup: string) {
+function uniq<T>(arr: T[]) {
+  return Array.from(new Set(arr));
+}
+
+/** ルートノード文字列からtailを取り出す */
+function tailOfNode(node: string) {
+  if (node.startsWith("ICIN:") || node.startsWith("ICOUT:") || node.startsWith("IC:")) {
+    const parts = node.split(":");
+    return parts[parts.length - 1] || "";
+  }
+  const idx = node.indexOf(":");
+  return idx >= 0 ? node.slice(idx + 1) : node;
+}
+
+/** tailからルートグループIDリストを返す */
+function routeIdsOfTail(tail: string): string[] | null {
+  return TAIL_TO_ROUTE_IDS[tail] || null;
+}
+
+/** ルートノードからSVGノードIDを返す */
+function svgNodeIdOfPathNode(node: string): string | null {
+  if (PA_ID_BY_NODE[node]) return PA_ID_BY_NODE[node] ?? null;
+  if (node.startsWith("ICIN:") || node.startsWith("ICOUT:") || node.startsWith("IC:")) {
+    return node.split(":")[1] || null;
+  }
+  if (node.includes(":")) {
+    return node.split(":")[0] || null;
+  }
+  return node || null;
+}
+
+/** SVGノードIDのエイリアス解決 */
+function resolveJctId(rawId: string): string {
+  return JCT_ID_ALIASES[rawId] || rawId;
+}
+
+// --- SVGパース ---
+
+/** SVGのcircle/ellipseから id→座標 マップを作る */
+function parseSvgPointMap(svgMarkup: string): Map<string, { x: number; y: number }> {
   const map = new Map<string, { x: number; y: number }>();
   const circleRe = /<(circle|ellipse)\b([^>]*)>/g;
   const attr = (chunk: string, name: string) => {
@@ -132,7 +222,7 @@ function parseSvgPointMap(svgMarkup: string) {
       .filter((n) => Number.isFinite(n));
     if (nums.length !== 6) return { x, y };
     const [a, b, c, d, e, f] = nums;
-    return { x: a * x + c * y + e, y: b * x + d * y + f };
+    return { x: a! * x + c! * y + e!, y: b! * x + d! * y + f! };
   };
   let m: RegExpExecArray | null;
   while ((m = circleRe.exec(svgMarkup))) {
@@ -149,203 +239,133 @@ function parseSvgPointMap(svgMarkup: string) {
     if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
     for (const id of uniq([rawId, repairedId])) {
       map.set(id, { x, y });
-      const base = id.replace(/_\d+$/, "");
-      if (base && !map.has(base)) map.set(base, { x, y });
     }
   }
   return map;
 }
 
-function normalizeRouteGroupId(id: string) {
-  return id.replace(/^Route_/, "").replace(/^route_/, "").replace(/_2$/, "");
-}
+// --- CSV パース ---
 
-const ROUTE_GROUP_IC_NAMES: Record<string, string[]> = {
-  C1: ["代官町", "北の丸", "神田橋", "宝町", "京橋", "新富町", "銀座", "汐留", "芝公園", "飯倉", "霞が関"],
-  C2: ["五反田", "富ヶ谷", "初台南", "中野長者橋", "西池袋", "高松", "新板橋", "滝野川", "王子南", "王子北", "扇大橋", "千住新橋", "小菅", "四つ木", "平井大橋", "中環小松川", "船堀橋", "清新町"],
-  R1H: ["芝浦", "勝島", "鈴ヶ森", "平和島", "空港西", "羽田"],
-  R1U: ["入谷", "上野", "本町"],
-  R3: ["高樹町", "渋谷", "池尻", "三軒茶屋", "用賀"],
-  R4: ["高井戸", "永福", "幡ヶ谷", "初台", "新宿", "代々木", "外苑"],
-  R5A: ["一ツ橋", "西神田", "飯田橋", "早稲田", "護国寺", "東池袋", "北池袋"],
-  R5B: ["板橋本町", "中台", "高島平", "戸田南", "戸田"],
-  R6A: ["堤通", "向島", "駒形", "清洲橋", "浜町", "箱崎"],
-  R6B: ["三郷", "八潮", "八潮南", "加平"],
-  R7: ["錦糸町", "小松川", "一之江"],
-  R9: ["福住", "木場", "塩浜", "枝川"],
-  R10: ["豊洲", "晴海"],
-  R11: ["台場"],
-  BAY: ["千鳥町", "浦安", "舞浜", "葛西", "新木場", "有明", "臨海副都心", "大井", "大井南", "空港中央", "湾岸環八", "浮島", "東扇島", "大黒ふ頭", "本牧ふ頭", "南本牧埠頭", "三溪園", "磯子", "杉田", "幸浦"],
-  K1: ["大師", "浜川崎", "浅田", "汐入", "生麦", "守屋町", "子安", "東神奈川", "横浜駅東口", "みなとみらい", "横浜公園"],
-  K2: ["横浜駅西口", "三ツ沢"],
-  K3: ["新山下", "山下町", "石川町", "阪東橋", "花之木", "永田"],
-  S1: ["鹿浜橋", "東領家", "加賀", "足立入谷", "新郷", "安行", "新井宿"],
-  S2: ["さいたま見沼", "新都心", "新都心西"],
-  S5: ["与野", "浦和北", "浦和南"],
-};
-
-function buildIcNameToSvgIdMap(host: Element) {
-  const out = new Map<string, string>(Object.entries(IC_NAME_ID_OVERRIDES));
-  const nodesRoot = host.querySelector("#nodes_ic");
-  if (!nodesRoot) return out;
-
-  for (const nodeGroup of Array.from(nodesRoot.children)) {
-    if (!(nodeGroup instanceof Element) || !nodeGroup.id) continue;
-    const key = normalizeRouteGroupId(nodeGroup.id);
-    const names = ROUTE_GROUP_IC_NAMES[key];
-    if (!names?.length) continue;
-
-    const ids = Array.from(nodeGroup.children)
-      .filter((el): el is Element => el instanceof Element && !!el.id && el.id.startsWith("ic_"))
-      .map((el) => el.id);
-
-    for (let i = 0; i < Math.min(names.length, ids.length); i++) {
-      out.set(names[i], ids[i]);
-      out.set(normalizeIcName(names[i]), ids[i]);
+function parseSeqCsv(csvText: string): Map<string, string[]> {
+  const lines = csvText.split(/\r?\n/).filter((l) => l && !l.trim().startsWith("#"));
+  if (lines.length === 0) return new Map();
+  const header = lines[0]!.split(",");
+  const routeIdx = header.indexOf("route");
+  const dirIdx = header.indexOf("dir");
+  const stopsIdx = header.indexOf("stops");
+  const map = new Map<string, string[]>();
+  for (const line of lines.slice(1)) {
+    const cols: string[] = [];
+    let cur = "";
+    let inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
+        else inQ = !inQ;
+      } else if (ch === ',' && !inQ) { cols.push(cur); cur = ""; }
+      else cur += ch;
     }
+    cols.push(cur);
+    const route = (cols[routeIdx] || "").trim();
+    const dir = (cols[dirIdx] || "").trim();
+    const stopsRaw = (cols[stopsIdx] || "").trim();
+    if (!route || !dir || !stopsRaw) continue;
+    const tail = `${route}_${dir}`;
+    const stops = stopsRaw
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    map.set(tail, stops);
   }
-  return out;
+  return map;
 }
 
-function publicAsset(path: string) {
-  return `${BASE_PATH}${path}`;
-}
+// --- DOM ヘルパー ---
 
-function routeTailOfNode(node: string) {
-  if (node.startsWith("ICIN:") || node.startsWith("ICOUT:") || node.startsWith("IC:")) {
-    const parts = node.split(":");
-    return parts[parts.length - 1] || "";
-  }
-  const idx = node.indexOf(":");
-  return idx >= 0 ? node.slice(idx + 1) : node;
-}
-
-function routeFamilyOfTail(tail: string) {
-  if (!tail) return null;
-  if (tail.startsWith("C1_")) return "C1";
-  if (tail.startsWith("C2_")) return "C2";
-  if (tail.startsWith("BAYX_")) return "BAYX";
-  if (tail.startsWith("BAY_")) return "BAY";
-  if (tail.startsWith("R1H_")) return "R1H";
-  if (tail.startsWith("R1U_")) return "R1U";
-  if (tail.startsWith("R2")) return "R2";
-  if (tail.startsWith("R3A_")) return "R3A";
-  if (tail.startsWith("R3B_")) return "R3B";
-  if (tail.startsWith("R4A_")) return "R4A";
-  if (tail.startsWith("R4B_")) return "R4B";
-  if (tail.startsWith("R5A_")) return "R5A";
-  if (tail.startsWith("R5B_")) return "R5B";
-  if (tail.startsWith("R6A_") || tail.startsWith("R6_")) return "R6A";
-  if (tail.startsWith("R6B_") || tail.startsWith("R6_MISATO_")) return "R6B";
-  if (tail.startsWith("R7A_")) return "R7A";
-  if (tail.startsWith("R7B_")) return "R7B";
-  if (tail.startsWith("R9_")) return "R9";
-  if (tail.startsWith("R10_")) return "R10";
-  if (tail.startsWith("R11_")) return "R11";
-  if (tail.startsWith("K1_")) return "K1";
-  if (tail.startsWith("K2_")) return "K2";
-  if (tail.startsWith("K3_")) return "K3";
-  if (tail.startsWith("K5_")) return "K5";
-  if (tail.startsWith("K6_")) return "K6";
-  if (tail.startsWith("K7_")) return "K7";
-  if (tail.startsWith("S1_")) return "S1";
-  if (tail.startsWith("S2_")) return "S2";
-  if (tail.startsWith("S5_")) return "S5";
-  return null;
-}
-
-function directionOfTail(tail: string) {
-  const m = tail.match(/_(UP|DOWN|CW|CCW|E|W)$/);
-  return m ? m[1] : null;
-}
-
-function routeBaseOfTail(tail: string) {
-  return tail.replace(/_(UP|DOWN|CW|CCW|E|W)$/, "");
-}
-
-function areOppositeDirections(a: string | null, b: string | null) {
-  return (
-    (a === "UP" && b === "DOWN") ||
-    (a === "DOWN" && b === "UP") ||
-    (a === "CW" && b === "CCW") ||
-    (a === "CCW" && b === "CW") ||
-    (a === "E" && b === "W") ||
-    (a === "W" && b === "E")
-  );
-}
-
-function routeConfigOfTail(tail: string): { routeIds: string[]; ring: boolean; forward: boolean | null } | null {
-  if (!tail) return null;
-  if (tail.startsWith("C1_")) return { routeIds: ["route_C1"], ring: true, forward: tail.endsWith("_CW") };
-  if (tail.startsWith("C2_")) return { routeIds: ["route_C2"], ring: true, forward: tail.endsWith("_CW") };
-  if (tail.startsWith("BAYX_")) return { routeIds: ["route_BAYX"], ring: false, forward: tail.endsWith("_E") };
-  if (tail.startsWith("BAY_")) return { routeIds: ["route_BAY"], ring: false, forward: tail.endsWith("_E") };
-  if (tail.startsWith("R1H_")) return { routeIds: ["route_R1H"], ring: false, forward: null };
-  if (tail.startsWith("R1U_")) return { routeIds: ["route_R1U"], ring: false, forward: null };
-  if (tail.startsWith("R2")) return { routeIds: ["route_R2", "route_R2_Togoshi"], ring: false, forward: null };
-  if (tail.startsWith("R3A_")) return { routeIds: ["route_R3A"], ring: false, forward: null };
-  if (tail.startsWith("R3B_")) return { routeIds: ["route_R3B"], ring: false, forward: null };
-  if (tail.startsWith("R4A_")) return { routeIds: ["route_R4A"], ring: false, forward: null };
-  if (tail.startsWith("R4B_")) return { routeIds: ["route_R4B"], ring: false, forward: null };
-  if (tail.startsWith("R5A_")) return { routeIds: ["route_R5A"], ring: false, forward: null };
-  if (tail.startsWith("R5B_")) return { routeIds: ["route_R5B"], ring: false, forward: null };
-  if (tail.startsWith("R6A_") || tail.startsWith("R6_")) return { routeIds: ["route_R6A"], ring: false, forward: null };
-  if (tail.startsWith("R6B_") || tail.startsWith("R6_MISATO_")) return { routeIds: ["route_R6B"], ring: false, forward: null };
-  if (tail.startsWith("R7A_")) return { routeIds: ["route_R7A"], ring: false, forward: null };
-  if (tail.startsWith("R7B_")) return { routeIds: ["route_R7B"], ring: false, forward: null };
-  if (tail.startsWith("R9_")) return { routeIds: ["route_R9"], ring: false, forward: null };
-  if (tail.startsWith("R10_")) return { routeIds: ["route_R10"], ring: false, forward: null };
-  if (tail.startsWith("R11_")) return { routeIds: ["route_R11"], ring: false, forward: null };
-  if (tail.startsWith("K1_")) return { routeIds: ["route_K1"], ring: false, forward: null };
-  if (tail.startsWith("K2_")) return { routeIds: ["route_K2"], ring: false, forward: null };
-  if (tail.startsWith("K3_")) return { routeIds: ["route_K3"], ring: false, forward: null };
-  if (tail.startsWith("K5_")) return { routeIds: ["route_K5"], ring: false, forward: null };
-  if (tail.startsWith("K6_")) return { routeIds: ["route_K6"], ring: false, forward: null };
-  if (tail.startsWith("K7_")) return { routeIds: ["route_K7"], ring: false, forward: null };
-  if (tail.startsWith("S1_")) return { routeIds: ["route_S1"], ring: false, forward: null };
-  if (tail.startsWith("S2_")) return { routeIds: ["Route_S2", "Route_S2_2"], ring: false, forward: null };
-  if (tail.startsWith("S5_")) return { routeIds: ["Route_S5", "Route_S5_2"], ring: false, forward: null };
-  return null;
-}
-
-function svgNodeIdFromPathNode(node: string) {
-  if (PA_ID_BY_NODE[node]) return PA_ID_BY_NODE[node];
-  if (node.startsWith("ICIN:") || node.startsWith("ICOUT:") || node.startsWith("IC:")) {
-    return node.split(":")[1] || null;
-  }
-  if (node.includes(":")) {
-    const base = node.split(":")[0] || "";
-    return NODE_ID_ALIASES[base] || base;
-  }
-  return NODE_ID_ALIASES[node] || node;
-}
-
-function findSvgNode(host: Element, rawId: string | null) {
-  if (!rawId) return null;
-  const all = Array.from(host.querySelectorAll<SVGElement>("[id]"));
-  const alias = NODE_ID_ALIASES[rawId] || rawId;
-  const candidates = uniq([rawId, alias, mojibakeId(rawId), mojibakeId(alias)]);
-
-  for (const candidate of candidates) {
-    for (const el of all) {
-      if (el.id === candidate) return el;
-    }
-  }
-  for (const candidate of candidates) {
-    for (const el of all) {
-      if (el.id.startsWith(`${candidate}_`)) return el;
-    }
+function findElement(host: Element, rawId: string): SVGElement | null {
+  const resolved = resolveJctId(rawId);
+  for (const id of uniq([rawId, resolved])) {
+    const el = host.querySelector<SVGElement>(`[id="${CSS.escape(id)}"]`);
+    if (el) return el;
   }
   return null;
 }
 
-function centerOf(el: SVGGraphicsElement | null) {
+function centerOf(el: SVGGraphicsElement | null): { x: number; y: number } | null {
   if (!el) return null;
-  const box = el.getBBox();
-  return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  try {
+    const box = el.getBBox();
+    return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  } catch {
+    return null;
+  }
 }
 
-function addLayer(rootSvg: SVGSVGElement, className: string) {
+/** IC名→SVG要素の中心座標を解決する */
+function resolveIcPoint(
+  icName: string,
+  host: Element,
+  pointMap: Map<string, { x: number; y: number }>
+): { x: number; y: number } | null {
+  const normalized = normalizeIcName(icName);
+  // 直接オーバーライド
+  const overrideId = IC_NAME_ID_OVERRIDES[icName] || IC_NAME_ID_OVERRIDES[normalized];
+  if (overrideId) {
+    const el = findElement(host, overrideId);
+    const c = centerOf(el as SVGGraphicsElement | null);
+    if (c) return c;
+    const pm = pointMap.get(overrideId);
+    if (pm) return pm;
+  }
+  // ic_ プレフィックス付きで探す
+  const guessId = `ic_${icName}`;
+  const el2 = findElement(host, guessId);
+  const c2 = centerOf(el2 as SVGGraphicsElement | null);
+  if (c2) return c2;
+  // pointMap から直接
+  return pointMap.get(icName) || pointMap.get(normalized) || null;
+}
+
+/** JCT名→SVG要素の中心座標を解決する */
+function resolveJctPoint(
+  jctId: string,
+  host: Element,
+  pointMap: Map<string, { x: number; y: number }>
+): { x: number; y: number } | null {
+  const resolved = resolveJctId(jctId);
+  for (const id of uniq([jctId, resolved])) {
+    const el = findElement(host, id);
+    const c = centerOf(el as SVGGraphicsElement | null);
+    if (c) return c;
+    const pm = pointMap.get(id);
+    if (pm) return pm;
+  }
+  return null;
+}
+
+/** stopトークン→座標 */
+function resolveStopPoint(
+  stop: string,
+  host: Element,
+  pointMap: Map<string, { x: number; y: number }>
+): { x: number; y: number } | null {
+  // IC:xxx 形式
+  if (stop.startsWith("IC:")) {
+    return resolveIcPoint(stop.slice(3).trim(), host, pointMap);
+  }
+  // PA
+  if (PA_ID_BY_NODE[stop]) {
+    const paId = PA_ID_BY_NODE[stop]!;
+    return pointMap.get(paId) || null;
+  }
+  // helper node（辰巳ルートの補助ノード）
+  if (/^TatsumiR9UpAfterPA/.test(stop)) return null;
+  // JCT
+  return resolveJctPoint(stop, host, pointMap);
+}
+
+function addLayer(rootSvg: SVGSVGElement, className: string): SVGGElement {
   rootSvg.querySelectorAll(`.${className}`).forEach((el) => el.remove());
   const layer = document.createElementNS("http://www.w3.org/2000/svg", "g");
   layer.setAttribute("class", className);
@@ -353,7 +373,12 @@ function addLayer(rootSvg: SVGSVGElement, className: string) {
   return layer;
 }
 
-function addMarker(layer: SVGGElement, point: { x: number; y: number } | null, fill: string, radius: number) {
+function addMarker(
+  layer: SVGGElement,
+  point: { x: number; y: number } | null,
+  fill: string,
+  radius: number
+) {
   if (!point) return;
   const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
   circle.setAttribute("cx", `${point.x}`);
@@ -365,148 +390,317 @@ function addMarker(layer: SVGGElement, point: { x: number; y: number } | null, f
   layer.appendChild(circle);
 }
 
-function nearestLengthOnPath(path: SVGPathElement, x: number, y: number) {
+function drawPath(layer: SVGGElement, d: string) {
+  if (!d) return;
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", d);
+  path.setAttribute("fill", "none");
+  path.setAttribute("stroke", "#2FFF00");
+  path.setAttribute("stroke-width", "5.5");
+  path.setAttribute("stroke-linecap", "round");
+  path.setAttribute("stroke-linejoin", "round");
+  path.setAttribute("opacity", "0.98");
+  path.style.filter = "drop-shadow(0 0 4px rgba(47,255,0,0.42))";
+  layer.appendChild(path);
+}
+
+// --- パス上への投影（最近傍点の距離を返すだけ） ---
+
+function nearestLengthOnPath(
+  path: SVGPathElement,
+  x: number,
+  y: number
+): { length: number; dist: number } {
   const total = path.getTotalLength();
-  const samples = Math.max(240, Math.ceil(total / 2));
-  let bestLength = 0;
-  let bestDist = Number.POSITIVE_INFINITY;
-
+  const samples = Math.max(300, Math.ceil(total / 1.5));
+  let bestLen = 0;
+  let bestDist = Infinity;
   for (let i = 0; i <= samples; i++) {
-    const length = (total * i) / samples;
-    const pt = path.getPointAtLength(length);
-    const dist = Math.hypot(pt.x - x, pt.y - y);
-    if (dist < bestDist) {
-      bestDist = dist;
-      bestLength = length;
-    }
+    const len = (total * i) / samples;
+    const pt = path.getPointAtLength(len);
+    const d = Math.hypot(pt.x - x, pt.y - y);
+    if (d < bestDist) { bestDist = d; bestLen = len; }
   }
-
-  let step = Math.max(total / samples, 1);
-  while (step > 0.5) {
-    for (const length of [Math.max(0, bestLength - step), bestLength, Math.min(total, bestLength + step)]) {
-      const pt = path.getPointAtLength(length);
-      const dist = Math.hypot(pt.x - x, pt.y - y);
-      if (dist < bestDist) {
-        bestDist = dist;
-        bestLength = length;
-      }
+  // 二分精細化
+  let step = total / samples;
+  while (step > 0.3) {
+    for (const l of [Math.max(0, bestLen - step), bestLen, Math.min(total, bestLen + step)]) {
+      const pt = path.getPointAtLength(l);
+      const d = Math.hypot(pt.x - x, pt.y - y);
+      if (d < bestDist) { bestDist = d; bestLen = l; }
     }
     step *= 0.5;
   }
-
-  return { length: bestLength, total, dist: bestDist };
+  return { length: bestLen, dist: bestDist };
 }
 
-function offsetPointAtLength(routePath: SVGPathElement, total: number, len: number, sign: number, offset: number) {
+/** オフセット付きのパス上の点を返す（左側通行: offset>0 で進行方向左） */
+function offsetPointAt(
+  routePath: SVGPathElement,
+  total: number,
+  len: number,
+  sign: number, // +1 or -1 (進行方向)
+  offset: number
+): { x: number; y: number } {
   const clamped = Math.max(0, Math.min(total, len));
   const pt = routePath.getPointAtLength(clamped);
-  const tangentStep = Math.max(total / 800, 1.5);
-  const probeLen = Math.max(0, Math.min(total, clamped + sign * tangentStep));
+  const step = Math.max(total / 1000, 1);
+  const probeLen = Math.max(0, Math.min(total, clamped + sign * step));
   const probe = routePath.getPointAtLength(probeLen);
   let dx = probe.x - pt.x;
   let dy = probe.y - pt.y;
   const mag = Math.hypot(dx, dy) || 1;
-  dx /= mag;
-  dy /= mag;
-  const nx = dy;
-  const ny = -dx;
-  return { x: pt.x + nx * offset, y: pt.y + ny * offset };
+  dx /= mag; dy /= mag;
+  // 左側通行: 進行方向の左 = 法線ベクトル (dy, -dx) を offset 方向に
+  return { x: pt.x + dy * offset, y: pt.y + (-dx) * offset };
 }
 
-function smoothedPathData(points: Array<{ x: number; y: number }>) {
+function pointsToPathData(points: Array<{ x: number; y: number }>): string {
   if (points.length < 2) return "";
-  let d = `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`;
+  let d = `M ${points[0]!.x.toFixed(2)} ${points[0]!.y.toFixed(2)}`;
   for (let i = 1; i < points.length; i++) {
-    d += ` L ${points[i].x.toFixed(2)} ${points[i].y.toFixed(2)}`;
+    d += ` L ${points[i]!.x.toFixed(2)} ${points[i]!.y.toFixed(2)}`;
   }
   return d;
 }
 
-function offsetPolylinePoints(points: Array<{ x: number; y: number }>, offset: number, ids: string[] = []) {
-  if (points.length < 2) return points;
-  const out = points.map((pt, i) => {
-    const prev = points[Math.max(0, i - 1)]!;
-    const next = points[Math.min(points.length - 1, i + 1)]!;
-    const prevSeg = { x: pt.x - prev.x, y: pt.y - prev.y };
-    const nextSeg = { x: next.x - pt.x, y: next.y - pt.y };
-    const prevLen = i > 0 ? Math.hypot(prevSeg.x, prevSeg.y) : 0;
-    const nextLen = i + 1 < points.length ? Math.hypot(nextSeg.x, nextSeg.y) : 0;
-    let tx = 0;
-    let ty = 0;
-    if (i > 0) {
-      const mag = prevLen || 1;
-      tx += prevSeg.x / mag;
-      ty += prevSeg.y / mag;
-    }
-    if (i + 1 < points.length) {
-      const mag = nextLen || 1;
-      tx += nextSeg.x / mag;
-      ty += nextSeg.y / mag;
-    }
-    const mag = Math.hypot(tx, ty) || 1;
-    tx /= mag;
-    ty /= mag;
-    const nx = ty;
-    const ny = -tx;
-    let effectiveOffset = offset;
-    const id = ids[i] || "";
-    if (id === "haneda_switchJCT") effectiveOffset = 0;
-    if (i > 0 && i + 1 < points.length) {
-      const prevUx = prevSeg.x / (prevLen || 1);
-      const prevUy = prevSeg.y / (prevLen || 1);
-      const nextUx = nextSeg.x / (nextLen || 1);
-      const nextUy = nextSeg.y / (nextLen || 1);
-      const dot = prevUx * nextUx + prevUy * nextUy;
-      if (dot < 0.25 || prevLen < 26 || nextLen < 26) effectiveOffset *= 0.25;
-      if (ids[i - 1] === "haneda_switchJCT" || ids[i + 1] === "haneda_switchJCT") effectiveOffset *= 0.1;
-    }
-    return { x: pt.x + nx * effectiveOffset, y: pt.y + ny * effectiveOffset };
-  });
-  out[0] = points[0]!;
-  out[out.length - 1] = points[points.length - 1]!;
-  return out;
-}
+// =============================================================================
+// メイン描画ロジック
+// =============================================================================
 
-function drawOverlayPath(overlayLayer: SVGGElement, d: string) {
-  if (!d) return;
-  const overlay = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  overlay.setAttribute('d', d);
-  overlay.setAttribute('fill', 'none');
-  overlay.setAttribute('stroke', '#2FFF00');
-  overlay.setAttribute('stroke-width', '5.5');
-  overlay.setAttribute('stroke-linecap', 'round');
-  overlay.setAttribute('stroke-linejoin', 'round');
-  overlay.setAttribute('opacity', '0.98');
-  overlay.style.filter = 'drop-shadow(0 0 4px rgba(47,255,0,0.42))';
-  overlayLayer.appendChild(overlay);
-}
-
-function shouldCarryOverlayAnchor(
-  prevRun: { tail: string; rawNodes: string[] } | null,
-  run: { tail: string; rawNodes: string[] },
+/**
+ * CSVのstop順インデックス比率でパス長を直接決定し、ハイライトを描画する。
+ * ICへの「投影距離の推定」は一切行わない。
+ */
+function drawHighlight(
+  host: Element,
+  rootSvg: SVGSVGElement,
+  highlightedPath: string[],
+  seqMap: Map<string, string[]>,
+  pointMap: Map<string, { x: number; y: number }>,
+  entryName: string | null,
+  exitName: string | undefined,
+  activeSpotLabels: string[],
+  overlayLayer: SVGGElement,
+  markerLayer: SVGGElement
 ) {
-  const prevLast = prevRun?.rawNodes[prevRun.rawNodes.length - 1] || "";
-  if ((prevLast === "TatsumiPA1" || prevLast === "TatsumiPA2" || prevLast === "TatsumiR9UpAfterPA1" || prevLast === "TatsumiR9UpAfterPA2") && run.tail.startsWith("R9_")) {
-    return true;
+  const OFFSET = 3.5; // 左側通行オフセット（px）
+
+  // --- ルートノード列をrunに分割 ---
+  type Run = {
+    tail: string;
+    routeIds: string[];
+    isRing: boolean;
+    rawNodes: string[]; // 元のノード列
+  };
+  const runs: Run[] = [];
+  let cur: Run | null = null;
+
+  for (const node of highlightedPath) {
+    const tail = tailOfNode(node);
+    const routeIds = routeIdsOfTail(tail);
+    if (!routeIds) {
+      // JCT/PA等の無tailノード → 直前のrunに付加するだけ
+      if (cur) cur.rawNodes.push(node);
+      continue;
+    }
+    if (!cur || cur.tail !== tail) {
+      if (cur) runs.push(cur);
+      cur = { tail, routeIds, isRing: RING_TAILS.has(tail), rawNodes: [] };
+    }
+    cur.rawNodes.push(node);
   }
-  if (prevLast === "HakozakiRotary" && run.tail.startsWith("R6A_")) {
-    return true;
+  if (cur) runs.push(cur);
+
+  // --- 各runの「開始stop」「終了stop」をCSVのstopリストから特定する ---
+  // CSVのstop列には IC:xxx 形式と JCT名が混在。
+  // rawNodesからstopトークンを取り出してCSVで検索する。
+
+  const stopTokenOfNode = (node: string): string | null => {
+    if (node.startsWith("ICIN:") || node.startsWith("ICOUT:") || node.startsWith("IC:")) {
+      const parts = node.split(":");
+      return parts[1] ? `IC:${parts[1]}` : null;
+    }
+    if (PA_ID_BY_NODE[node]) return null; // PAはCSVで別扱い
+    if (/^TatsumiR9UpAfterPA/.test(node)) return node; // helper node
+    if (node.includes(":")) return node.split(":")[0] || null;
+    // JCT
+    return node || null;
+  };
+
+  let prevRunEndPoint: { x: number; y: number } | null = null;
+
+  for (let ri = 0; ri < runs.length; ri++) {
+    const run = runs[ri]!;
+    const csvStops = seqMap.get(run.tail) || [];
+    if (csvStops.length === 0) continue;
+
+    // stopIndexMapを作る（CSV上の位置）
+    const stopIndexMap = new Map<string, number>();
+    csvStops.forEach((s, i) => { if (!stopIndexMap.has(s)) stopIndexMap.set(s, i); });
+
+    // rawNodesからCSV上のインデックスを収集
+    const nodeIndices: Array<{ node: string; idx: number }> = [];
+    for (const node of run.rawNodes) {
+      const token = stopTokenOfNode(node);
+      if (!token) continue;
+      const idx = stopIndexMap.get(token);
+      if (idx != null) nodeIndices.push({ node, idx });
+    }
+
+    if (nodeIndices.length < 2 && !run.isRing) continue;
+
+    // 最初と最後のCSVインデックス
+    const firstIdx = nodeIndices[0]?.idx ?? 0;
+    const lastIdx = nodeIndices[nodeIndices.length - 1]?.idx ?? (csvStops.length - 1);
+
+    // ルートパスを取得
+    const routePaths: SVGPathElement[] = run.routeIds
+      .flatMap((id) => Array.from(host.querySelectorAll<SVGPathElement>(`#${CSS.escape(id)} path`)))
+      .filter(Boolean);
+
+    if (routePaths.length === 0) continue;
+
+    // 最適なルートパスを選ぶ（既知のJCT点が最も近いもの）
+    let bestPath = routePaths[0]!;
+    if (routePaths.length > 1) {
+      // 最初のstopの座標でスコアリング
+      const firstStop = csvStops[firstIdx];
+      if (firstStop) {
+        const pt = resolveStopPoint(firstStop, host, pointMap);
+        if (pt) {
+          let bestScore = Infinity;
+          for (const rp of routePaths) {
+            const near = nearestLengthOnPath(rp, pt.x, pt.y);
+            if (near.dist < bestScore) { bestScore = near.dist; bestPath = rp; }
+          }
+        }
+      }
+    }
+
+    const total = bestPath.getTotalLength();
+
+    // --- CSVのstopをパス上に投影してインデックス→長さのマップを作る ---
+    // 全stopについて nearestLength を計算し、単調になるよう調整する
+    const stopLengths: number[] = new Array(csvStops.length).fill(-1);
+    for (let i = 0; i < csvStops.length; i++) {
+      const stop = csvStops[i]!;
+      const pt = resolveStopPoint(stop, host, pointMap);
+      if (!pt) continue;
+      stopLengths[i] = nearestLengthOnPath(bestPath, pt.x, pt.y).length;
+    }
+
+    // 有効な長さのみで単調性を推定（CW/CCW/UP/DOWN）
+    const validLengths = stopLengths.filter((l) => l >= 0);
+    let increasing = true;
+    if (validLengths.length >= 2) {
+      let inc = 0, dec = 0;
+      for (let i = 0; i + 1 < validLengths.length; i++) {
+        if (validLengths[i + 1]! > validLengths[i]!) inc++;
+        else if (validLengths[i + 1]! < validLengths[i]!) dec++;
+      }
+      increasing = inc >= dec;
+    }
+
+    // 単調になるよう長さを補正（リングパスの折り返しを考慮）
+    const adjustedLengths: number[] = [];
+    let lastValid = -1;
+    for (let i = 0; i < csvStops.length; i++) {
+      let len = stopLengths[i]!;
+      if (len < 0) { adjustedLengths.push(-1); continue; }
+      if (lastValid >= 0) {
+        if (increasing) { while (len < adjustedLengths[lastValid]!) len += total; }
+        else { while (len > adjustedLengths[lastValid]!) len -= total; }
+      }
+      adjustedLengths.push(len);
+      lastValid = i;
+    }
+
+    // firstIdx, lastIdx の長さを取得（-1なら補間で求める）
+    const findLength = (idx: number): number | null => {
+      if (adjustedLengths[idx] !== undefined && adjustedLengths[idx]! >= 0) {
+        return adjustedLengths[idx]!;
+      }
+      // 前後の有効値から線形補間
+      let before = -1, beforeIdx = -1, after = -1, afterIdx = -1;
+      for (let i = idx - 1; i >= 0; i--) {
+        if (adjustedLengths[i]! >= 0) { before = adjustedLengths[i]!; beforeIdx = i; break; }
+      }
+      for (let i = idx + 1; i < adjustedLengths.length; i++) {
+        if (adjustedLengths[i]! >= 0) { after = adjustedLengths[i]!; afterIdx = i; break; }
+      }
+      if (before >= 0 && after >= 0 && afterIdx !== beforeIdx) {
+        const t = (idx - beforeIdx) / (afterIdx - beforeIdx);
+        return before + (after - before) * t;
+      }
+      if (before >= 0) return before;
+      if (after >= 0) return after;
+      return null;
+    };
+
+    let startLen = findLength(firstIdx);
+    let endLen = findLength(lastIdx);
+
+    // リングで1周する場合
+    if (run.isRing && firstIdx === lastIdx) {
+      endLen = (startLen ?? 0) + (increasing ? total : -total);
+    }
+
+    if (startLen == null || endLen == null) continue;
+
+    // 進行方向
+    const sign = endLen >= startLen ? 1 : -1;
+    const distance = Math.abs(endLen - startLen);
+    if (distance < 1) continue;
+
+    // サンプル点を生成してオフセット線を描く
+    const steps = Math.max(20, Math.ceil(distance / 8));
+    const points: Array<{ x: number; y: number }> = [];
+    for (let j = 0; j <= steps; j++) {
+      const t = j / steps;
+      const len = startLen + (endLen - startLen) * t;
+      points.push(offsetPointAt(bestPath, total, len, sign, OFFSET));
+    }
+
+    if (points.length < 2) continue;
+
+    // run間の接続：前のrunの終点と現在の始点をつなぐ
+    if (prevRunEndPoint) {
+      const gap = Math.hypot(
+        points[0]!.x - prevRunEndPoint.x,
+        points[0]!.y - prevRunEndPoint.y
+      );
+      if (gap > 2 && gap < 80) {
+        // 短いギャップは直線でつなぐ
+        drawPath(overlayLayer, pointsToPathData([prevRunEndPoint, points[0]!]));
+      }
+    }
+
+    drawPath(overlayLayer, pointsToPathData(points));
+    prevRunEndPoint = points[points.length - 1]!;
   }
-  if (prevLast === "DaikokuPA" && (run.tail.startsWith("BAY_") || run.tail.startsWith("K5_"))) {
-    return true;
+
+  // --- マーカー描画 ---
+  const resolveEntryExit = (name: string | null | undefined): { x: number; y: number } | null => {
+    if (!name) return null;
+    return (
+      resolveIcPoint(name, host, pointMap) ||
+      resolveJctPoint(name, host, pointMap) ||
+      null
+    );
+  };
+
+  addMarker(markerLayer, resolveEntryExit(entryName), "#2563eb", 7);
+  addMarker(markerLayer, resolveEntryExit(exitName), "#dc2626", 7);
+  for (const label of activeSpotLabels) {
+    const id = PA_ID_BY_LABEL[label];
+    if (id) addMarker(markerLayer, pointMap.get(id) || null, "#059669", 5);
   }
-  return false;
 }
 
-function isSequenceHelperNode(node: string) {
-  return /^TatsumiR9UpAfterPA[12]$/.test(node);
-}
-
-function shouldUsePolylineRun(family: string | null, pointIds: string[]) {
-  if (!family) return false;
-  if (!POLYLINE_FAMILIES.has(family)) return false;
-  return true;
-}
+// =============================================================================
+// Reactコンポーネント
+// =============================================================================
 
 export default function ShutokoMap({
   entryName,
@@ -532,54 +726,12 @@ export default function ShutokoMap({
       .catch(() => setSeqCsv(""));
   }, []);
 
-  const routeRuns = useMemo(() => {
-    const runs: Array<{ tail: string; routeIds: string[]; ring: boolean; forward: boolean | null; pointIds: string[]; rawNodes: string[] }> = [];
-    let current: { tail: string; routeIds: string[]; ring: boolean; forward: boolean | null; pointIds: string[]; rawNodes: string[] } | null = null;
-
-    for (const node of highlightedPath) {
-      const pointId = svgNodeIdFromPathNode(node);
-      const tail = routeTailOfNode(node);
-      const config = routeConfigOfTail(tail);
-
-      if (!config) {
-        if (current) {
-          if (pointId) current.pointIds.push(pointId);
-          if (PA_ID_BY_NODE[node] || isSequenceHelperNode(node)) current.rawNodes.push(node);
-        }
-        continue;
-      }
-
-      if (!current || current.tail !== tail) {
-        if (current) runs.push(current);
-        current = { tail, routeIds: config.routeIds, ring: config.ring, forward: config.forward, pointIds: [], rawNodes: [] };
-      }
-      current.rawNodes.push(node);
-      if (pointId) {
-        current.pointIds.push(pointId);
-      }
-    }
-    if (current) runs.push(current);
-
-    if (runs.length > 0 && entryName) runs[0].pointIds.unshift(entryName);
-    if (runs.length > 0 && exitName) runs[runs.length - 1].pointIds.push(exitName);
-
-    for (const run of runs) {
-      const deduped: string[] = [];
-      for (const id of run.pointIds) {
-        if (!id) continue;
-        if (deduped[deduped.length - 1] !== id) deduped.push(id);
-      }
-      run.pointIds = deduped;
-    }
-
-    return runs.filter((run) => run.pointIds.length >= 1 || run.rawNodes.length >= 1);
-  }, [entryName, exitName, highlightedPath]);
-
   const pointMap = useMemo(() => parseSvgPointMap(svgMarkup), [svgMarkup]);
+  const seqMap = useMemo(() => parseSeqCsv(seqCsv), [seqCsv]);
 
   useEffect(() => {
     const host = hostRef.current;
-    if (!host) return;
+    if (!host || !svgMarkup || !seqCsv) return;
 
     const rootSvg = host.querySelector<SVGSVGElement>("svg");
     if (!rootSvg) return;
@@ -589,501 +741,20 @@ export default function ShutokoMap({
 
     const overlayLayer = addLayer(rootSvg, "route-overlay-layer");
     const markerLayer = addLayer(rootSvg, "route-marker-layer");
-    const icNameToSvgId = buildIcNameToSvgIdMap(host);
-    const pointForSvgId = (rawId: string | null) => {
-      if (!rawId) return null;
-      const resolved = icNameToSvgId.get(rawId) || icNameToSvgId.get(normalizeIcName(rawId)) || rawId;
-      return (
-        centerOf(findSvgNode(host, resolved) as SVGGraphicsElement | null) ||
-        pointMap.get(resolved) ||
-        pointMap.get(rawId) ||
-        null
-      );
-    };
 
-    const parseSeq = (csvText: string) => {
-      const lines = csvText.split(/\r?\n/).filter(Boolean);
-      if (lines.length === 0) return new Map<string, string[]>();
-      const header = lines[0].split(",");
-      const routeIdx = header.indexOf("route");
-      const dirIdx = header.indexOf("dir");
-      const stopsIdx = header.indexOf("stops");
-      const map = new Map<string, string[]>();
-      for (const line of lines.slice(1)) {
-        const cols: string[] = [];
-        let cur = "";
-        let inQ = false;
-        for (let i = 0; i < line.length; i++) {
-          const ch = line[i];
-          if (ch === "\"") {
-            if (inQ && line[i + 1] === "\"") {
-              cur += "\"";
-              i++;
-            } else {
-              inQ = !inQ;
-            }
-          } else if (ch === "," && !inQ) {
-            cols.push(cur);
-            cur = "";
-          } else {
-            cur += ch;
-          }
-        }
-        cols.push(cur);
-        const route = (cols[routeIdx] || "").trim();
-        const dir = (cols[dirIdx] || "").trim();
-        const stopsRaw = (cols[stopsIdx] || "").trim();
-        if (!route || !dir || !stopsRaw || route.startsWith("#")) continue;
-        const tail = route === "BAY" ? `BAY_${dir}` : `${route}_${dir}`;
-        const stops = stopsRaw.split(",").map((s) => s.trim()).filter(Boolean).map((s) => (s.startsWith("IC:") ? s.slice(3).trim() : s));
-        map.set(tail, stops);
-      }
-      return map;
-    };
-
-    const seqMap = parseSeq(seqCsv);
-
-    const svgIdForStop = (stop: string) => {
-      const bareStop = stop.startsWith("IC:") ? stop.slice(3).trim() : stop;
-      const normalized = normalizeIcName(bareStop);
-      if (PA_ID_BY_NODE[bareStop]) return PA_ID_BY_NODE[bareStop];
-      return (
-        IC_NAME_ID_OVERRIDES[bareStop] ||
-        IC_NAME_ID_OVERRIDES[normalized] ||
-        icNameToSvgId.get(bareStop) ||
-        icNameToSvgId.get(normalized) ||
-        NODE_ID_ALIASES[bareStop] ||
-        bareStop
-      );
-    };
-
-    const stopTokenOfNode = (node: string) => {
-      if (node.startsWith("ICIN:") || node.startsWith("ICOUT:") || node.startsWith("IC:")) {
-        const parts = node.split(":");
-        return parts[1] || null;
-      }
-      if (node.includes(":")) return node.split(":")[0] || null;
-      return node || null;
-    };
-
-    const expandRunPointIds = (
-      run: { tail: string; pointIds: string[]; rawNodes: string[] }
-    ) => {
-      const stops = seqMap.get(run.tail) || [];
-      if (stops.length === 0 || run.rawNodes.length < 2) return run.pointIds;
-
-      const stopIndex = new Map<string, number>();
-      stops.forEach((stop, idx) => {
-        if (!stopIndex.has(stop)) stopIndex.set(stop, idx);
-      });
-
-      const expanded: string[] = [];
-      for (let i = 0; i < run.rawNodes.length; i++) {
-        const raw = run.rawNodes[i];
-        const token = stopTokenOfNode(raw);
-        if (!token) continue;
-        const idx = stopIndex.get(token);
-        if (idx == null) continue;
-
-        const stopName = stops[idx]!.replace(/^IC:/, "");
-        const svgId = svgIdForStop(stopName);
-        if (expanded[expanded.length - 1] !== svgId) expanded.push(svgId);
-
-        if (i + 1 >= run.rawNodes.length) continue;
-        const nextToken = stopTokenOfNode(run.rawNodes[i + 1]);
-        if (!nextToken) continue;
-        const nextIdx = stopIndex.get(nextToken);
-        if (nextIdx == null || nextIdx === idx) continue;
-
-        const step = nextIdx > idx ? 1 : -1;
-        for (let j = idx + step; j !== nextIdx; j += step) {
-          const midStop = stops[j];
-          if (!midStop) continue;
-          const midSvg = svgIdForStop(midStop.replace(/^IC:/, ""));
-          if (expanded[expanded.length - 1] !== midSvg) expanded.push(midSvg);
-        }
-      }
-
-      if (expanded.length >= 2) {
-        const firstRawPoint = run.pointIds[0];
-        const lastRawPoint = run.pointIds[run.pointIds.length - 1];
-        if (firstRawPoint && expanded[0] !== firstRawPoint) expanded.unshift(firstRawPoint);
-        if (lastRawPoint && expanded[expanded.length - 1] !== lastRawPoint) expanded.push(lastRawPoint);
-        return dedupeConsecutive(expanded);
-      }
-      return dedupeConsecutive(run.pointIds);
-    };
-
-    const expandRunStops = (
-      run: { tail: string; rawNodes: string[] }
-    ) => {
-      const stops = seqMap.get(run.tail) || [];
-      if (stops.length === 0 || run.rawNodes.length < 2) return [];
-
-      const stopIndex = new Map<string, number>();
-      stops.forEach((stop, idx) => {
-        if (!stopIndex.has(stop)) stopIndex.set(stop, idx);
-      });
-
-      const expanded: string[] = [];
-      for (let i = 0; i < run.rawNodes.length; i++) {
-        const raw = run.rawNodes[i];
-        const token = stopTokenOfNode(raw);
-        if (!token) continue;
-        const idx = stopIndex.get(token);
-        if (idx == null) continue;
-        const stopName = stops[idx]!;
-        if (expanded[expanded.length - 1] !== stopName) expanded.push(stopName);
-
-        if (i + 1 >= run.rawNodes.length) continue;
-        const nextToken = stopTokenOfNode(run.rawNodes[i + 1]);
-        if (!nextToken) continue;
-        const nextIdx = stopIndex.get(nextToken);
-        if (nextIdx == null || nextIdx === idx) continue;
-        const step = nextIdx > idx ? 1 : -1;
-        for (let j = idx + step; j !== nextIdx; j += step) {
-          const midStop = stops[j];
-          if (!midStop) continue;
-          if (expanded[expanded.length - 1] !== midStop) expanded.push(midStop);
-        }
-      }
-      return dedupeConsecutive(expanded);
-    };
-
-    const stopPathProjectionCache = new Map<string, { total: number; lengths: Map<string, number>; avgDist: number }>();
-
-    const stopProjectionForPath = (routePath: SVGPathElement, tail: string) => {
-      const cacheKey = `${routePath.id}|${tail}`;
-      const cached = stopPathProjectionCache.get(cacheKey);
-      if (cached) return cached;
-
-      const stops = seqMap.get(tail) || [];
-      const lengths = new Map<string, number>();
-      let totalDist = 0;
-      let count = 0;
-      const total = routePath.getTotalLength();
-      let rawLengths: Array<{ stop: string; length: number; dist: number }> = [];
-
-      for (const stop of stops) {
-        const svgId = svgIdForStop(stop);
-        const point = pointForSvgId(svgId);
-        if (!point) continue;
-        const near = nearestLengthOnPath(routePath, point.x, point.y);
-        rawLengths.push({ stop, length: near.length, dist: near.dist });
-      }
-
-      let inferredIncreasing: boolean | null = null;
-      if (rawLengths.length >= 2) {
-        let inc = 0;
-        let dec = 0;
-        for (let i = 0; i + 1 < rawLengths.length; i++) {
-          if (rawLengths[i + 1]!.length > rawLengths[i]!.length) inc++;
-          if (rawLengths[i + 1]!.length < rawLengths[i]!.length) dec++;
-        }
-        if (inc !== dec) inferredIncreasing = inc > dec;
-      }
-
-      let adjusted: typeof rawLengths = [];
-      if (rawLengths.length > 0) {
-        adjusted = [rawLengths[0]!];
-        for (let i = 1; i < rawLengths.length; i++) {
-          let cur = { ...rawLengths[i]! };
-          const prev = adjusted[i - 1]!;
-          if (inferredIncreasing === true) {
-            while (cur.length < prev.length) cur.length += total;
-          } else if (inferredIncreasing === false) {
-            while (cur.length > prev.length) cur.length -= total;
-          }
-          adjusted.push(cur);
-        }
-      }
-
-      for (const item of adjusted) {
-        if (!lengths.has(item.stop)) lengths.set(item.stop, item.length);
-        totalDist += item.dist;
-        count += 1;
-      }
-
-      const result = { total, lengths, avgDist: count > 0 ? totalDist / count : Number.POSITIVE_INFINITY };
-      stopPathProjectionCache.set(cacheKey, result);
-      return result;
-    };
-
-    const inferIncreasingDirection = (tail: string, routePath: SVGPathElement) => {
-      const stops = seqMap.get(tail) || [];
-      const lengths: number[] = [];
-      for (const stop of stops) {
-        const svgId = svgIdForStop(stop);
-        const point = pointForSvgId(svgId);
-        if (!point) continue;
-        const near = nearestLengthOnPath(routePath, point.x, point.y);
-        if (near.dist <= 80) lengths.push(near.length);
-      }
-      if (lengths.length < 2) return null;
-      let inc = 0;
-      let dec = 0;
-      for (let i = 0; i + 1 < lengths.length; i++) {
-        if (lengths[i + 1] > lengths[i]) inc++;
-        if (lengths[i + 1] < lengths[i]) dec++;
-      }
-      if (inc === dec) return null;
-      return inc > dec;
-    };
-
-    let firstProjectedPoint: { x: number; y: number } | null = null;
-    let lastProjectedPoint: { x: number; y: number } | null = null;
-    let previousOverlayEnd: { x: number; y: number } | null = null;
-    for (let runIndex = 0; runIndex < routeRuns.length; runIndex++) {
-      const run = routeRuns[runIndex]!;
-      const prevRun = runIndex > 0 ? routeRuns[runIndex - 1] : null;
-      const nextRun = runIndex + 1 < routeRuns.length ? routeRuns[runIndex + 1] : null;
-      const routePaths = run.routeIds
-        .map((id) => host.querySelector<SVGPathElement>(`#${id} path`))
-        .filter((p): p is SVGPathElement => !!p);
-      if (routePaths.length === 0 || run.pointIds.length < 2) continue;
-
-      let expandedPointIds = expandRunPointIds(run);
-      const prevFamily = prevRun ? routeFamilyOfTail(prevRun.tail) : null;
-      const curFamily = routeFamilyOfTail(run.tail);
-      const nextFamily = nextRun ? routeFamilyOfTail(nextRun.tail) : null;
-      const needsHanedaSwitch =
-        (curFamily === "K1" && (prevFamily === "R1H" || nextFamily === "R1H")) ||
-        (curFamily === "R1H" && (prevFamily === "K1" || nextFamily === "K1"));
-      if (needsHanedaSwitch && pointMap.has("haneda_switchJCT")) {
-        if ((run.tail === "K1_UP" || run.tail === "R1H_DOWN") && expandedPointIds[expandedPointIds.length - 1] !== "haneda_switchJCT") {
-          expandedPointIds = [...expandedPointIds, "haneda_switchJCT"];
-        }
-        if ((run.tail === "K1_DOWN" || run.tail === "R1H_UP") && expandedPointIds[0] !== "haneda_switchJCT") {
-          expandedPointIds = ["haneda_switchJCT", ...expandedPointIds];
-        }
-      }
-      const prevTail = prevRun?.tail || "";
-      const nextTail = nextRun?.tail || "";
-      const fullRingLoop =
-        (run.tail.startsWith("C1_") || run.tail.startsWith("C2_")) &&
-        routeBaseOfTail(prevTail) === routeBaseOfTail(nextTail) &&
-        areOppositeDirections(directionOfTail(prevTail), directionOfTail(nextTail));
-      if (fullRingLoop && expandedPointIds.length < 2) {
-        expandedPointIds = (seqMap.get(run.tail) || [])
-          .map((stop) => svgIdForStop(stop))
-          .filter(Boolean);
-      }
-
-      const nodePoints = expandedPointIds
-        .map((id) => ({
-          id,
-          point: pointForSvgId(id),
-        }))
-        .filter((x): x is { id: string; point: { x: number; y: number } } => !!x.point);
-      if (nodePoints.length < 2) continue;
-
-      let bestPath:
-        | {
-            path: SVGPathElement;
-            total: number;
-            score: number;
-            lengths: number[];
-          }
-        | null = null;
-
-      for (const routePath of routePaths) {
-        const projections = nodePoints.map((np) => nearestLengthOnPath(routePath, np.point.x, np.point.y));
-        const score = projections.reduce((sum, p) => sum + p.dist, 0);
-        if (!bestPath || score < bestPath.score) {
-          bestPath = {
-            path: routePath,
-            total: projections[0]?.total || routePath.getTotalLength(),
-            score,
-            lengths: projections.map((p) => p.length),
-          };
-        }
-      }
-
-      const firstId = nodePoints[0]?.id || "";
-      const lastId = nodePoints[nodePoints.length - 1]?.id || "";
-      const inheritedStartAnchor = shouldCarryOverlayAnchor(prevRun, run) ? previousOverlayEnd : null;
-      const startAnchor = inheritedStartAnchor || (firstId.startsWith("pa_") ? null : nodePoints[0]?.point || null);
-      const endAnchor = lastId.startsWith("pa_") ? null : nodePoints[nodePoints.length - 1]?.point || null;
-      if (!firstProjectedPoint) firstProjectedPoint = nodePoints[0].point;
-      lastProjectedPoint = nodePoints[nodePoints.length - 1].point;
-
-      const overlayEnds = (() => {
-        const offset = 3.5;
-        if (!run.ring) {
-          const expandedStops = expandRunStops(run);
-          if (shouldUsePolylineRun(curFamily, expandedPointIds)) {
-            let fallbackPoints = offsetPolylinePoints(nodePoints.map((np) => np.point), offset, nodePoints.map((np) => np.id));
-            if (fallbackPoints.length < 2) return null;
-            if (startAnchor) fallbackPoints[0] = startAnchor;
-            if (endAnchor) fallbackPoints[fallbackPoints.length - 1] = endAnchor;
-            drawOverlayPath(overlayLayer, smoothedPathData(fallbackPoints));
-            return { start: fallbackPoints[0], end: fallbackPoints[fallbackPoints.length - 1] };
-          }
-          if (routePaths.length > 0 && expandedStops.length >= 2) {
-            let bestStopPath:
-              | {
-                  path: SVGPathElement;
-                  total: number;
-                  avgDist: number;
-                  lengths: number[];
-                }
-              | null = null;
-            for (const routePath of routePaths) {
-              const proj = stopProjectionForPath(routePath, run.tail);
-              const stopLengths = expandedStops
-                .map((stop) => proj.lengths.get(stop))
-                .filter((x): x is number => typeof x === "number");
-              if (stopLengths.length < 2) continue;
-              if (!bestStopPath || proj.avgDist < bestStopPath.avgDist) {
-                bestStopPath = { path: routePath, total: proj.total, avgDist: proj.avgDist, lengths: stopLengths };
-              }
-            }
-            if (bestStopPath && bestStopPath.avgDist <= 120) {
-              const lengths = [...bestStopPath.lengths];
-              const segments = lengths
-                .slice(0, -1)
-                .map((start, i) => ({ start, end: lengths[i + 1], distance: Math.abs(lengths[i + 1] - start) }))
-                .filter((seg) => seg.distance >= 1);
-              if (segments.length > 0) {
-                const points: Array<{ x: number; y: number }> = [];
-                for (let i = 0; i < segments.length; i++) {
-                  const { start, end, distance } = segments[i]!;
-                  const sign = end >= start ? 1 : -1;
-                  const steps = Math.max(10, Math.ceil(distance / 10));
-                  for (let j = 0; j <= steps; j++) {
-                    if (i > 0 && j === 0) continue;
-                    const t = j / steps;
-                    const len = start + (end - start) * t;
-                    points.push(offsetPointAtLength(bestStopPath.path, bestStopPath.total, len, sign, offset));
-                  }
-                }
-                if (points.length >= 2) {
-                  if (startAnchor) points[0] = startAnchor;
-                  if (endAnchor) points[points.length - 1] = endAnchor;
-                  drawOverlayPath(overlayLayer, smoothedPathData(points));
-                  return { start: points[0], end: points[points.length - 1] };
-                }
-              }
-            }
-          }
-          if (bestPath && bestPath.score / Math.max(nodePoints.length, 1) <= 120) {
-            let lengths = [...bestPath.lengths];
-            let inc = 0;
-            let dec = 0;
-            for (let i = 0; i + 1 < lengths.length; i++) {
-              if (lengths[i + 1]! > lengths[i]!) inc++;
-              if (lengths[i + 1]! < lengths[i]!) dec++;
-            }
-            const increasing = inc === dec ? lengths[lengths.length - 1]! >= lengths[0]! : inc > dec;
-            const adjusted = [lengths[0]!];
-            for (let i = 1; i < lengths.length; i++) {
-              let cur = lengths[i]!;
-              const prev = adjusted[i - 1]!;
-              if (increasing) {
-                while (cur < prev) cur += bestPath.total;
-              } else {
-                while (cur > prev) cur -= bestPath.total;
-              }
-              adjusted.push(cur);
-            }
-            lengths = adjusted;
-            const segments = lengths
-              .slice(0, -1)
-              .map((start, i) => ({ start, end: lengths[i + 1]!, distance: Math.abs(lengths[i + 1]! - start) }))
-              .filter((seg) => seg.distance >= 1);
-            if (segments.length > 0) {
-              const points: Array<{ x: number; y: number }> = [];
-              for (let i = 0; i < segments.length; i++) {
-                const { start, end, distance } = segments[i];
-                const sign = end >= start ? 1 : -1;
-                const steps = Math.max(10, Math.ceil(distance / 10));
-                for (let j = 0; j <= steps; j++) {
-                  if (i > 0 && j === 0) continue;
-                  const t = j / steps;
-                  const len = start + (end - start) * t;
-                  points.push(offsetPointAtLength(bestPath.path, bestPath.total, len, sign, offset));
-                }
-              }
-              if (points.length >= 2) {
-                if (startAnchor) points[0] = startAnchor;
-                if (endAnchor) points[points.length - 1] = endAnchor;
-                drawOverlayPath(overlayLayer, smoothedPathData(points));
-                return { start: points[0], end: points[points.length - 1] };
-              }
-            }
-          }
-          let fallbackPoints = offsetPolylinePoints(nodePoints.map((np) => np.point), offset, nodePoints.map((np) => np.id));
-          if (fallbackPoints.length < 2) return null;
-          if (startAnchor) fallbackPoints[0] = startAnchor;
-          if (endAnchor) fallbackPoints[fallbackPoints.length - 1] = endAnchor;
-          drawOverlayPath(overlayLayer, smoothedPathData(fallbackPoints));
-          return { start: fallbackPoints[0], end: fallbackPoints[fallbackPoints.length - 1] };
-        }
-        if (!bestPath || bestPath.score / Math.max(nodePoints.length, 1) > 180) return null;
-
-        const inferredIncreasing = inferIncreasingDirection(run.tail, bestPath.path);
-        let lengths = [...bestPath.lengths];
-
-        if (run.ring && inferredIncreasing != null && lengths.length > 1) {
-          const adjusted = [lengths[0]];
-          for (let i = 1; i < lengths.length; i++) {
-            let cur = lengths[i];
-            const prev = adjusted[i - 1];
-            if (inferredIncreasing) {
-              while (cur < prev) cur += bestPath.total;
-            } else {
-              while (cur > prev) cur -= bestPath.total;
-            }
-            adjusted.push(cur);
-          }
-          lengths = adjusted;
-        }
-
-        if (fullRingLoop && lengths.length >= 1) {
-          const start = lengths[0]!;
-          const delta = inferredIncreasing === false ? -bestPath.total : bestPath.total;
-          lengths = [start, start + delta];
-        }
-        if (lengths.length < 2) return null;
-        const segments = lengths
-          .slice(0, -1)
-          .map((start, i) => ({ start, end: lengths[i + 1], distance: Math.abs(lengths[i + 1] - start) }))
-          .filter((seg) => seg.distance >= 1);
-        const totalDistance = segments.reduce((sum, seg) => sum + seg.distance, 0);
-        if (totalDistance < 1) return null;
-        const points: Array<{ x: number; y: number }> = [];
-        for (let i = 0; i < segments.length; i++) {
-          const { start, end, distance } = segments[i];
-          const sign = end >= start ? 1 : -1;
-          const steps = Math.max(10, Math.ceil(distance / 10));
-          for (let j = 0; j <= steps; j++) {
-            if (i > 0 && j === 0) continue;
-            const t = j / steps;
-            const len = start + (end - start) * t;
-            points.push(offsetPointAtLength(bestPath.path, bestPath.total, len, sign, offset));
-          }
-        }
-        if (points.length < 2) return null;
-        if (startAnchor) points[0] = startAnchor;
-        if (endAnchor) points[points.length - 1] = endAnchor;
-        drawOverlayPath(overlayLayer, smoothedPathData(points));
-        return { start: points[0], end: points[points.length - 1] };
-      })();
-      if (!overlayEnds) continue;
-      previousOverlayEnd = overlayEnds.end;
-    }
-
-    const entrySvgId = entryName ? icNameToSvgId.get(entryName) || icNameToSvgId.get(normalizeIcName(entryName)) || entryName : null;
-    const exitSvgId = exitName ? icNameToSvgId.get(exitName) || icNameToSvgId.get(normalizeIcName(exitName)) || exitName : null;
-    const entryPoint = pointForSvgId(entrySvgId) || firstProjectedPoint || null;
-    const exitPoint = pointForSvgId(exitSvgId) || lastProjectedPoint || null;
-    addMarker(markerLayer, entryPoint, "#2563eb", 7);
-    addMarker(markerLayer, exitPoint, "#dc2626", 7);
-    for (const label of activeSpotLabels) {
-      const id = PA_ID_BY_LABEL[label];
-      if (id) addMarker(markerLayer, pointForSvgId(id), "#059669", 5);
-    }
-  }, [activeSpotLabels, entryName, exitName, pointMap, routeRuns, seqCsv, svgMarkup]);
+    drawHighlight(
+      host,
+      rootSvg,
+      highlightedPath,
+      seqMap,
+      pointMap,
+      entryName,
+      exitName,
+      activeSpotLabels,
+      overlayLayer,
+      markerLayer
+    );
+  }, [svgMarkup, seqCsv, seqMap, pointMap, highlightedPath, entryName, exitName, activeSpotLabels]);
 
   return (
     <div
@@ -1120,10 +791,7 @@ export default function ShutokoMap({
       {svgMarkup ? (
         <div
           ref={hostRef}
-          style={{
-            width: "100%",
-            lineHeight: 0,
-          }}
+          style={{ width: "100%", lineHeight: 0 }}
           dangerouslySetInnerHTML={{ __html: svgMarkup }}
         />
       ) : (
