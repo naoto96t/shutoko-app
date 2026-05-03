@@ -603,13 +603,15 @@ function drawHighlight(
       increasing = inc >= dec;
     }
 
-    // 単調になるよう長さを補正（リングパスの折り返しを考慮）
+    // 単調になるよう長さを補正。折り返し補正は環状線だけに限定する。
+    // 放射/湾岸/K線で全stopの最近傍投影を無理に単調化すると、
+    // IC点の表示位置ズレで以降の長さがpath終端へ吸われる。
     const adjustedLengths: number[] = [];
     let lastValid = -1;
     for (let i = 0; i < csvStops.length; i++) {
       let len = stopLengths[i]!;
       if (len < 0) { adjustedLengths.push(-1); continue; }
-      if (lastValid >= 0) {
+      if (run.isRing && lastValid >= 0) {
         if (increasing) { while (len < adjustedLengths[lastValid]!) len += total; }
         else { while (len > adjustedLengths[lastValid]!) len -= total; }
       }
@@ -660,7 +662,8 @@ function drawHighlight(
     for (let j = 0; j <= steps; j++) {
       const t = j / steps;
       const len = startLen + (endLen - startLen) * t;
-      points.push(offsetPointAt(bestPath, total, len, sign, OFFSET));
+      const drawableLen = run.isRing ? ((len % total) + total) % total : len;
+      points.push(offsetPointAt(bestPath, total, drawableLen, sign, OFFSET));
     }
 
     if (points.length < 2) continue;
