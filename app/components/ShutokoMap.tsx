@@ -8,6 +8,7 @@ type ShutokoMapProps = {
   entryName: string | null;
   exitName?: string;
   activeSpotLabels?: string[];
+  highlightedRoutes?: string[];
   highlightedPath?: string[];
   title?: string;
   headerAction?: ReactNode;
@@ -706,6 +707,7 @@ export default function ShutokoMap({
   entryName,
   exitName,
   activeSpotLabels = [],
+  highlightedRoutes: _highlightedRoutes = [],
   highlightedPath = [],
   title = "Route Map",
   headerAction,
