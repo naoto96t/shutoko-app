@@ -196,7 +196,11 @@ function scoreDetourPath(path: string[], selectedSpotNodes: Set<string>) {
 }
 
 function publicAsset(path: string) {
-  return `${BASE_PATH}${path}`;
+  const activeBase =
+    BASE_PATH && typeof window !== "undefined" && window.location.pathname.startsWith(BASE_PATH)
+      ? BASE_PATH
+      : "";
+  return `${activeBase}${path}`;
 }
 
 function normalizeIcName(name: string) {
@@ -860,6 +864,7 @@ export default function Page() {
   const [entryFlow, setEntryFlow] = useState<"auto" | "up" | "down">("auto");
   const [selectedRowIndex, setSelectedRowIndex] = useState(0);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [viewportWidth, setViewportWidth] = useState(1024);
 
   const fares = faresData?.entries ?? EMPTY_ENTRIES;
   const entries = useMemo(() => Object.keys(fares).sort(), [fares]);
@@ -877,6 +882,13 @@ export default function Page() {
     for (const s of SPOTS) o[s.key] = false;
     return o;
   });
+
+  useEffect(() => {
+    const updateViewportWidth = () => setViewportWidth(window.innerWidth);
+    updateViewportWidth();
+    window.addEventListener("resize", updateViewportWidth);
+    return () => window.removeEventListener("resize", updateViewportWidth);
+  }, []);
 
   useEffect(() => {
     fetch(publicAsset("/plans.json")).then((r) => r.json()).then(setFaresData).catch(() => setFaresData(null));
@@ -1294,35 +1306,101 @@ export default function Page() {
       ? `${entryName} → ${selectedRow.exit}`
       : entryName
     : "首都高 周回ドライブプランナー";
+  const isNarrowLayout = viewportWidth < 900;
+  const headerHeight = isNarrowLayout ? 148 : 164;
 
   return (
     <div style={{ maxWidth: 1320, margin: "0 auto", padding: 16 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-        {entryName ? (
-          <button
-            onClick={resetHome}
-            style={{ padding: "8px 12px", border: "1px solid #d6d3d1", borderRadius: 12, background: "white" }}
-          >
-            ホームへ戻る
-          </button>
-        ) : null}
-        <h1 style={{ fontSize: 22, margin: 0 }}>首都高 周回ドライブプランナー</h1>
-        <button
-          onClick={() => setAboutOpen(true)}
+      <div
+        style={{
+          position: "relative",
+          minHeight: headerHeight,
+          borderRadius: 8,
+          overflow: "hidden",
+          border: "1px solid var(--border)",
+          background: "var(--surface)",
+          marginBottom: 18,
+          boxShadow: "var(--shadow-card)",
+        }}
+      >
+        <img
+          src={publicAsset("/cover.png")}
+          alt=""
+          aria-hidden="true"
           style={{
-            padding: "8px 12px",
-            border: "1px solid #d6d3d1",
-            borderRadius: 12,
-            background: "white",
-            fontSize: 13,
-            color: "#44403c",
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            objectPosition: isNarrowLayout ? "58% 58%" : "center 56%",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(90deg, rgba(4, 12, 20, 0.78) 0%, rgba(4, 12, 20, 0.48) 46%, rgba(4, 12, 20, 0.08) 100%)",
+          }}
+        />
+        <div
+          style={{
+            position: "relative",
+            minHeight: headerHeight,
+            padding: isNarrowLayout ? 16 : 20,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            gap: 18,
           }}
         >
-          このアプリについて
-        </button>
-      </div>
-      <div style={{ fontSize: 11, color: "#78716c", marginTop: 4, marginLeft: entryName ? 118 : 0 }}>
-        build {BUILD_LABEL}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            {entryName ? (
+              <button
+                onClick={resetHome}
+                style={{
+                  padding: "8px 12px",
+                  border: "1px solid rgba(255, 255, 255, 0.54)",
+                  borderRadius: 8,
+                  background: "rgba(255, 255, 255, 0.88)",
+                  color: "#111827",
+                  boxShadow: "0 8px 22px rgba(0, 0, 0, 0.18)",
+                }}
+              >
+                ホームへ戻る
+              </button>
+            ) : null}
+            <button
+              onClick={() => setAboutOpen(true)}
+              style={{
+                padding: "8px 12px",
+                border: "1px solid rgba(255, 255, 255, 0.54)",
+                borderRadius: 8,
+                background: "rgba(255, 255, 255, 0.88)",
+                fontSize: 13,
+                color: "#111827",
+                boxShadow: "0 8px 22px rgba(0, 0, 0, 0.18)",
+              }}
+            >
+              このアプリについて
+            </button>
+          </div>
+          <div>
+            <h1
+              style={{
+                fontSize: isNarrowLayout ? 26 : 34,
+                lineHeight: 1.18,
+                margin: 0,
+                color: "#ffffff",
+                textShadow: "0 2px 14px rgba(0, 0, 0, 0.42)",
+              }}
+            >
+              首都高 周回ドライブプランナー
+            </h1>
+            <div style={{ fontSize: 11, color: "rgba(255, 255, 255, 0.78)", marginTop: 7 }}>build {BUILD_LABEL}</div>
+          </div>
+        </div>
       </div>
 
       {aboutOpen ? (
@@ -1331,7 +1409,7 @@ export default function Page() {
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(15, 23, 42, 0.42)",
+            background: "var(--overlay)",
             display: "grid",
             placeItems: "center",
             padding: 16,
@@ -1345,16 +1423,16 @@ export default function Page() {
               maxHeight: "82vh",
               overflowY: "auto",
               borderRadius: 22,
-              background: "linear-gradient(180deg, #ffffff 0%, #fafaf9 100%)",
-              border: "1px solid #d6d3d1",
-              boxShadow: "0 24px 80px rgba(15, 23, 42, 0.18)",
+              background: "var(--surface-raised)",
+              border: "1px solid var(--border)",
+              boxShadow: "var(--shadow-modal)",
               padding: 20,
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
               <div>
                 <div style={{ fontSize: 20, fontWeight: 800 }}>このアプリについて</div>
-                <div style={{ fontSize: 12, color: "#78716c", marginTop: 4 }}>
+                <div style={{ fontSize: 12, color: "var(--muted-soft)", marginTop: 4 }}>
                   首都高の周回ドライブを、なるべくわかりやすく計画するための参考ツールです。
                 </div>
               </div>
@@ -1362,16 +1440,16 @@ export default function Page() {
                 onClick={() => setAboutOpen(false)}
                 style={{
                   padding: "8px 12px",
-                  border: "1px solid #d6d3d1",
+                  border: "1px solid var(--border)",
                   borderRadius: 12,
-                  background: "white",
+                  background: "var(--control-bg)",
                 }}
               >
                 閉じる
               </button>
             </div>
 
-            <div style={{ marginTop: 18, display: "grid", gap: 14, color: "#292524", lineHeight: 1.8, fontSize: 14 }}>
+            <div style={{ marginTop: 18, display: "grid", gap: 14, color: "var(--foreground)", lineHeight: 1.8, fontSize: 14 }}>
               <p style={{ margin: 0 }}>
                 このアプリは、首都高の特殊な料金計算と接続関係を使って、低料金で長く走れるドライブプランを探すためのものです。
                 首都高に慣れていない人でも、入口を選んで、通りたいPAを指定すると、成立しやすい周回ルートをざっくり確認できるようにしています。
@@ -1451,13 +1529,13 @@ export default function Page() {
             }
           }}
           placeholder="入口を検索（例：五反田 / 外苑 / 葛西）"
-          style={{ width: "100%", padding: 12, fontSize: 16, border: "1px solid #bbb", borderRadius: 12 }}
+          style={{ width: "100%", padding: 12, fontSize: 16, border: "1px solid var(--border)", borderRadius: 12, background: "var(--control-bg)" }}
         />
       </div>
 
       {!entryName ? (
-        <div style={{ marginTop: 10, padding: 12, border: "1px solid #ddd", borderRadius: 12, background: "white" }}>
-          <div style={{ fontSize: 12, color: "#666", marginBottom: 8, fontWeight: 700 }}>経由したいスポット</div>
+        <div style={{ marginTop: 10, padding: 12, border: "1px solid var(--border)", borderRadius: 12, background: "var(--control-bg)" }}>
+          <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 8, fontWeight: 700 }}>経由したいスポット</div>
           <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
             {SPOTS.map((s) => (
               <label key={s.key} style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 13 }}>
@@ -1473,8 +1551,8 @@ export default function Page() {
         </div>
       ) : null}
 
-      {!faresData && <div style={{ marginTop: 16, color: "#666" }}>plans.json を読み込めていません。</div>}
-      {!graph && <div style={{ marginTop: 8, color: "#666" }}>graph.json を読み込めていません。</div>}
+      {!faresData && <div style={{ marginTop: 16, color: "var(--muted)" }}>plans.json を読み込めていません。</div>}
+      {!graph && <div style={{ marginTop: 8, color: "var(--muted)" }}>graph.json を読み込めていません。</div>}
 
       {faresData && !entryName && (
         <div style={{ marginTop: 12 }}>
@@ -1486,17 +1564,17 @@ export default function Page() {
                 style={{
                   textAlign: "left",
                   padding: 10,
-                  border: "1px solid #e7e5e4",
+                  border: "1px solid var(--border-soft)",
                   borderRadius: 14,
-                  background: "linear-gradient(180deg, #ffffff 0%, #fafaf9 100%)",
-                  boxShadow: "0 4px 14px rgba(15,23,42,0.04)",
+                  background: "var(--surface-raised)",
+                  boxShadow: "var(--shadow-card)",
                 }}
               >
                 <div style={{ fontWeight: 800, fontSize: 15 }}>{ic}</div>
-                <div style={{ fontSize: 12, color: "#666", marginTop: 4 }}>
+                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
                   start: {fares[ic].start_nodes.map(prettyNode).join(", ")}
                 </div>
-                <div style={{ fontSize: 12, color: "#666", marginTop: 2 }}>
+                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
                   exits: {fares[ic].exits?.length ?? 0}
                 </div>
               </button>
@@ -1511,7 +1589,7 @@ export default function Page() {
             style={{
               marginTop: 12,
               display: "grid",
-              gridTemplateColumns: "minmax(0, 1.65fr) minmax(360px, 1fr)",
+              gridTemplateColumns: isNarrowLayout ? "minmax(0, 1fr)" : "minmax(0, 1.65fr) minmax(360px, 1fr)",
               gap: 14,
               alignItems: "start",
               gridTemplateRows: "auto",
@@ -1529,7 +1607,7 @@ export default function Page() {
                 toolbar={
                   <div style={{ display: "grid", gap: 12 }}>
                     <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
-                      <div style={{ fontSize: 12, color: "#666", fontWeight: 700 }}>経由したいスポット</div>
+                      <div style={{ fontSize: 12, color: "var(--muted)", fontWeight: 700 }}>経由したいスポット</div>
                       {SPOTS.map((s) => (
                         <label key={s.key} style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 13 }}>
                           <input
@@ -1541,7 +1619,7 @@ export default function Page() {
                         </label>
                       ))}
                     </div>
-                    <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center", fontSize: 12, color: "#666" }}>
+                    <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center", fontSize: 12, color: "var(--muted)" }}>
                       <span>入口: {entryName}</span>
                       {entryHasUpDown ? (
                         <>
@@ -1567,9 +1645,9 @@ export default function Page() {
               />
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 10, alignContent: "start", alignSelf: "start", marginTop: 92 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 10, alignContent: "start", alignSelf: "start", marginTop: 0, minWidth: 0 }}>
               {activeSpots.length > 0 ? (
-                <div style={{ fontSize: 12, color: "#666", padding: "4px 2px" }}>
+                <div style={{ fontSize: 12, color: "var(--muted)", padding: "4px 2px" }}>
                   成立ルート: {evaluatedDetours.filter((d) => d.detour.ok).length} / {fixedRows.length} 件
                 </div>
               ) : null}
@@ -1587,12 +1665,12 @@ export default function Page() {
                   key={i}
                   onClick={() => setSelectedRowIndex(i)}
                   style={{
-                    border: selectedRowIndex === i ? "2px solid #0ea5e9" : "1px solid #ddd",
-                    boxShadow: selectedRowIndex === i ? "0 8px 24px rgba(14,165,233,0.12)" : "none",
+                    border: selectedRowIndex === i ? "2px solid #0ea5e9" : "1px solid var(--border)",
+                    boxShadow: selectedRowIndex === i ? "var(--shadow-selected)" : "none",
                     borderRadius: 14,
                     padding: 12,
                     cursor: "pointer",
-                    background: selectedRowIndex === i ? "#f8fdff" : "linear-gradient(180deg, #ffffff 0%, #fafaf9 100%)",
+                    background: selectedRowIndex === i ? "var(--selected-bg)" : "var(--surface-raised)",
                   }}
                 >
                   <div style={{ fontWeight: 800, fontSize: 15 }}>
@@ -1600,15 +1678,15 @@ export default function Page() {
                   </div>
 
                   {normal ? (
-                    <div style={{ marginTop: 8, fontSize: 12, color: "#666" }}>
+                    <div style={{ marginTop: 8, fontSize: 12, color: "var(--muted)" }}>
                       通常ルート: {normal}
                     </div>
                   ) : null}
 
                   {activeSpots.length > 0 && detour?.ok ? (
                     <div style={{ marginTop: 10, fontSize: 12 }}>
-                      <div style={{ color: "#111", fontWeight: 700 }}>周回ルート:</div>
-                      <div style={{ color: "#666", marginTop: 4 }}>
+                      <div style={{ color: "var(--foreground)", fontWeight: 700 }}>周回ルート:</div>
+                      <div style={{ color: "var(--muted)", marginTop: 4 }}>
                         {prettyDetourPath(detour.path).join(" → ")}
                       </div>
                     </div>
@@ -1616,10 +1694,10 @@ export default function Page() {
 
                   {activeSpots.length > 0 && detour && !detour.ok ? (
                     <div style={{ marginTop: 10, fontSize: 12 }}>
-                      <div style={{ color: "#111", fontWeight: 700 }}>
+                      <div style={{ color: "var(--foreground)", fontWeight: 700 }}>
                         {evaluatedDetours[i]?.structurallyImpossible ? "周回不可能" : "周回ルートなし"}
                       </div>
-                      <div style={{ color: "#666", marginTop: 4 }}>
+                      <div style={{ color: "var(--muted)", marginTop: 4 }}>
                         {evaluatedDetours[i]?.structurallyImpossible
                           ? "環状線に到達できないため、この出入口の組み合わせでは周回できません。"
                           : detour.why || "条件に合う周回ルートが見つかりませんでした。"}
@@ -1630,7 +1708,7 @@ export default function Page() {
               );
               })}
               {activeSpots.length > 0 && evaluatedDetours.filter((d) => d.detour.ok).length === 0 ? (
-                <div style={{ color: "#888" }}>条件に合う周回ルートが見つかりませんでした。</div>
+                <div style={{ color: "var(--muted-soft)" }}>条件に合う周回ルートが見つかりませんでした。</div>
               ) : null}
             </div>
           </div>

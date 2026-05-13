@@ -8,7 +8,7 @@ C1,CCW,"IC:霞が関,TanimachiJCT,IC:飯倉,IchinohashiJCT,IC:芝公園,Shibaura
 
 # --- C2 ---
 C2,CW,"OoiJCT,IC:中環大井南,IC:五反田,OhashiJCT,IC:富ヶ谷,IC:初台南,NishiShinjukuJCT,IC:中野長者橋,IC:西池袋,IC:高松,KumanochoJCT,ItabashiJCT,IC:新板橋,IC:滝野川,IC:王子南,IC:王子北,KouhokuJCT,IC:扇大橋,IC:千住新橋,KosugeJCT,IC:小菅,HorikiriJCT,IC:四つ木,IC:平井大橋,IC:中環小松川,KomatsugawaJCT,IC:船堀橋,IC:清新町,KasaiJCT"
-C2,CCW,"KasaiJCT,IC:清新町,IC:船堀橋,KomatsugawaJCT,IC:中環小松川,IC:平井大橋,IC:四つ木,HorikiriJCT,IC:小菅,KosugeJCT,IC:千住新橋,IC:扇大橋,IC:平井大橋,IC:江北JCT,IC:王子北,IC:王子南,IC:滝野川,IC:新板橋,ItabashiJCT,KumanochoJCT,IC:高松,IC:西池袋,IC:中野長者橋,NishiShinjukuJCT,IC:初台南,IC:富ヶ谷,OhashiJCT,IC:五反田,IC:中環大井南,OoiJCT"
+C2,CCW,"KasaiJCT,IC:清新町,IC:船堀橋,KomatsugawaJCT,IC:中環小松川,IC:平井大橋,IC:四つ木,HorikiriJCT,IC:小菅,KosugeJCT,IC:千住新橋,IC:扇大橋,KouhokuJCT,IC:王子北,IC:王子南,IC:滝野川,IC:新板橋,ItabashiJCT,KumanochoJCT,IC:高松,IC:西池袋,IC:中野長者橋,NishiShinjukuJCT,IC:初台南,IC:富ヶ谷,OhashiJCT,IC:五反田,IC:中環大井南,OoiJCT"
 
 # --- BAY（端点の並びはあなたの定義に合わせて後で調整OK）---
 BAY,E,"IC:幸浦,IC:杉田,IC:磯子,IC:三溪園,IC:南本牧ふ頭,IC:本牧ふ頭,HonmokuJCT,DaikokuJCT,IC:大黒ふ頭,IC:東扇島,IC:浮島,KawasakiUkishimaJCT,IC:湾岸環八,IC:空港中央,TokaiJCT,IC:大井南,OoiJCT,IC:大井,IC:臨海副都心,AriakeJCT,ShinonomeJCT,IC:有明,TatsumiJCT,IC:新木場,KasaiJCT,IC:葛西,IC:舞浜,IC:浦安,IC:千鳥町,TakayaJCT"
