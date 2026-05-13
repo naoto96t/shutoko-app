@@ -263,7 +263,7 @@ const RING_TAILS = new Set(["C1_CW", "C1_CCW", "C2_CW", "C2_CCW"]);
 
 function publicAsset(path: string) {
   const activeBase =
-    BASE_PATH && typeof window !== "undefined" && window.location.pathname.startsWith(BASE_PATH)
+    BASE_PATH && (typeof window === "undefined" || window.location.pathname.startsWith(BASE_PATH))
       ? BASE_PATH
       : "";
   return `${activeBase}${path}`;

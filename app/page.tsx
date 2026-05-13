@@ -197,7 +197,7 @@ function scoreDetourPath(path: string[], selectedSpotNodes: Set<string>) {
 
 function publicAsset(path: string) {
   const activeBase =
-    BASE_PATH && typeof window !== "undefined" && window.location.pathname.startsWith(BASE_PATH)
+    BASE_PATH && (typeof window === "undefined" || window.location.pathname.startsWith(BASE_PATH))
       ? BASE_PATH
       : "";
   return `${activeBase}${path}`;
