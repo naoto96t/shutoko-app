@@ -5,6 +5,8 @@ import ShutokoMap from "./components/ShutokoMap";
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
 const BUILD_LABEL = process.env.NEXT_PUBLIC_BUILD_LABEL || "local";
+const ENTRY_HISTORY_KEY = "shutoko.entryHistory.v1";
+const ENTRY_HISTORY_LIMIT = 8;
 
 type ExitRow = {
   exit: string;
@@ -52,6 +54,7 @@ function prettyNode(n: string) {
   if (n.startsWith("R6_")) return `6号向島線 ${n.endsWith("_UP") ? "上り" : "下り"}`;
   if (n.startsWith("R6A_")) return `6号向島線 ${n.endsWith("_UP") ? "上り" : "下り"}`;
   if (n.startsWith("R6B_")) return `6号三郷線 ${n.endsWith("_UP") ? "上り" : "下り"}`;
+  if (n.startsWith("R2_Togoshi_")) return `2号目黒線 ${n.endsWith("_UP") ? "上り" : "下り"}`;
   const m = n.match(/^(R(\d+)(?:[AB])?|S1)_(UP|DOWN)$/);
   if (m) {
     const dir = m[3] === "UP" ? "上り" : "下り";
@@ -74,12 +77,17 @@ function routeTailOfNode(node: string) {
   return tailOfPort(node);
 }
 
+function nodeBaseName(n: string) {
+  return n.split(":")[0] || n;
+}
+
 function isFacility(n: string) {
-  return n === "HakozakiRotary" || n === "DaikokuPA" || n === "TatsumiPA1" || n === "TatsumiPA2" || n === "ShibauraPA";
+  const base = nodeBaseName(n);
+  return base === "HakozakiRotary" || base === "DaikokuPA" || base === "TatsumiPA1" || base === "TatsumiPA2" || base === "ShibauraPA";
 }
 
 function prettyFacility(n: string) {
-  switch (n) {
+  switch (nodeBaseName(n)) {
     case "HakozakiRotary":
       return "箱崎PA";
     case "DaikokuPA":
@@ -162,7 +170,19 @@ function prettyDetourPath(path: string[]) {
 }
 
 function isPaNode(n: string) {
-  return n === "HakozakiRotary" || n === "DaikokuPA" || n === "TatsumiPA1" || n === "TatsumiPA2" || n === "ShibauraPA";
+  return isFacility(n);
+}
+
+function hasForbiddenTatsumiTurnback(path: string[]) {
+  const hasR9DownBeforeTatsumi = (idx: number) => path.slice(0, idx).some((node) => routeTailOfNode(node) === "R9_DOWN");
+  const hasR9UpAfterTatsumi = (idx: number) => path.slice(idx + 1).some((node) => routeTailOfNode(node) === "R9_UP");
+  const hasR9UpBeforeTatsumi = (idx: number) => path.slice(0, idx).some((node) => routeTailOfNode(node) === "R9_UP");
+  const hasR9DownAfterTatsumi = (idx: number) => path.slice(idx + 1).some((node) => routeTailOfNode(node) === "R9_DOWN");
+  return path.some((node, idx) => (
+    (node === "TatsumiPA1" || node === "TatsumiPA2") &&
+    ((hasR9DownBeforeTatsumi(idx) && hasR9UpAfterTatsumi(idx)) ||
+      (hasR9UpBeforeTatsumi(idx) && hasR9DownAfterTatsumi(idx)))
+  ));
 }
 
 function scoreDetourPath(path: string[], selectedSpotNodes: Set<string>) {
@@ -175,8 +195,9 @@ function scoreDetourPath(path: string[], selectedSpotNodes: Set<string>) {
     const nextTail = i + 1 < path.length ? routeTailOfNode(path[i + 1]) : "";
     const prevBase = routeBaseOfTail(prevTail);
     const nextBase = routeBaseOfTail(nextTail);
+    const curBase = nodeBaseName(cur);
 
-    if (!selectedSpotNodes.has(cur)) {
+    if (!selectedSpotNodes.has(curBase)) {
       penalty += 10000;
     }
 
@@ -184,11 +205,11 @@ function scoreDetourPath(path: string[], selectedSpotNodes: Set<string>) {
       penalty += 4000;
     }
 
-    if (cur === "DaikokuPA" && ((prevTail.startsWith("BAY_") && nextTail.startsWith("BAY_")) || (prevTail.startsWith("K5_") && nextTail.startsWith("K5_")))) {
+    if (curBase === "DaikokuPA" && ((prevTail.startsWith("BAY_") && nextTail.startsWith("BAY_")) || (prevTail.startsWith("K5_") && nextTail.startsWith("K5_")))) {
       penalty += 6000;
     }
 
-    if (cur === "HakozakiRotary" && prevTail.startsWith("R6A_") && nextTail.startsWith("R6A_")) {
+    if (curBase === "HakozakiRotary" && prevTail.startsWith("R6A_") && nextTail.startsWith("R6A_")) {
       penalty += 6000;
     }
   }
@@ -248,7 +269,11 @@ function directionOfTail(tail: string) {
 }
 
 function routeBaseOfTail(tail: string) {
-  return tail.replace(/_(UP|DOWN|CW|CCW|E|W)$/, "");
+  const base = tail.replace(/_(UP|DOWN|CW|CCW|E|W)$/, "");
+  if (base === "R2_Togoshi") return "R2";
+  const split = base.match(/^(R[3-7])[AB]$/);
+  if (split) return split[1];
+  return base;
 }
 
 function areOppositeDirections(a: string | null, b: string | null) {
@@ -487,7 +512,7 @@ function bfsPathAvoid(
   maxSteps = 60000
 ): string[] | null {
   const isRing = (t: string) => t.startsWith("C1_") || t.startsWith("C2_") || t.startsWith("BAY");
-  const isRadial = (t: string) => /^(R\d+|R1H|R1U|R2A|R2B|R3A|R3B|R4A|R4B|R5A|R5B|R6A|R6B|R7A|R7B|K\d|S\d)_/.test(t);
+  const isRadial = (t: string) => /^(R\d+|R1H|R1U|R2_Togoshi|R3A|R3B|R4A|R4B|R5A|R5B|R6A|R6B|R7A|R7B|K\d|S\d)_/.test(t);
   const jctOf = (node: string) => (node.includes(":") ? node.split(":")[0] : "");
 
   type BfsState = { node: string; prevNode: string | null };
@@ -521,7 +546,7 @@ function bfsPathAvoid(
       if (seqInfo) {
         const fromPos = seqInfo.pos.get(v);
         const toPos = seqInfo.pos.get(nxt);
-        if (fromTail && toTail && fromTail === toTail && fromPos != null && toPos != null && toPos < fromPos) {
+        if (fromTail && toTail && fromTail === toTail && fromPos != null && toPos != null && toPos < fromPos && !fromTail.startsWith("C1_")) {
           continue;
         }
         if (isIntraJunctionTurn(v, nxt)) {
@@ -578,7 +603,7 @@ function bfsPathAvoid(
 
       // C1の向き制約:
       // Rx_DOWN -> C1 は不可、C1 -> Rx_UP は不可
-      const radialTail = /^(R\d+(?:A|B)?|R1H|R1U|K\d|S\d)_(UP|DOWN)$/;
+      const radialTail = /^(R2_Togoshi|R\d+(?:A|B)?|R1H|R1U|K\d|S\d)_(UP|DOWN)$/;
       const fromRad = radialTail.exec(fromTail);
       const toRad = radialTail.exec(toTail);
       if (fromRad && fromRad[2] === "DOWN" && toTail.startsWith("C1_")) {
@@ -631,6 +656,9 @@ function bfsPathAvoid(
         const vt = tailOfPort(v);
         const nt = tailOfPort(nxt);
 
+        if (pj && pj === vj && vj === nj && pt === nt && pt !== vt) {
+          continue;
+        }
         if (pj && pj === vj && vj === nj && isRing(pt) && isRadial(vt) && isRing(nt)) {
           continue;
         }
@@ -685,7 +713,7 @@ function dijkstraPathAvoid(
   maxSteps = 120000
 ): string[] | null {
   const isRing = (t: string) => t.startsWith("C1_") || t.startsWith("C2_") || t.startsWith("BAY");
-  const isRadial = (t: string) => /^(R\d+|R1H|R1U|R2A|R2B|R3A|R3B|R4A|R4B|R5A|R5B|R6A|R6B|R7A|R7B|K\d|S\d)_/.test(t);
+  const isRadial = (t: string) => /^(R\d+|R1H|R1U|R2_Togoshi|R3A|R3B|R4A|R4B|R5A|R5B|R6A|R6B|R7A|R7B|K\d|S\d)_/.test(t);
   const jctOf = (node: string) => (node.includes(":") ? node.split(":")[0] : "");
 
   type SearchState = { node: string; prevNode: string | null; cost: number };
@@ -730,7 +758,7 @@ function dijkstraPathAvoid(
       if (seqInfo) {
         const fromPos = seqInfo.pos.get(v);
         const toPos = seqInfo.pos.get(nxt);
-        if (fromTail && toTail && fromTail === toTail && fromPos != null && toPos != null && toPos < fromPos) {
+        if (fromTail && toTail && fromTail === toTail && fromPos != null && toPos != null && toPos < fromPos && !fromTail.startsWith("C1_")) {
           continue;
         }
         if (isIntraJunctionTurn(v, nxt)) {
@@ -771,7 +799,7 @@ function dijkstraPathAvoid(
         continue;
       }
 
-      const radialTail = /^(R\d+(?:A|B)?|R1H|R1U|K\d|S\d)_(UP|DOWN)$/;
+      const radialTail = /^(R2_Togoshi|R\d+(?:A|B)?|R1H|R1U|K\d|S\d)_(UP|DOWN)$/;
       const fromRad = radialTail.exec(fromTail);
       if (fromRad && fromRad[2] === "DOWN" && toTail.startsWith("C1_")) {
         continue;
@@ -819,6 +847,9 @@ function dijkstraPathAvoid(
         const vt = tailOfPort(v);
         const nt = tailOfPort(nxt);
 
+        if (pj && pj === vj && vj === nj && pt === nt && pt !== vt) {
+          continue;
+        }
         if (pj && pj === vj && vj === nj && isRing(pt) && isRadial(vt) && isRing(nt)) {
           continue;
         }
@@ -865,6 +896,7 @@ export default function Page() {
   const [selectedRowIndex, setSelectedRowIndex] = useState(0);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [viewportWidth, setViewportWidth] = useState(1024);
+  const [recentEntries, setRecentEntries] = useState<string[]>([]);
 
   const fares = faresData?.entries ?? EMPTY_ENTRIES;
   const entries = useMemo(() => Object.keys(fares).sort(), [fares]);
@@ -888,6 +920,18 @@ export default function Page() {
     updateViewportWidth();
     window.addEventListener("resize", updateViewportWidth);
     return () => window.removeEventListener("resize", updateViewportWidth);
+  }, []);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(ENTRY_HISTORY_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      if (Array.isArray(parsed)) {
+        setRecentEntries(parsed.filter((x) => typeof x === "string").slice(0, ENTRY_HISTORY_LIMIT));
+      }
+    } catch {
+      setRecentEntries([]);
+    }
   }, []);
 
   useEffect(() => {
@@ -958,6 +1002,15 @@ export default function Page() {
     setQ(resolved);
     setEntryFlow("auto");
     setSelectedRowIndex(0);
+    setRecentEntries((prev) => {
+      const next = [resolved, ...prev.filter((x) => x !== resolved)].slice(0, ENTRY_HISTORY_LIMIT);
+      try {
+        window.localStorage.setItem(ENTRY_HISTORY_KEY, JSON.stringify(next));
+      } catch {
+        // localStorage may be blocked in private browsing.
+      }
+      return next;
+    });
   }, [normalizedEntryMap]);
 
   const commitSearch = useCallback(() => {
@@ -1094,6 +1147,7 @@ export default function Page() {
     if (icoutTargets.length === 0) return { ok: false, path: [], why: "出口ノードが見つからない" };
 
     const avoidLoopDeadEnds = (node: string) => {
+      if (isPaNode(node)) return true;
       const t = tailOfPort(node);
       return t.startsWith("R10_");
     };
@@ -1143,6 +1197,8 @@ export default function Page() {
 
     const avoidLoopDeadEnds = (node: string) => {
       const t = tailOfPort(node);
+      const base = nodeBaseName(node);
+      if (isPaNode(node) && !activeSpots.some((spot) => spot.node === base)) return true;
       return t.startsWith("R10_"); // 周回では晴海線(R10)を避ける
     };
 
@@ -1157,7 +1213,9 @@ export default function Page() {
         seqInfo,
         (_prevNode, node, nextNode) => {
           let cost = 1;
-          if (isPaNode(nextNode) && !targets.has(nextNode)) {
+          const nextBaseName = nodeBaseName(nextNode);
+          const nextIsSelectedSpot = activeSpots.some((spot) => spot.node === nextBaseName);
+          if (isPaNode(nextNode) && !targets.has(nextNode) && !nextIsSelectedSpot) {
             cost += 10000;
           }
 
@@ -1166,17 +1224,17 @@ export default function Page() {
           const nodeBase = routeBaseOfTail(nodeTail);
           const nextBase = routeBaseOfTail(nextTail);
 
-          if (nextNode === "DaikokuPA" && !targets.has(nextNode)) {
+          if (nextBaseName === "DaikokuPA" && !targets.has(nextNode) && !nextIsSelectedSpot) {
             cost += 10000;
           }
-          if (nextNode === "HakozakiRotary" && !targets.has(nextNode)) {
-            cost += 10000;
+          if (nextBaseName === "HakozakiRotary" && !targets.has(nextNode) && !nextIsSelectedSpot) {
+            cost += 100000;
           }
-          if (nextNode === "DaikokuPA" && nodeTail.startsWith("BAY_")) {
+          if (nextBaseName === "DaikokuPA" && nodeTail.startsWith("BAY_")) {
             cost += 4000;
           }
-          if (nextNode === "HakozakiRotary" && nodeTail.startsWith("R6A_")) {
-            cost += 4000;
+          if (nextBaseName === "HakozakiRotary" && nodeTail.startsWith("R6A_")) {
+            cost += 40000;
           }
           if (nodeBase && nextBase && nodeBase === nextBase && areOppositeDirections(directionOfTail(nodeTail), directionOfTail(nextTail))) {
             cost += 5000;
@@ -1204,6 +1262,7 @@ export default function Page() {
       if (!pe) return null;
       if (full.length === 0) full = pe;
       else full = full.concat(pe.slice(1));
+      if (hasForbiddenTatsumiTurnback(full)) return null;
       return full;
     };
 
@@ -1556,6 +1615,42 @@ export default function Page() {
 
       {faresData && !entryName && (
         <div style={{ marginTop: 12 }}>
+          {recentEntries.length > 0 ? (
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 13, fontWeight: 800, color: "var(--foreground)", marginBottom: 8 }}>よく使うインター</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {recentEntries
+                  .filter((ic) => fares[ic])
+                  .map((ic) => (
+                    <button
+                      key={ic}
+                      onClick={() => onPickEntry(ic)}
+                      style={{
+                        padding: "7px 10px",
+                        border: "1px solid var(--border)",
+                        borderRadius: 8,
+                        background: "var(--surface-raised)",
+                        color: "var(--foreground)",
+                        fontSize: 13,
+                        fontWeight: 700,
+                        boxShadow: "var(--shadow-card)",
+                      }}
+                    >
+                      {ic}
+                    </button>
+                  ))}
+              </div>
+            </div>
+          ) : null}
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 900, color: "var(--foreground)" }}>フルインター一覧</div>
+              <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
+                入口と出口の両方を使えるICを中心に表示しています
+              </div>
+            </div>
+            <div style={{ fontSize: 12, color: "var(--muted-soft)", whiteSpace: "nowrap" }}>{suggestions.length} 件</div>
+          </div>
           <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10 }}>
             {suggestions.map((ic) => (
               <button

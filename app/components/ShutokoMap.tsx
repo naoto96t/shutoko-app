@@ -205,10 +205,10 @@ const TAIL_TO_ROUTE_IDS: Record<string, string[]> = {
   R1H_DOWN: ["route_R1H_DOWN"],
   R1U_UP: ["route_R1U_UP"],
   R1U_DOWN: ["route_R1U_DOWN"],
-  R2A_UP: ["route_R2_UP"],
-  R2A_DOWN: ["route_R2_DOWN"],
-  R2B_UP: ["route_R2_Togoshi_UP", "route_R2_UP"],
-  R2B_DOWN: ["route_R2_Togoshi_DOWN", "route_R2_DOWN"],
+  R2_UP: ["route_R2_UP"],
+  R2_DOWN: ["route_R2_DOWN"],
+  R2_Togoshi_UP: ["route_R2_Togoshi_UP", "route_R2_UP"],
+  R2_Togoshi_DOWN: ["route_R2_Togoshi_DOWN", "route_R2_DOWN"],
   R3A_UP: ["route_R3A_UP"],
   R3A_DOWN: ["route_R3A_DOWN"],
   R3B_UP: ["route_R3B_UP"],
@@ -331,6 +331,22 @@ function svgNodeIdOfPathNode(node: string): string | null {
 /** SVGノードIDのエイリアス解決 */
 function resolveJctId(rawId: string): string {
   return JCT_ID_ALIASES[rawId] || rawId;
+}
+
+function cssEscape(value: string): string {
+  if (typeof CSS !== "undefined" && typeof CSS.escape === "function") return CSS.escape(value);
+  return value.replace(/["\\#.;:[\],>+~*^$|=()\s]/g, "\\$&");
+}
+
+function svgElementCenter(host: Element, id: string): { x: number; y: number } | null {
+  const el = host.querySelector<SVGGraphicsElement>(`#${cssEscape(id)}`);
+  if (!el || typeof el.getBBox !== "function") return null;
+  try {
+    const box = el.getBBox();
+    return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  } catch {
+    return null;
+  }
 }
 
 // --- SVGパース ---
@@ -940,7 +956,7 @@ function drawHighlight(
   addMarker(markerLayer, resolveEntryExit(exitName), "#dc2626", 8.5, "出");
   for (const label of activeSpotLabels) {
     const id = PA_ID_BY_LABEL[label];
-    if (id) addMarker(markerLayer, pointMap.get(id) || null, "#2563eb", 7.5);
+    if (id) addMarker(markerLayer, pointMap.get(id) || svgElementCenter(host, id), "#2563eb", 7.5);
   }
 }
 
