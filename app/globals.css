@@ -7,6 +7,8 @@
   --surface-soft: #fafaf9;
   --surface-raised: linear-gradient(180deg, #ffffff 0%, #fafaf9 100%);
   --map-surface: linear-gradient(180deg, #f8fafc 0%, #ffffff 38%, #f5f7fb 100%);
+  --map-svg-base: #ffffff;
+  --map-svg-bg: #f6f6f6;
   --control-bg: #ffffff;
   --selected-bg: #f8fdff;
   --border: #d6d3d1;
@@ -35,6 +37,8 @@
     --surface-soft: #202020;
     --surface-raised: linear-gradient(180deg, #202020 0%, #171717 100%);
     --map-surface: linear-gradient(180deg, #18181b 0%, #141414 42%, #1f2937 100%);
+    --map-svg-base: #111827;
+    --map-svg-bg: #18212f;
     --control-bg: #171717;
     --selected-bg: #0b2530;
     --border: #5a5550;

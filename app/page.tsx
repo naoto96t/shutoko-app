@@ -25,6 +25,9 @@ type SeqPosMap = Map<string, number>;
 type SeqJctMap = Map<string, Set<string>>;
 type ExitAllowMap = Map<string, Set<string>>;
 type IcMasterRow = { is_full?: boolean; entry_dir?: string[]; exit_dir?: string[] };
+type DetourLength = "light" | "standard" | "long";
+type ReturnRouteMode = "auto" | "different";
+type ScenicRouteMode = "auto" | "c1_bay";
 const EMPTY_ENTRIES: Record<string, EntryBlock> = {};
 
 const LABEL: Record<string, string> = {
@@ -173,16 +176,13 @@ function isPaNode(n: string) {
   return isFacility(n);
 }
 
+function isHardAvoidUnselectedPa(n: string) {
+  const base = nodeBaseName(n);
+  return base === "TatsumiPA1" || base === "TatsumiPA2" || base === "ShibauraPA";
+}
+
 function hasForbiddenTatsumiTurnback(path: string[]) {
-  const hasR9DownBeforeTatsumi = (idx: number) => path.slice(0, idx).some((node) => routeTailOfNode(node) === "R9_DOWN");
-  const hasR9UpAfterTatsumi = (idx: number) => path.slice(idx + 1).some((node) => routeTailOfNode(node) === "R9_UP");
-  const hasR9UpBeforeTatsumi = (idx: number) => path.slice(0, idx).some((node) => routeTailOfNode(node) === "R9_UP");
-  const hasR9DownAfterTatsumi = (idx: number) => path.slice(idx + 1).some((node) => routeTailOfNode(node) === "R9_DOWN");
-  return path.some((node, idx) => (
-    (node === "TatsumiPA1" || node === "TatsumiPA2") &&
-    ((hasR9DownBeforeTatsumi(idx) && hasR9UpAfterTatsumi(idx)) ||
-      (hasR9UpBeforeTatsumi(idx) && hasR9DownAfterTatsumi(idx)))
-  ));
+  return path.some((node) => node.startsWith("TatsumiPA1:") || node.startsWith("TatsumiPA2:"));
 }
 
 function scoreDetourPath(path: string[], selectedSpotNodes: Set<string>) {
@@ -222,6 +222,31 @@ function publicAsset(path: string) {
       ? BASE_PATH
       : "";
   return `${activeBase}${path}`;
+}
+
+async function fetchPublicAsset(path: string) {
+  const candidates = uniq([publicAsset(path), path]);
+  let lastError: unknown = null;
+  for (const url of candidates) {
+    try {
+      const response = await fetch(url);
+      if (response.ok) return response;
+      lastError = new Error(`${url}: ${response.status}`);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError ?? new Error(`Failed to fetch ${path}`);
+}
+
+async function fetchPublicText(path: string) {
+  const response = await fetchPublicAsset(path);
+  return response.text();
+}
+
+async function fetchPublicJson<T>(path: string): Promise<T> {
+  const response = await fetchPublicAsset(path);
+  return response.json() as Promise<T>;
 }
 
 function normalizeIcName(name: string) {
@@ -472,6 +497,23 @@ function tailAllowedByExitTag(tail: string, allow: Set<string>) {
   return false;
 }
 
+function prettyExitDirections(allow: Set<string> | undefined) {
+  if (!allow || allow.size === 0) return "";
+  const labels: [string, string][] = [
+    ["UP", "上り"],
+    ["DOWN", "下り"],
+    ["CCW", "内回り"],
+    ["CW", "外回り"],
+    ["BAY_E", "東行き"],
+    ["BAY_W", "西行き"],
+  ];
+  return labels.filter(([key]) => allow.has(key)).map(([, label]) => label).join("・");
+}
+
+function tailSetOfPath(pathNodes: string[] | undefined) {
+  return new Set((pathNodes || []).map(routeTailOfNode).filter(Boolean));
+}
+
 function isTurnScopedNode(node: string) {
   if (!node.includes(":")) return false;
   if (node.startsWith("ICIN:")) return false;
@@ -563,11 +605,6 @@ function bfsPathAvoid(
         continue;
       }
 
-      // 湾岸線から放射の「下り」へは入れない
-      if ((fromTail === "BAY_E" || fromTail === "BAY_W") && /_(DOWN)$/.test(toTail)) {
-        continue;
-      }
-
       // 湾岸線の行き先反転は大黒PA経由のみ許可（直結Uターンを禁止）
       if ((fromTail === "BAY_E" && toTail === "BAY_W") || (fromTail === "BAY_W" && toTail === "BAY_E")) {
         continue;
@@ -587,20 +624,6 @@ function bfsPathAvoid(
         continue;
       }
 
-      // A/B側の方向制約（指定ルール）
-      // R[3-7]A_UP -> C2 は不可（A_DOWN -> C2 は許可）
-      if (/^R[3-7]A_UP$/.test(fromTail) && toTail.startsWith("C2_")) {
-        continue;
-      }
-      // C2 -> R[3-7]B_UP は不可、R[3-7]B_DOWN -> C2 は不可
-      // （B_UP は都心方向、B_DOWN は都心外方向という定義）
-      if (fromTail.startsWith("C2_") && /^R[3-7]B_UP$/.test(toTail)) {
-        continue;
-      }
-      if (/^R[3-7]B_DOWN$/.test(fromTail) && toTail.startsWith("C2_")) {
-        continue;
-      }
-
       // C1の向き制約:
       // Rx_DOWN -> C1 は不可、C1 -> Rx_UP は不可
       const radialTail = /^(R2_Togoshi|R\d+(?:A|B)?|R1H|R1U|K\d|S\d)_(UP|DOWN)$/;
@@ -610,40 +633,6 @@ function bfsPathAvoid(
         continue;
       }
       if (fromTail.startsWith("C1_") && toRad && toRad[2] === "UP") {
-        continue;
-      }
-
-      // 7号とC2の接続を厳格化
-      // 許可: 7B_UP -> C2_CCW, C2_CW -> 7B_DOWN
-      if (
-        (fromTail.startsWith("R7A_") || fromTail.startsWith("R7B_") || fromTail.startsWith("C2_")) &&
-        (toTail.startsWith("R7A_") || toTail.startsWith("R7B_") || toTail.startsWith("C2_"))
-      ) {
-        const sameLine =
-          (fromTail.startsWith("R7") && toTail.startsWith("R7")) ||
-          (fromTail.startsWith("C2") && toTail.startsWith("C2"));
-        const ok7c2 =
-          (fromTail === "R7B_UP" && toTail === "C2_CCW") ||
-          (fromTail === "C2_CW" && toTail === "R7B_DOWN");
-        if (!sameLine && !ok7c2) {
-          continue;
-        }
-      }
-
-      // 4AとC2の接続は禁止（4BのみC2と接続）
-      if (
-        (fromTail.startsWith("R4A_") && toTail.startsWith("C2_")) ||
-        (toTail.startsWith("R4A_") && fromTail.startsWith("C2_"))
-      ) {
-        continue;
-      }
-      // R4の明示ルール:
-      // 不可: C2 -> R4B_UP, R4B_DOWN -> C2
-      // 可:   C2 -> R4B_DOWN, R4B_UP -> C2
-      if (fromTail.startsWith("C2_") && toTail === "R4B_UP") {
-        continue;
-      }
-      if (fromTail === "R4B_DOWN" && toTail.startsWith("C2_")) {
         continue;
       }
 
@@ -663,6 +652,16 @@ function bfsPathAvoid(
           continue;
         }
         if (pj && pj === vj && vj === nj && isRing(pt) && isRing(vt) && isRing(nt) && pt !== vt && nt === pt) {
+          continue;
+        }
+        if (
+          pj &&
+          pj === vj &&
+          vj === nj &&
+          routeBaseOfTail(pt) === routeBaseOfTail(nt) &&
+          routeBaseOfTail(pt) !== routeBaseOfTail(vt) &&
+          areOppositeDirections(directionOfTail(pt), directionOfTail(nt))
+        ) {
           continue;
         }
         // 同一JCT内で、放射/環状/放射と2手使って同一路線の向きを反転する経路を禁止
@@ -775,9 +774,6 @@ function dijkstraPathAvoid(
         continue;
       }
 
-      if ((fromTail === "BAY_E" || fromTail === "BAY_W") && /_(DOWN)$/.test(toTail)) {
-        continue;
-      }
       if ((fromTail === "BAY_E" && toTail === "BAY_W") || (fromTail === "BAY_W" && toTail === "BAY_E")) {
         continue;
       }
@@ -789,16 +785,6 @@ function dijkstraPathAvoid(
       ) {
         continue;
       }
-      if (/^R[3-7]A_UP$/.test(fromTail) && toTail.startsWith("C2_")) {
-        continue;
-      }
-      if (fromTail.startsWith("C2_") && /^R[3-7]B_UP$/.test(toTail)) {
-        continue;
-      }
-      if (/^R[3-7]B_DOWN$/.test(fromTail) && toTail.startsWith("C2_")) {
-        continue;
-      }
-
       const radialTail = /^(R2_Togoshi|R\d+(?:A|B)?|R1H|R1U|K\d|S\d)_(UP|DOWN)$/;
       const fromRad = radialTail.exec(fromTail);
       if (fromRad && fromRad[2] === "DOWN" && toTail.startsWith("C1_")) {
@@ -808,34 +794,6 @@ function dijkstraPathAvoid(
         continue;
       }
       if (fromTail === "R1U_DOWN" && toTail === "C1_CCW") {
-        continue;
-      }
-
-      if (
-        (fromTail.startsWith("R7A_") || fromTail.startsWith("R7B_") || fromTail.startsWith("C2_")) &&
-        (toTail.startsWith("R7A_") || toTail.startsWith("R7B_") || toTail.startsWith("C2_"))
-      ) {
-        const sameLine =
-          (fromTail.startsWith("R7") && toTail.startsWith("R7")) ||
-          (fromTail.startsWith("C2") && toTail.startsWith("C2"));
-        const ok7c2 =
-          (fromTail === "R7B_UP" && toTail === "C2_CCW") ||
-          (fromTail === "C2_CW" && toTail === "R7B_DOWN");
-        if (!sameLine && !ok7c2) {
-          continue;
-        }
-      }
-
-      if (
-        (fromTail.startsWith("R4A_") && toTail.startsWith("C2_")) ||
-        (toTail.startsWith("R4A_") && fromTail.startsWith("C2_"))
-      ) {
-        continue;
-      }
-      if (fromTail.startsWith("C2_") && toTail === "R4B_UP") {
-        continue;
-      }
-      if (fromTail === "R4B_DOWN" && toTail.startsWith("C2_")) {
         continue;
       }
 
@@ -854,6 +812,16 @@ function dijkstraPathAvoid(
           continue;
         }
         if (pj && pj === vj && vj === nj && isRing(pt) && isRing(vt) && isRing(nt) && pt !== vt && nt === pt) {
+          continue;
+        }
+        if (
+          pj &&
+          pj === vj &&
+          vj === nj &&
+          routeBaseOfTail(pt) === routeBaseOfTail(nt) &&
+          routeBaseOfTail(pt) !== routeBaseOfTail(vt) &&
+          areOppositeDirections(directionOfTail(pt), directionOfTail(nt))
+        ) {
           continue;
         }
         if (
@@ -897,6 +865,10 @@ export default function Page() {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [viewportWidth, setViewportWidth] = useState(1024);
   const [recentEntries, setRecentEntries] = useState<string[]>([]);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [detourLength, setDetourLength] = useState<DetourLength>("standard");
+  const [returnRouteMode, setReturnRouteMode] = useState<ReturnRouteMode>("auto");
+  const [scenicRouteMode, setScenicRouteMode] = useState<ScenicRouteMode>("auto");
 
   const fares = faresData?.entries ?? EMPTY_ENTRIES;
   const entries = useMemo(() => Object.keys(fares).sort(), [fares]);
@@ -935,14 +907,14 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
-    fetch(publicAsset("/plans.json")).then((r) => r.json()).then(setFaresData).catch(() => setFaresData(null));
-    fetch(publicAsset("/graph.json")).then((r) => r.json()).then(setGraph).catch(() => setGraph(null));
+    fetchPublicJson<PlansJson>("/plans.json").then(setFaresData).catch(() => setFaresData(null));
+    fetchPublicJson<GraphJson>("/graph.json").then(setGraph).catch(() => setGraph(null));
     Promise.all([
-      fetch(publicAsset("/allowed_turns_port.csv")).then((r) => r.text()),
-      fetch(publicAsset("/connections_port.csv")).then((r) => r.text()),
-      fetch(publicAsset("/special_switches_port.csv")).then((r) => r.text()),
-      fetch(publicAsset("/forbidden_turns.csv")).then((r) => r.text()),
-      fetch(publicAsset("/route_sequence_v2.csv")).then((r) => r.text()),
+      fetchPublicText("/allowed_turns_port.csv"),
+      fetchPublicText("/connections_port.csv"),
+      fetchPublicText("/special_switches_port.csv"),
+      fetchPublicText("/forbidden_turns.csv"),
+      fetchPublicText("/route_sequence_v2.csv"),
     ])
       .then(([allowedCsv, connCsv, specialCsv, forbiddenCsv, seqCsv]) => {
         const s = new Set<string>();
@@ -957,12 +929,10 @@ export default function Page() {
         setTurnRules(new Set());
         setSeqInfo(null);
       });
-    fetch(publicAsset("/ic_tags.csv"))
-      .then((r) => r.text())
+    fetchPublicText("/ic_tags.csv")
       .then((csv) => setExitAllow(parseIcExitAllow(csv)))
       .catch(() => setExitAllow(new Map()));
-    fetch(publicAsset("/ic_master.json"))
-      .then((r) => r.json())
+    fetchPublicJson<Record<string, IcMasterRow>>("/ic_master.json")
       .then(setIcMaster)
       .catch(() => setIcMaster({}));
   }, []);
@@ -1198,12 +1168,13 @@ export default function Page() {
     const avoidLoopDeadEnds = (node: string) => {
       const t = tailOfPort(node);
       const base = nodeBaseName(node);
-      if (isPaNode(node) && !activeSpots.some((spot) => spot.node === base)) return true;
+      if (isPaNode(node) && !activeSpots.some((spot) => spot.node === base) && isHardAvoidUnselectedPa(node)) return true;
       return t.startsWith("R10_"); // 周回では晴海線(R10)を避ける
     };
 
     const go = (starts: string[], targetsArr: string[]) => {
       const targets = new Set(targetsArr);
+      const normalTails = tailSetOfPath(normalPathNodes);
       return dijkstraPathAvoid(
         graph,
         starts,
@@ -1223,6 +1194,28 @@ export default function Page() {
           const nextTail = routeTailOfNode(nextNode);
           const nodeBase = routeBaseOfTail(nodeTail);
           const nextBase = routeBaseOfTail(nextTail);
+          const nextIsC1 = nextTail.startsWith("C1_");
+          const nextIsC2 = nextTail.startsWith("C2_");
+          const nextIsBay = nextTail.startsWith("BAY_");
+
+          if (detourLength === "light") {
+            if (nextIsC2) cost += 4;
+            if (nextIsBay) cost += 1.5;
+          } else if (detourLength === "long") {
+            if (nextIsC1 || nextIsBay) cost -= 0.25;
+            if (nextIsC2) cost += 0.5;
+          } else if (nextIsC2) {
+            cost += 1.25;
+          }
+
+          if (returnRouteMode === "different" && normalTails.has(nextTail)) {
+            cost += 7;
+          }
+
+          if (scenicRouteMode === "c1_bay") {
+            if (nextIsC1 || nextIsBay) cost -= 0.35;
+            if (nextIsC2) cost += 1.5;
+          }
 
           if (nextBaseName === "DaikokuPA" && !targets.has(nextNode) && !nextIsSelectedSpot) {
             cost += 10000;
@@ -1646,7 +1639,7 @@ export default function Page() {
             <div>
               <div style={{ fontSize: 16, fontWeight: 900, color: "var(--foreground)" }}>フルインター一覧</div>
               <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
-                入口と出口の両方を使えるICを中心に表示しています
+                入口と出口が両方にあるインターです。ここを通ると、車両の方向が記録されず、料金が最短距離で計算されます。
               </div>
             </div>
             <div style={{ fontSize: 12, color: "var(--muted-soft)", whiteSpace: "nowrap" }}>{suggestions.length} 件</div>
@@ -1735,6 +1728,100 @@ export default function Page() {
                       ) : null}
                       <span>候補出口: {entry.exits?.length ?? 0}</span>
                     </div>
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => setAdvancedOpen((v) => !v)}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          padding: "6px 8px",
+                          border: "1px solid var(--border-soft)",
+                          borderRadius: 8,
+                          background: "var(--control-bg)",
+                          color: "var(--foreground)",
+                          fontSize: 12,
+                          fontWeight: 800,
+                        }}
+                      >
+                        詳細設定 {advancedOpen ? "⌃" : "⌄"}
+                      </button>
+                      {advancedOpen ? (
+                        <div style={{ marginTop: 10, display: "grid", gap: 10, fontSize: 12, color: "var(--muted)" }}>
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                            <span style={{ fontWeight: 800, color: "var(--foreground)" }}>周回の長さ</span>
+                            {([
+                              ["light", "軽め"],
+                              ["standard", "標準"],
+                              ["long", "長め"],
+                            ] as const).map(([value, label]) => (
+                              <button
+                                key={value}
+                                type="button"
+                                onClick={() => setDetourLength(value)}
+                                style={{
+                                  padding: "5px 9px",
+                                  border: detourLength === value ? "1px solid #0ea5e9" : "1px solid var(--border-soft)",
+                                  borderRadius: 8,
+                                  background: detourLength === value ? "var(--selected-bg)" : "var(--control-bg)",
+                                  color: "var(--foreground)",
+                                  fontWeight: detourLength === value ? 800 : 600,
+                                }}
+                              >
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                            <span style={{ fontWeight: 800, color: "var(--foreground)" }}>帰り道</span>
+                            {([
+                              ["auto", "おまかせ"],
+                              ["different", "なるべく別ルート"],
+                            ] as const).map(([value, label]) => (
+                              <button
+                                key={value}
+                                type="button"
+                                onClick={() => setReturnRouteMode(value)}
+                                style={{
+                                  padding: "5px 9px",
+                                  border: returnRouteMode === value ? "1px solid #0ea5e9" : "1px solid var(--border-soft)",
+                                  borderRadius: 8,
+                                  background: returnRouteMode === value ? "var(--selected-bg)" : "var(--control-bg)",
+                                  color: "var(--foreground)",
+                                  fontWeight: returnRouteMode === value ? 800 : 600,
+                                }}
+                              >
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                            <span style={{ fontWeight: 800, color: "var(--foreground)" }}>名所ルート</span>
+                            {([
+                              ["auto", "おまかせ"],
+                              ["c1_bay", "C1・湾岸を優先"],
+                            ] as const).map(([value, label]) => (
+                              <button
+                                key={value}
+                                type="button"
+                                onClick={() => setScenicRouteMode(value)}
+                                style={{
+                                  padding: "5px 9px",
+                                  border: scenicRouteMode === value ? "1px solid #0ea5e9" : "1px solid var(--border-soft)",
+                                  borderRadius: 8,
+                                  background: scenicRouteMode === value ? "var(--selected-bg)" : "var(--control-bg)",
+                                  color: "var(--foreground)",
+                                  fontWeight: scenicRouteMode === value ? 800 : 600,
+                                }}
+                              >
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                 }
               />
@@ -1754,6 +1841,7 @@ export default function Page() {
               const normal =
                 (usePlansNormal ? prettyNormalPath(x.path_nodes, x.exit) : "") ||
                 (normalCalc?.ok ? prettyDetourPath(normalCalc.path).join(" → ") : "");
+              const exitDirectionLabel = prettyExitDirections(exitAllow.get(x.exit));
 
               return (
                 <div
@@ -1769,7 +1857,7 @@ export default function Page() {
                   }}
                 >
                   <div style={{ fontWeight: 800, fontSize: 15 }}>
-                    {x.toll}円 / 出口：{x.exit} {x.dist ? ` / ${x.dist}km` : ""}
+                    {x.toll}円 / 出口：{x.exit} {x.dist ? ` / ${x.dist}km` : ""}{exitDirectionLabel ? ` / 出口方向：${exitDirectionLabel}` : ""}
                   </div>
 
                   {normal ? (

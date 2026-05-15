@@ -310,6 +310,7 @@ function routeIdsOfTail(tail: string): string[] | null {
   if (!routeIds) return null;
   const base = routeBaseOfTail(tail);
   if (base === "C1") return routeIds;
+  if (base.startsWith("S")) return routeIds;
   const fallbackIds = base.startsWith("S")
     ? [`Route_${base}`, `Route_${base}_2`, `route_${base}`]
     : [`route_${base}`, `Route_${base}`];
@@ -523,9 +524,15 @@ function addLayer(rootSvg: SVGSVGElement, className: string): SVGGElement {
 function routePathsById(host: Element, id: string): { id: string; path: SVGPathElement }[] {
   const escaped = CSS.escape(id);
   const paths = new Set<SVGPathElement>();
+  const addIfRoutePath = (path: SVGPathElement | null) => {
+    if (!path) return;
+    const stroke = path.getAttribute("stroke");
+    if (!stroke || stroke === "none") return;
+    paths.add(path);
+  };
   const direct = host.querySelector<SVGPathElement>(`path#${escaped}`);
-  if (direct) paths.add(direct);
-  host.querySelectorAll<SVGPathElement>(`#${escaped} path`).forEach((path) => paths.add(path));
+  addIfRoutePath(direct);
+  host.querySelectorAll<SVGPathElement>(`#${escaped} path`).forEach(addIfRoutePath);
   return Array.from(paths).map((path) => ({ id, path }));
 }
 
@@ -562,10 +569,11 @@ function addMarker(
   layer.appendChild(group);
 }
 
-function drawPath(layer: SVGGElement, d: string, strokeWidth = 4.8) {
+function drawPath(layer: SVGGElement, d: string, strokeWidth = 4.8, tail?: string) {
   if (!d) return;
   const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
   path.setAttribute("d", d);
+  if (tail) path.setAttribute("data-tail", tail);
   path.setAttribute("fill", "none");
   path.setAttribute("stroke", "#2FFF00");
   path.setAttribute("stroke-width", `${strokeWidth}`);
@@ -756,13 +764,23 @@ function drawHighlight(
       const startIdx = stopIndexMap.get("TatsumiJCT");
       if (startIdx != null) nodeIndices.unshift({ node: "TatsumiJCT:R9_UP", idx: startIdx });
     }
+    const hanedaSwitchIdx = stopIndexMap.get("haneda_switchJCT");
+    if (hanedaSwitchIdx != null && nodeIndices.length === 1) {
+      const prevRun = runs[ri - 1];
+      const nextRun = runs[ri + 1];
+      if (run.tail === "R1H_UP" && prevRun?.tail === "K1_UP" && run.rawNodes.some((node) => node === "ShowajimaJCT:R1H_UP")) {
+        nodeIndices.unshift({ node: "haneda_switchJCT:R1H_UP", idx: hanedaSwitchIdx });
+      }
+      if (run.tail === "R1H_DOWN" && nextRun?.tail === "K1_DOWN" && run.rawNodes.some((node) => node === "ShowajimaJCT:R1H_DOWN")) {
+        nodeIndices.push({ node: "haneda_switchJCT:R1H_DOWN", idx: hanedaSwitchIdx });
+      }
+    }
 
     if (nodeIndices.length < 2 && !run.isRing) continue;
 
     // 最初と最後のCSVインデックス
     let firstIdx = nodeIndices[0]?.idx ?? 0;
     let lastIdx = nodeIndices[nodeIndices.length - 1]?.idx ?? (csvStops.length - 1);
-    const hanedaSwitchIdx = stopIndexMap.get("haneda_switchJCT");
     if (hanedaSwitchIdx != null) {
       const firstNode = run.rawNodes[0] || "";
       const lastNode = run.rawNodes[run.rawNodes.length - 1] || "";
@@ -875,6 +893,43 @@ function drawHighlight(
 
     let startLen = findLength(firstIdx);
     let endLen = findLength(lastIdx);
+    if (!usingBaseRoutePath && firstIdx === 0 && adjustedLengths[firstIdx] === -1) {
+      const nextResolvedLen = adjustedLengths.find((len, idx) => idx > firstIdx && len >= 0);
+      startLen = nextResolvedLen != null && nextResolvedLen > total / 2 ? total : 0;
+    }
+    if (!usingBaseRoutePath && lastIdx === csvStops.length - 1 && adjustedLengths[lastIdx] === -1) {
+      const prevResolvedLen = [...adjustedLengths].reverse().find((len, revIdx) => {
+        const idx = adjustedLengths.length - 1 - revIdx;
+        return idx < lastIdx && len >= 0;
+      });
+      endLen = prevResolvedLen != null && prevResolvedLen < total / 2 ? 0 : total;
+    }
+    if (
+      !usingBaseRoutePath &&
+      firstIdx === 0 &&
+      lastIdx === csvStops.length - 1 &&
+      (adjustedLengths[firstIdx] === -1 || adjustedLengths[lastIdx] === -1)
+    ) {
+      const firstResolved = resolveStopPoint(csvStops.find((_, idx) => idx > firstIdx && adjustedLengths[idx]! >= 0) || "", host, pointMap);
+      const lastResolved = resolveStopPoint([...csvStops].reverse().find((_, revIdx) => {
+        const idx = csvStops.length - 1 - revIdx;
+        return idx < lastIdx && adjustedLengths[idx]! >= 0;
+      }) || "", host, pointMap);
+      if (firstResolved && lastResolved) {
+        const pathStart = bestPath.getPointAtLength(0);
+        const pathEnd = bestPath.getPointAtLength(total);
+        const normalScore =
+          Math.hypot(pathStart.x - firstResolved.x, pathStart.y - firstResolved.y) +
+          Math.hypot(pathEnd.x - lastResolved.x, pathEnd.y - lastResolved.y);
+        const reversedScore =
+          Math.hypot(pathEnd.x - firstResolved.x, pathEnd.y - firstResolved.y) +
+          Math.hypot(pathStart.x - lastResolved.x, pathStart.y - lastResolved.y);
+        if (reversedScore + 1 < normalScore) {
+          startLen = total;
+          endLen = 0;
+        }
+      }
+    }
 
     // リングで1周する場合
     if (run.isRing && firstIdx === lastIdx) {
@@ -901,12 +956,24 @@ function drawHighlight(
     if (points.length < 2) continue;
     const startPoint = startStop ? resolveStopPoint(startStop, host, pointMap) : null;
     const endPoint = endStop ? resolveStopPoint(endStop, host, pointMap) : null;
-    const startSnapLimit = ri === 0 ? 40 : 30;
-    const endSnapLimit = ri === runs.length - 1 ? 40 : 30;
-    if (startPoint && nearestLengthOnPath(bestPath, startPoint.x, startPoint.y).dist < startSnapLimit) {
+    const startSnapLimit = ri === 0 ? 90 : 30;
+    const endSnapLimit = ri === runs.length - 1 ? 90 : 30;
+    if (
+      startPoint &&
+      (
+        nearestLengthOnPath(bestPath, startPoint.x, startPoint.y).dist < startSnapLimit ||
+        (ri === 0 && Math.hypot(points[0]!.x - startPoint.x, points[0]!.y - startPoint.y) < startSnapLimit)
+      )
+    ) {
       points[0] = startPoint;
     }
-    if (endPoint && nearestLengthOnPath(bestPath, endPoint.x, endPoint.y).dist < endSnapLimit) {
+    if (
+      endPoint &&
+      (
+        nearestLengthOnPath(bestPath, endPoint.x, endPoint.y).dist < endSnapLimit ||
+        (ri === runs.length - 1 && Math.hypot(points[points.length - 1]!.x - endPoint.x, points[points.length - 1]!.y - endPoint.y) < endSnapLimit)
+      )
+    ) {
       points[points.length - 1] = endPoint;
     }
 
@@ -923,19 +990,20 @@ function drawHighlight(
         const prevLeg = Math.hypot(prevRunEndPoint.x - transitionPoint.x, prevRunEndPoint.y - transitionPoint.y);
         const nextLeg = Math.hypot(points[0]!.x - transitionPoint.x, points[0]!.y - transitionPoint.y);
         if (prevLeg < 56 && nextLeg < 56) {
-          drawPath(overlayLayer, pointsToPathData([prevRunEndPoint, transitionPoint, points[0]!]));
+          drawPath(overlayLayer, pointsToPathData([prevRunEndPoint, transitionPoint, points[0]!]), undefined, `${prevRenderedRun?.tail || ""}->${run.tail}`);
         } else if (gap < 30) {
-          drawPath(overlayLayer, pointsToPathData([prevRunEndPoint, points[0]!]));
+          drawPath(overlayLayer, pointsToPathData([prevRunEndPoint, points[0]!]), undefined, `${prevRenderedRun?.tail || ""}->${run.tail}`);
         }
       } else if (gap > 1 && gap < 30) {
-        drawPath(overlayLayer, pointsToPathData([prevRunEndPoint, points[0]!]));
+        drawPath(overlayLayer, pointsToPathData([prevRunEndPoint, points[0]!]), undefined, `${prevRenderedRun?.tail || ""}->${run.tail}`);
       }
     }
 
     drawPath(
       overlayLayer,
       pointsToPathData(points),
-      run.isRing ? RING_STROKE_WIDTH : undefined
+      run.isRing ? RING_STROKE_WIDTH : undefined,
+      run.tail
     );
     prevRunEndPoint = points[points.length - 1]!;
     prevRunEndStop = endStop;
@@ -1001,6 +1069,9 @@ export default function ShutokoMap({
     rootSvg.style.width = "100%";
     rootSvg.style.height = "auto";
     rootSvg.style.display = "block";
+    rootSvg.querySelectorAll<SVGRectElement>(":scope > rect").forEach((rect, index) => {
+      rect.style.fill = rect.id === "bg" || index > 0 ? "var(--map-svg-bg)" : "var(--map-svg-base)";
+    });
 
     const overlayLayer = addLayer(rootSvg, "route-overlay-layer");
     const markerLayer = addLayer(rootSvg, "route-marker-layer");
