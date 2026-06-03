@@ -737,8 +737,8 @@
 </g>
 </g>
 <g id="highlight_paths">
-<path id="Route_D3_2" d="M56.5 592L143 506.5" stroke="#CACACA" stroke-width="9"/>
-<path id="RAqualine_2" d="M397 645.5L537.5 786" stroke="#CACACA" stroke-width="9"/>
+<path id="Route_D3_2" d="M56.5 592L143 506.5" stroke="transparent" stroke-width="1"/>
+<path id="RAqualine_2" d="M397 645.5L537.5 786" stroke="transparent" stroke-width="1"/>
 <path id="route_D8_DOWN" d="M371 398.5L361.5 387.5" stroke="transparent" stroke-width="1"/>
 <path id="route_R1U_UP" d="M395.5 290V367L389 376" stroke="transparent" stroke-width="1"/>
 <path id="route_R1U_DOWN" d="M388.5 290V365.5L385.5 369.5" stroke="transparent" stroke-width="1"/>

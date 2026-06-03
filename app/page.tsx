@@ -28,6 +28,7 @@ type IcMasterRow = { is_full?: boolean; entry_dir?: string[]; exit_dir?: string[
 type DetourLength = "light" | "standard" | "long";
 type ReturnRouteMode = "auto" | "different";
 type ScenicRouteMode = "auto" | "c1_bay";
+type RouteGuideStep = { kind: "route" | "facility" | "exit"; label: string; family?: string | null };
 const EMPTY_ENTRIES: Record<string, EntryBlock> = {};
 
 const LABEL: Record<string, string> = {
@@ -170,6 +171,247 @@ function prettyDetourPath(path: string[]) {
     prev = label;
   }
   return out;
+}
+
+function routeGuideSteps(path: string[]) {
+  const out: RouteGuideStep[] = [];
+  let prevKey = "";
+  for (const raw of path) {
+    if (/AfterPA/i.test(raw)) continue;
+    if (raw.startsWith("ICIN:") || raw.startsWith("IC:")) continue;
+    if (raw.startsWith("ICOUT:")) {
+      const ic = raw.split(":")[1] || "";
+      const key = `exit:${ic}`;
+      if (key !== prevKey) out.push({ kind: "exit", label: `${ic} OUT` });
+      break;
+    }
+    if (isFacility(raw)) {
+      const label = prettyFacility(raw);
+      const key = `facility:${label}`;
+      if (key !== prevKey) out.push({ kind: "facility", label });
+      prevKey = key;
+      continue;
+    }
+    const tail = routeTailOfNode(raw);
+    const family = routeFamilyOfTail(tail);
+    const label = prettyNode(tail);
+    const key = `route:${label}`;
+    if (family && key !== prevKey) out.push({ kind: "route", label, family });
+    prevKey = key;
+  }
+  return out;
+}
+
+function routeGuidePathFromNodes(pathNodes: string[] | undefined, exitName: string) {
+  if (!pathNodes || pathNodes.length === 0) return [] as string[];
+  const synthetic = pathNodes.slice();
+  const lastTail = pathNodes[pathNodes.length - 1] || "";
+  synthetic.push(`ICOUT:${exitName}:${lastTail}`);
+  return synthetic;
+}
+
+function parseKm(dist: string | undefined) {
+  if (!dist) return null;
+  const n = Number.parseFloat(dist);
+  return Number.isFinite(n) ? n : null;
+}
+
+function estimateTimeRange(km: number | null) {
+  if (km == null) return null;
+  const min = Math.max(5, Math.round(km + 4));
+  const max = Math.max(min + 4, Math.round(km * 1.7 + 6));
+  return `${min}〜${max}分`;
+}
+
+const ROUTE_COLORS: Record<string, string> = {
+  C1: "#11a05f",
+  C2: "#6f86df",
+  BAY: "#e69c2c",
+  BAYX: "#e69c2c",
+  R1H: "#63b670",
+  R1U: "#ddc542",
+  R2: "#c869a7",
+  R3A: "#8fca5c",
+  R3B: "#8fca5c",
+  R4A: "#c6657c",
+  R4B: "#c6657c",
+  R5A: "#c29961",
+  R5B: "#c29961",
+  R6A: "#63b670",
+  R6B: "#96ba6f",
+  R7A: "#b96fba",
+  R7B: "#b96fba",
+  R9: "#c6b860",
+  R10: "#63b670",
+  R11: "#da6fab",
+  K1: "#d55eb3",
+  K2: "#6f42c1",
+  K3: "#f19a36",
+  K5: "#31a160",
+  K6: "#87add2",
+  S1: "#d642a2",
+  S2: "#c7c191",
+  S5: "#82c491",
+};
+
+const ROUTE_BADGE_TEXT: Record<string, string> = {
+  C1: "C1",
+  C2: "C2",
+  BAY: "B",
+  BAYX: "B",
+  R1H: "1",
+  R1U: "1",
+  R2: "2",
+  R3A: "3",
+  R3B: "3",
+  R4A: "4",
+  R4B: "4",
+  R5A: "5",
+  R5B: "5",
+  R6A: "6",
+  R6B: "6",
+  R7A: "7",
+  R7B: "7",
+  R9: "9",
+  R10: "10",
+  R11: "11",
+  K1: "K1",
+  K2: "K2",
+  K3: "K3",
+  K5: "K5",
+  K6: "K6",
+  S1: "S1",
+  S2: "S2",
+  S5: "S5",
+};
+
+const ROUTE_NAME_TEXT: Record<string, string> = {
+  BAY: "湾岸線",
+  BAYX: "湾岸分岐線",
+  R1H: "羽田線",
+  R1U: "上野線",
+  R2: "目黒線",
+  R3A: "渋谷線",
+  R3B: "渋谷線",
+  R4A: "新宿線",
+  R4B: "新宿線",
+  R5A: "池袋線",
+  R5B: "池袋線",
+  R6A: "向島線",
+  R6B: "三郷線",
+  R7A: "小松川線",
+  R7B: "小松川線",
+  R9: "深川線",
+  R10: "晴海線",
+  R11: "台場線",
+  K1: "横羽線",
+  K2: "三ツ沢線",
+  K3: "狩場線",
+  K5: "大黒線",
+  K6: "川崎線",
+  S1: "川口線",
+  S2: "埼玉新都心線",
+  S5: "埼玉大宮線",
+};
+
+function routeDirectionText(label: string) {
+  if (label.includes("上り")) return "上り";
+  if (label.includes("下り")) return "下り";
+  if (label.includes("内回り")) return "内回り";
+  if (label.includes("外回り")) return "外回り";
+  if (label.includes("東行き")) return "東行き";
+  if (label.includes("西行き")) return "西行き";
+  return "";
+}
+
+function RouteBadge({ family, label }: { family: string; label: string }) {
+  const color = ROUTE_COLORS[family] || "#64748b";
+  const text = ROUTE_BADGE_TEXT[family] || family;
+  const name = ROUTE_NAME_TEXT[family] || "";
+  const dir = routeDirectionText(label);
+  const isRing = family === "C1" || family === "C2";
+  const isBay = family === "BAY" || family === "BAYX";
+  const badgeShape = isRing
+    ? { borderRadius: "999px", width: 25, height: 25 }
+    : {
+        borderRadius: 6,
+        minWidth: isBay ? 25 : 28,
+        height: 25,
+        clipPath: "polygon(10% 0, 90% 0, 100% 38%, 50% 100%, 0 38%)",
+      };
+
+  return (
+    <span title={label} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flex: "0 0 auto",
+          background: color,
+          color: "white",
+          border: "2px solid white",
+          boxShadow: "0 0 0 1px rgba(15,23,42,0.14)",
+          fontSize: text.length > 2 ? 9 : 12,
+          fontWeight: 900,
+          lineHeight: 1,
+          ...badgeShape,
+        }}
+      >
+        {text}
+      </span>
+      {!isRing ? (
+        <span style={{ display: "inline-flex", flexDirection: "column", gap: 1, lineHeight: 1.05 }}>
+          <span style={{ color: "var(--foreground)", fontSize: 11, fontWeight: 900, whiteSpace: "nowrap" }}>
+            {name || label}
+          </span>
+          {dir ? <span style={{ color: "var(--muted-soft)", fontSize: 10, fontWeight: 700 }}>{dir}</span> : null}
+        </span>
+      ) : (
+        <span style={{ color: "var(--foreground)", fontSize: 11, fontWeight: 900, whiteSpace: "nowrap" }}>
+          {dir}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function RouteGuide({ steps }: { steps: RouteGuideStep[] }) {
+  if (steps.length === 0) return null;
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+      {steps.map((step, idx) => {
+        const isRoute = step.kind === "route";
+        return (
+          <span key={`${step.kind}-${step.label}-${idx}`} style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+            {idx > 0 ? <span style={{ color: "var(--muted-soft)" }}>→</span> : null}
+            {isRoute && step.family ? (
+              <RouteBadge family={step.family} label={step.label} />
+            ) : (
+              <span
+                title={step.label}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  minHeight: 24,
+                  padding: "3px 8px",
+                  borderRadius: 999,
+                  background: "var(--control-bg)",
+                  border: "1px solid var(--border-soft)",
+                  color: "var(--foreground)",
+                  fontSize: 11,
+                  fontWeight: 800,
+                  lineHeight: 1.15,
+                }}
+              >
+                {step.label}
+              </span>
+            )}
+          </span>
+        );
+      })}
+    </div>
+  );
 }
 
 function isPaNode(n: string) {
@@ -865,10 +1107,9 @@ export default function Page() {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [viewportWidth, setViewportWidth] = useState(1024);
   const [recentEntries, setRecentEntries] = useState<string[]>([]);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [detourLength, setDetourLength] = useState<DetourLength>("standard");
-  const [returnRouteMode, setReturnRouteMode] = useState<ReturnRouteMode>("auto");
-  const [scenicRouteMode, setScenicRouteMode] = useState<ScenicRouteMode>("auto");
+  const detourLength: DetourLength = "standard";
+  const returnRouteMode: ReturnRouteMode = "auto";
+  const scenicRouteMode: ScenicRouteMode = "auto";
 
   const fares = faresData?.entries ?? EMPTY_ENTRIES;
   const entries = useMemo(() => Object.keys(fares).sort(), [fares]);
@@ -1728,100 +1969,6 @@ export default function Page() {
                       ) : null}
                       <span>候補出口: {entry.exits?.length ?? 0}</span>
                     </div>
-                    <div>
-                      <button
-                        type="button"
-                        onClick={() => setAdvancedOpen((v) => !v)}
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 6,
-                          padding: "6px 8px",
-                          border: "1px solid var(--border-soft)",
-                          borderRadius: 8,
-                          background: "var(--control-bg)",
-                          color: "var(--foreground)",
-                          fontSize: 12,
-                          fontWeight: 800,
-                        }}
-                      >
-                        詳細設定 {advancedOpen ? "⌃" : "⌄"}
-                      </button>
-                      {advancedOpen ? (
-                        <div style={{ marginTop: 10, display: "grid", gap: 10, fontSize: 12, color: "var(--muted)" }}>
-                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                            <span style={{ fontWeight: 800, color: "var(--foreground)" }}>周回の長さ</span>
-                            {([
-                              ["light", "軽め"],
-                              ["standard", "標準"],
-                              ["long", "長め"],
-                            ] as const).map(([value, label]) => (
-                              <button
-                                key={value}
-                                type="button"
-                                onClick={() => setDetourLength(value)}
-                                style={{
-                                  padding: "5px 9px",
-                                  border: detourLength === value ? "1px solid #0ea5e9" : "1px solid var(--border-soft)",
-                                  borderRadius: 8,
-                                  background: detourLength === value ? "var(--selected-bg)" : "var(--control-bg)",
-                                  color: "var(--foreground)",
-                                  fontWeight: detourLength === value ? 800 : 600,
-                                }}
-                              >
-                                {label}
-                              </button>
-                            ))}
-                          </div>
-                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                            <span style={{ fontWeight: 800, color: "var(--foreground)" }}>帰り道</span>
-                            {([
-                              ["auto", "おまかせ"],
-                              ["different", "なるべく別ルート"],
-                            ] as const).map(([value, label]) => (
-                              <button
-                                key={value}
-                                type="button"
-                                onClick={() => setReturnRouteMode(value)}
-                                style={{
-                                  padding: "5px 9px",
-                                  border: returnRouteMode === value ? "1px solid #0ea5e9" : "1px solid var(--border-soft)",
-                                  borderRadius: 8,
-                                  background: returnRouteMode === value ? "var(--selected-bg)" : "var(--control-bg)",
-                                  color: "var(--foreground)",
-                                  fontWeight: returnRouteMode === value ? 800 : 600,
-                                }}
-                              >
-                                {label}
-                              </button>
-                            ))}
-                          </div>
-                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                            <span style={{ fontWeight: 800, color: "var(--foreground)" }}>名所ルート</span>
-                            {([
-                              ["auto", "おまかせ"],
-                              ["c1_bay", "C1・湾岸を優先"],
-                            ] as const).map(([value, label]) => (
-                              <button
-                                key={value}
-                                type="button"
-                                onClick={() => setScenicRouteMode(value)}
-                                style={{
-                                  padding: "5px 9px",
-                                  border: scenicRouteMode === value ? "1px solid #0ea5e9" : "1px solid var(--border-soft)",
-                                  borderRadius: 8,
-                                  background: scenicRouteMode === value ? "var(--selected-bg)" : "var(--control-bg)",
-                                  color: "var(--foreground)",
-                                  fontWeight: scenicRouteMode === value ? 800 : 600,
-                                }}
-                              >
-                                {label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
                   </div>
                 }
               />
@@ -1838,10 +1985,20 @@ export default function Page() {
               const detour = activeSpots.length > 0 ? evaluatedDetours[i]?.detour : null;
               const normalCalc = normalPaths[i];
               const usePlansNormal = !entryHasUpDown && plansPathMatchesEntryFlow(x.path_nodes);
+              const normalPathForGuide =
+                normalCalc?.ok
+                  ? normalCalc.path
+                  : usePlansNormal
+                    ? routeGuidePathFromNodes(x.path_nodes, x.exit)
+                    : [];
+              const normalSteps = routeGuideSteps(normalPathForGuide);
               const normal =
                 (usePlansNormal ? prettyNormalPath(x.path_nodes, x.exit) : "") ||
                 (normalCalc?.ok ? prettyDetourPath(normalCalc.path).join(" → ") : "");
               const exitDirectionLabel = prettyExitDirections(exitAllow.get(x.exit));
+              const distanceKm = parseKm(x.dist);
+              const timeRange = estimateTimeRange(distanceKm);
+              const detourSteps = detour?.ok ? routeGuideSteps(detour.path) : [];
 
               return (
                 <div
@@ -1856,20 +2013,53 @@ export default function Page() {
                     background: selectedRowIndex === i ? "var(--selected-bg)" : "var(--surface-raised)",
                   }}
                 >
-                  <div style={{ fontWeight: 800, fontSize: 15 }}>
-                    {x.toll}円 / 出口：{x.exit} {x.dist ? ` / ${x.dist}km` : ""}{exitDirectionLabel ? ` / 出口方向：${exitDirectionLabel}` : ""}
+                  <div style={{ fontWeight: 900, fontSize: 15, lineHeight: 1.35 }}>
+                    {entryName}IN → {x.exit}OUT
                   </div>
+                  <div
+                    style={{
+                      marginTop: 9,
+                      display: "grid",
+                      gridTemplateColumns: viewportWidth < 720 ? "1fr 1fr" : "repeat(3, minmax(0, 1fr))",
+                      gap: 8,
+                    }}
+                  >
+                    {[
+                      ["料金", `${x.toll}円`],
+                      ["料金距離", x.dist ? `${x.dist}km` : "不明"],
+                      ["所要時間目安", timeRange || "不明"],
+                    ].map(([label, value]) => (
+                      <div
+                        key={label}
+                        style={{
+                          padding: "7px 8px",
+                          borderRadius: 8,
+                          border: "1px solid var(--border-soft)",
+                          background: "var(--control-bg)",
+                        }}
+                      >
+                        <div style={{ fontSize: 10, color: "var(--muted-soft)", fontWeight: 800 }}>{label}</div>
+                        <div style={{ marginTop: 2, fontSize: 13, color: "var(--foreground)", fontWeight: 900 }}>{value}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {exitDirectionLabel ? (
+                    <div style={{ marginTop: 8, fontSize: 11, color: "var(--muted)" }}>出口方向：{exitDirectionLabel}</div>
+                  ) : null}
 
-                  {normal ? (
-                    <div style={{ marginTop: 8, fontSize: 12, color: "var(--muted)" }}>
-                      通常ルート: {normal}
+                  {normalSteps.length > 0 ? (
+                    <div style={{ marginTop: 10, fontSize: 12 }}>
+                      <div style={{ color: "var(--foreground)", fontWeight: 800, marginBottom: 5 }}>通常ルート</div>
+                      <RouteGuide steps={normalSteps} />
+                      {normal ? <div style={{ color: "var(--muted)", marginTop: 6, lineHeight: 1.55 }}>{normal}</div> : null}
                     </div>
                   ) : null}
 
                   {activeSpots.length > 0 && detour?.ok ? (
                     <div style={{ marginTop: 10, fontSize: 12 }}>
-                      <div style={{ color: "var(--foreground)", fontWeight: 700 }}>周回ルート:</div>
-                      <div style={{ color: "var(--muted)", marginTop: 4 }}>
+                      <div style={{ color: "var(--foreground)", fontWeight: 800, marginBottom: 5 }}>周回ルート</div>
+                      <RouteGuide steps={detourSteps} />
+                      <div style={{ color: "var(--muted)", marginTop: 6, lineHeight: 1.55 }}>
                         {prettyDetourPath(detour.path).join(" → ")}
                       </div>
                     </div>

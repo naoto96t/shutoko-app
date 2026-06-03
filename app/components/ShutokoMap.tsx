@@ -536,6 +536,14 @@ function routePathsById(host: Element, id: string): { id: string; path: SVGPathE
   return Array.from(paths).map((path) => ({ id, path }));
 }
 
+function styleMapBackground(rootSvg: SVGSVGElement) {
+  const baseRect = rootSvg.querySelector<SVGRectElement>(":scope > rect");
+  if (baseRect) baseRect.style.fill = "var(--map-svg-base)";
+  rootSvg.querySelectorAll<SVGRectElement>("rect#bg").forEach((rect) => {
+    rect.style.fill = "var(--map-svg-bg)";
+  });
+}
+
 function addMarker(
   layer: SVGGElement,
   point: { x: number; y: number } | null,
@@ -956,8 +964,8 @@ function drawHighlight(
     if (points.length < 2) continue;
     const startPoint = startStop ? resolveStopPoint(startStop, host, pointMap) : null;
     const endPoint = endStop ? resolveStopPoint(endStop, host, pointMap) : null;
-    const startSnapLimit = ri === 0 ? 90 : 30;
-    const endSnapLimit = ri === runs.length - 1 ? 90 : 30;
+    const startSnapLimit = ri === 0 ? 90 : 0;
+    const endSnapLimit = ri === runs.length - 1 ? 90 : 0;
     if (
       startPoint &&
       (
@@ -989,7 +997,9 @@ function drawHighlight(
       if (gap > 1 && transitionPoint) {
         const prevLeg = Math.hypot(prevRunEndPoint.x - transitionPoint.x, prevRunEndPoint.y - transitionPoint.y);
         const nextLeg = Math.hypot(points[0]!.x - transitionPoint.x, points[0]!.y - transitionPoint.y);
-        if (prevLeg < 56 && nextLeg < 56) {
+        if (gap < 34) {
+          drawPath(overlayLayer, pointsToPathData([prevRunEndPoint, points[0]!]), undefined, `${prevRenderedRun?.tail || ""}->${run.tail}`);
+        } else if (prevLeg < 56 && nextLeg < 56) {
           drawPath(overlayLayer, pointsToPathData([prevRunEndPoint, transitionPoint, points[0]!]), undefined, `${prevRenderedRun?.tail || ""}->${run.tail}`);
         } else if (gap < 30) {
           drawPath(overlayLayer, pointsToPathData([prevRunEndPoint, points[0]!]), undefined, `${prevRenderedRun?.tail || ""}->${run.tail}`);
@@ -1069,9 +1079,7 @@ export default function ShutokoMap({
     rootSvg.style.width = "100%";
     rootSvg.style.height = "auto";
     rootSvg.style.display = "block";
-    rootSvg.querySelectorAll<SVGRectElement>(":scope > rect").forEach((rect, index) => {
-      rect.style.fill = rect.id === "bg" || index > 0 ? "var(--map-svg-bg)" : "var(--map-svg-base)";
-    });
+    styleMapBackground(rootSvg);
 
     const overlayLayer = addLayer(rootSvg, "route-overlay-layer");
     const markerLayer = addLayer(rootSvg, "route-marker-layer");
