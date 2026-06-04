@@ -20,6 +20,14 @@ EdobashiJCT,R1U_UP,R6A_DOWN,不可
 EdobashiJCT,R1U_UP,C1_CCW,不可
 EdobashiJCT,C1_CW,R1U_DOWN,不可
 EdobashiJCT,R6A_UP,R1U_DOWN,不可
+EdobashiJCT,R9_UP,C1_CCW,物理接続なし（9号は6号向島線経由）
+EdobashiJCT,R9_UP,C1_CW,物理接続なし（9号は6号向島線経由）
+EdobashiJCT,R9_DOWN,C1_CCW,物理接続なし（9号は6号向島線経由）
+EdobashiJCT,R9_DOWN,C1_CW,物理接続なし（9号は6号向島線経由）
+EdobashiJCT,C1_CCW,R9_UP,物理接続なし（9号は6号向島線経由）
+EdobashiJCT,C1_CW,R9_UP,物理接続なし（9号は6号向島線経由）
+EdobashiJCT,C1_CCW,R9_DOWN,物理接続なし（9号は6号向島線経由）
+EdobashiJCT,C1_CW,R9_DOWN,物理接続なし（9号は6号向島線経由）
 ShibauraJCT,R11_UP,R1H_DOWN,不可
 ShibauraJCT,R1H_UP,R11_DOWN,不可
 ShibauraJCT,R11_DOWN,R1H_UP,不可

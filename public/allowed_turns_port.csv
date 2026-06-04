@@ -73,14 +73,8 @@ ShinonomeJCT,ShinonomeJCT:R10_DOWN,ShinonomeJCT:BAY_E,seed
 ShinonomeJCT,ShinonomeJCT:R10_DOWN,ShinonomeJCT:BAY_W,seed
 ShinonomeJCT,ShinonomeJCT:R10_UP,ShinonomeJCT:BAY_E,seed
 ShinonomeJCT,ShinonomeJCT:R10_UP,ShinonomeJCT:BAY_W,seed
-EdobashiJCT,EdobashiJCT:R9_UP,EdobashiJCT:C1_CW,9号→C1（江戸橋）
-EdobashiJCT,EdobashiJCT:R9_UP,EdobashiJCT:C1_CCW,9号→C1（江戸橋）
-EdobashiJCT,EdobashiJCT:R9_DOWN,EdobashiJCT:C1_CW,9号→C1（江戸橋）
-EdobashiJCT,EdobashiJCT:R9_DOWN,EdobashiJCT:C1_CCW,9号→C1（江戸橋）
-EdobashiJCT,EdobashiJCT:C1_CW,EdobashiJCT:R9_UP,C1→9号（江戸橋）
-EdobashiJCT,EdobashiJCT:C1_CCW,EdobashiJCT:R9_UP,C1→9号（江戸橋）
-EdobashiJCT,EdobashiJCT:C1_CW,EdobashiJCT:R9_DOWN,C1→9号（江戸橋）
-EdobashiJCT,EdobashiJCT:C1_CCW,EdobashiJCT:R9_DOWN,C1→9号（江戸橋）
+HakozakiJCT,HakozakiJCT:R9_UP,HakozakiJCT:R6A_UP,9号上り→6号向島線上り（箱崎JCT）
+HakozakiJCT,HakozakiJCT:R6A_DOWN,HakozakiJCT:R9_DOWN,6号向島線下り→9号下り（箱崎JCT）
 ShibauraJCT,ShibauraJCT:R11_UP,ShibauraJCT:R1H_UP,11号→1号羽田（芝浦）
 ShibauraJCT,ShibauraJCT:R11_UP,ShibauraJCT:R1H_DOWN,11号→1号羽田（芝浦）
 ShibauraJCT,ShibauraJCT:R11_DOWN,ShibauraJCT:R1H_UP,11号→1号羽田（芝浦）
@@ -125,14 +119,6 @@ HamasakibashiJCT,HamasakibashiJCT:C1_CCW,HamasakibashiJCT:R11_UP,C1->R11 (inner)
 HamasakibashiJCT,HamasakibashiJCT:C1_CCW,HamasakibashiJCT:R11_DOWN,C1->R11 (inner)
 HamasakibashiJCT,HamasakibashiJCT:R11_UP,HamasakibashiJCT:C1_CCW,R11->C1 (inner)
 HamasakibashiJCT,HamasakibashiJCT:R11_DOWN,HamasakibashiJCT:C1_CCW,R11->C1 (inner)
-EdobashiJCT,EdobashiJCT:C1_CW,EdobashiJCT:R9_UP,C1->R9 (inner)
-EdobashiJCT,EdobashiJCT:C1_CW,EdobashiJCT:R9_DOWN,C1->R9 (inner)
-EdobashiJCT,EdobashiJCT:R9_UP,EdobashiJCT:C1_CW,R9->C1 (inner)
-EdobashiJCT,EdobashiJCT:R9_DOWN,EdobashiJCT:C1_CW,R9->C1 (inner)
-EdobashiJCT,EdobashiJCT:C1_CCW,EdobashiJCT:R9_UP,C1->R9 (inner)
-EdobashiJCT,EdobashiJCT:C1_CCW,EdobashiJCT:R9_DOWN,C1->R9 (inner)
-EdobashiJCT,EdobashiJCT:R9_UP,EdobashiJCT:C1_CCW,R9->C1 (inner)
-EdobashiJCT,EdobashiJCT:R9_DOWN,EdobashiJCT:C1_CCW,R9->C1 (inner)
 ShibauraJCT,ShibauraJCT:C1_CW,ShibauraJCT:R1H_UP,C1->R1H (inner)
 ShibauraJCT,ShibauraJCT:C1_CW,ShibauraJCT:R1H_DOWN,C1->R1H (inner)
 ShibauraJCT,ShibauraJCT:R1H_UP,ShibauraJCT:C1_CW,R1H->C1 (inner)
@@ -226,4 +212,4 @@ TatsumiJCT,TatsumiJCT:R9_DOWN,TatsumiJCT:BAY_E,R9_DOWN -> BAY_E
 TatsumiJCT,TatsumiJCT:R9_DOWN,TatsumiJCT:BAY_W,R9_DOWN -> BAY_W
 TatsumiJCT,TatsumiJCT:BAY_W,TatsumiPA2,PA2 enter only from BAY_W
 TatsumiJCT,TatsumiPA2,TatsumiR9UpAfterPA2,PA2 merge toward R9_UP
-TatsumiJCT,TatsumiR9UpAfterPA2,TatsumiJCT:R9_UP,AfterPA2 -> R9_UP
+TatsumiJCT,TatsumiR9UpAfterPA2,TatsumiR9UpAfterPA2:R9_UP,AfterPA2 -> R9_UP

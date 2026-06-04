@@ -41,8 +41,8 @@ R5A,UP,"KumanochoJCT,IC:北池袋,IC:東池袋,IC:護国寺,IC:早稲田,IC:飯�
 R5A,DOWN,"TakebashiJCT,IC:一ツ橋,IC:西神田,IC:飯田橋,IC:早稲田,IC:護国寺,IC:東池袋,IC:北池袋,KumanochoJCT"
 
 # 6号はA/Bに分割：Horikiri側(内側) と Kosuge側(外側)
-R6A,DOWN,"EdobashiJCT,IC:箱崎,IC:浜町,IC:清洲橋,RyougokuJCT,IC:駒形,IC:向島,IC:堤通,HorikiriJCT"
-R6A,UP,"HorikiriJCT,IC:堤通,IC:向島,IC:駒形,RyougokuJCT,IC:清洲橋,IC:浜町,IC:箱崎,EdobashiJCT"
+R6A,DOWN,"EdobashiJCT,HakozakiJCT,IC:箱崎,IC:浜町,IC:清洲橋,RyougokuJCT,IC:駒形,IC:向島,IC:堤通,HorikiriJCT"
+R6A,UP,"HorikiriJCT,IC:堤通,IC:向島,IC:駒形,RyougokuJCT,IC:清洲橋,IC:浜町,IC:箱崎,HakozakiJCT,EdobashiJCT"
 
 R6B,DOWN,"KosugeJCT,IC:加平,IC:八潮南,IC:八潮,IC:三郷,MisatoJCT"
 R6B,UP,"MisatoJCT,IC:三郷,IC:八潮,IC:八潮南,IC:加平,KosugeJCT"

@@ -1196,6 +1196,7 @@ export default function Page() {
       .filter((x) => normalizeIcName(x).toLowerCase().includes(lower))
       .slice(0, 40);
   }, [q, entries, fullEntries]);
+  const homeListEntries = q.trim() ? suggestions : fullEntries;
 
   const resetHome = () => {
     setQ("");
@@ -1456,6 +1457,10 @@ export default function Page() {
           if (scenicRouteMode === "c1_bay") {
             if (nextIsC1 || nextIsBay) cost -= 0.35;
             if (nextIsC2) cost += 1.5;
+          }
+
+          if (nextTail.startsWith("R5A_") || nextTail.startsWith("R5B_")) {
+            cost += 12;
           }
 
           if (nextBaseName === "DaikokuPA" && !targets.has(nextNode) && !nextIsSelectedSpot) {
@@ -1826,31 +1831,26 @@ export default function Page() {
         />
       </div>
 
-      {!entryName ? (
-        <div style={{ marginTop: 10, padding: 12, border: "1px solid var(--border)", borderRadius: 12, background: "var(--control-bg)" }}>
-          <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 8, fontWeight: 700 }}>経由したいスポット</div>
-          <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-            {SPOTS.map((s) => (
-              <label key={s.key} style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 13 }}>
-                <input
-                  type="checkbox"
-                  checked={!!spotOn[s.key]}
-                  onChange={(e) => setSpotOn((p) => ({ ...p, [s.key]: e.target.checked }))}
-                />
-                {s.label}
-              </label>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
       {!faresData && <div style={{ marginTop: 16, color: "var(--muted)" }}>plans.json を読み込めていません。</div>}
       {!graph && <div style={{ marginTop: 8, color: "var(--muted)" }}>graph.json を読み込めていません。</div>}
 
       {faresData && !entryName && (
         <div style={{ marginTop: 12 }}>
+          <ShutokoMap
+            key="entry-picker-map"
+            title="クリックで入口を選択"
+            entryName={null}
+            selectableEntryNames={entries}
+            onSelectEntry={onPickEntry}
+            toolbar={
+              <div style={{ color: "var(--muted)", fontSize: 12, lineHeight: 1.6 }}>
+                地図上のICドットをクリックすると入口に設定できます。
+              </div>
+            }
+          />
+
           {recentEntries.length > 0 ? (
-            <div style={{ marginBottom: 14 }}>
+            <div style={{ marginTop: 14, marginBottom: 14 }}>
               <div style={{ fontSize: 13, fontWeight: 800, color: "var(--foreground)", marginBottom: 8 }}>よく使うインター</div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {recentEntries
@@ -1883,29 +1883,25 @@ export default function Page() {
                 入口と出口が両方にあるインターです。ここを通ると、車両の方向が記録されず、料金が最短距離で計算されます。
               </div>
             </div>
-            <div style={{ fontSize: 12, color: "var(--muted-soft)", whiteSpace: "nowrap" }}>{suggestions.length} 件</div>
+            <div style={{ fontSize: 12, color: "var(--muted-soft)", whiteSpace: "nowrap" }}>{homeListEntries.length} 件</div>
           </div>
-          <div style={{ marginTop: 10, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10 }}>
-            {suggestions.map((ic) => (
+          <div style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {homeListEntries.map((ic) => (
               <button
                 key={ic}
                 onClick={() => onPickEntry(ic)}
                 style={{
-                  textAlign: "left",
-                  padding: 10,
+                  padding: "8px 10px",
                   border: "1px solid var(--border-soft)",
-                  borderRadius: 14,
+                  borderRadius: 8,
                   background: "var(--surface-raised)",
+                  color: "var(--foreground)",
+                  fontSize: 13,
+                  fontWeight: 800,
                   boxShadow: "var(--shadow-card)",
                 }}
               >
-                <div style={{ fontWeight: 800, fontSize: 15 }}>{ic}</div>
-                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
-                  start: {fares[ic].start_nodes.map(prettyNode).join(", ")}
-                </div>
-                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
-                  exits: {fares[ic].exits?.length ?? 0}
-                </div>
+                {ic}
               </button>
             ))}
           </div>

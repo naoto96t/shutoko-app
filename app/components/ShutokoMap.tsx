@@ -10,6 +10,8 @@ type ShutokoMapProps = {
   activeSpotLabels?: string[];
   highlightedRoutes?: string[];
   highlightedPath?: string[];
+  selectableEntryNames?: string[];
+  onSelectEntry?: (name: string) => void;
   title?: string;
   headerAction?: ReactNode;
   toolbar?: ReactNode;
@@ -521,6 +523,52 @@ function addLayer(rootSvg: SVGSVGElement, className: string): SVGGElement {
   return layer;
 }
 
+function drawSelectableEntries(
+  host: Element,
+  layer: SVGGElement,
+  pointMap: Map<string, { x: number; y: number }>,
+  entryNames: string[],
+  onSelectEntry?: (name: string) => void
+) {
+  if (!onSelectEntry || entryNames.length === 0) return;
+  const seen = new Set<string>();
+  for (const name of entryNames) {
+    if (seen.has(name)) continue;
+    seen.add(name);
+    const point = resolveIcPoint(name, host, pointMap);
+    if (!point) continue;
+
+    const hit = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    hit.setAttribute("cx", `${point.x}`);
+    hit.setAttribute("cy", `${point.y}`);
+    hit.setAttribute("r", "8.5");
+    hit.setAttribute("fill", "transparent");
+    hit.setAttribute("stroke", "transparent");
+    hit.setAttribute("stroke-width", "1");
+    hit.style.cursor = "pointer";
+    hit.style.pointerEvents = "all";
+    hit.setAttribute("role", "button");
+    hit.setAttribute("aria-label", `${name}を入口にする`);
+    const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+    title.textContent = `${name}を入口にする`;
+    hit.appendChild(title);
+    hit.addEventListener("mouseenter", () => {
+      hit.setAttribute("stroke", "#0ea5e9");
+      hit.setAttribute("stroke-width", "2.5");
+    });
+    hit.addEventListener("mouseleave", () => {
+      hit.setAttribute("stroke", "transparent");
+      hit.setAttribute("stroke-width", "1");
+    });
+    hit.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      onSelectEntry(name);
+    });
+    layer.appendChild(hit);
+  }
+}
+
 function routePathsById(host: Element, id: string): { id: string; path: SVGPathElement }[] {
   const escaped = CSS.escape(id);
   const paths = new Set<SVGPathElement>();
@@ -652,6 +700,12 @@ function pointsToPathData(points: Array<{ x: number; y: number }>): string {
   return d;
 }
 
+function wrappedRingLength(len: number, total: number) {
+  const wrapped = ((len % total) + total) % total;
+  const isExactPositiveLap = len > 0 && Math.abs(wrapped) < 0.001;
+  return isExactPositiveLap ? total : wrapped;
+}
+
 // =============================================================================
 // メイン描画ロジック
 // =============================================================================
@@ -684,20 +738,23 @@ function drawHighlight(
   };
   const runs: Run[] = [];
   let cur: Run | null = null;
+  let pendingSharedNodes: string[] = [];
 
   for (const node of highlightedPath) {
     const tail = tailOfNode(node);
     const routeIds = routeIdsOfTail(tail);
     if (!routeIds) {
-      // JCT/PA等の無tailノード → 直前のrunに付加するだけ
+      // JCT/PA等の無tailノードは路線切替点なので、前後のrunで共有する。
       if (cur) cur.rawNodes.push(node);
+      pendingSharedNodes = [node];
       continue;
     }
     if (!cur || cur.tail !== tail) {
       if (cur) runs.push(cur);
-      cur = { tail, routeIds, isRing: RING_TAILS.has(tail), rawNodes: [] };
+      cur = { tail, routeIds, isRing: RING_TAILS.has(tail), rawNodes: pendingSharedNodes.slice() };
     }
     cur.rawNodes.push(node);
+    pendingSharedNodes = [];
   }
   if (cur) runs.push(cur);
 
@@ -764,6 +821,18 @@ function drawHighlight(
       const idx = stopIndexMap.get(token);
       if (idx != null) nodeIndices.push({ node, idx });
     }
+    if (run.tail.startsWith("C1_") && nodeIndices.length === 0 && run.rawNodes.some((node) => node === run.tail)) {
+      const prevStops = (runs[ri - 1]?.rawNodes || []).slice(-4).reverse().map(namedStopOfNode).filter(Boolean) as string[];
+      const nextStops = (runs[ri + 1]?.rawNodes || []).slice(0, 4).map(namedStopOfNode).filter(Boolean) as string[];
+      const inferredStop =
+        prevStops.find((stop) => nextStops.includes(stop) && stopIndexMap.has(stop)) ||
+        prevStops.find((stop) => stopIndexMap.has(stop)) ||
+        nextStops.find((stop) => stopIndexMap.has(stop));
+      const inferredIdx = inferredStop ? stopIndexMap.get(inferredStop) : undefined;
+      if (inferredStop && inferredIdx != null) {
+        nodeIndices.push({ node: `${inferredStop}:${run.tail}`, idx: inferredIdx });
+      }
+    }
     if (
       run.tail === "R9_UP" &&
       nodeIndices.length === 1 &&
@@ -784,7 +853,15 @@ function drawHighlight(
       }
     }
 
-    if (nodeIndices.length < 2 && !run.isRing) continue;
+    const canDrawSingleStopC1Lap = run.tail.startsWith("C1_") && nodeIndices.length === 1;
+    if (nodeIndices.length < 2 && !canDrawSingleStopC1Lap) {
+      if (run.isRing) {
+        prevRunEndPoint = null;
+        prevRunEndStop = null;
+        prevRenderedRun = null;
+      }
+      continue;
+    }
 
     // 最初と最後のCSVインデックス
     let firstIdx = nodeIndices[0]?.idx ?? 0;
@@ -901,6 +978,14 @@ function drawHighlight(
 
     let startLen = findLength(firstIdx);
     let endLen = findLength(lastIdx);
+    if (run.isRing) {
+      if (stopLengths[firstIdx] !== undefined && stopLengths[firstIdx]! >= 0) {
+        startLen = stopLengths[firstIdx]!;
+      }
+      if (stopLengths[lastIdx] !== undefined && stopLengths[lastIdx]! >= 0) {
+        endLen = stopLengths[lastIdx]!;
+      }
+    }
     if (!usingBaseRoutePath && firstIdx === 0 && adjustedLengths[firstIdx] === -1) {
       const nextResolvedLen = adjustedLengths.find((len, idx) => idx > firstIdx && len >= 0);
       startLen = nextResolvedLen != null && nextResolvedLen > total / 2 ? total : 0;
@@ -940,11 +1025,17 @@ function drawHighlight(
     }
 
     // リングで1周する場合
-    if (run.isRing && firstIdx === lastIdx) {
+    const isFullRingLap = run.isRing && firstIdx === lastIdx;
+    if (isFullRingLap) {
       endLen = (startLen ?? 0) + (increasing ? total : -total);
     }
 
     if (startLen == null || endLen == null) continue;
+
+    // C1は一周反転を現実的な周回として扱う。C2/BAYは短区間を全周化すると大きく飛んで見える。
+    if (run.tail.startsWith("C1_") && !isFullRingLap) {
+      while (endLen < startLen) endLen += total;
+    }
 
     // 進行方向
     const sign = endLen >= startLen ? 1 : -1;
@@ -957,7 +1048,7 @@ function drawHighlight(
     for (let j = 0; j <= steps; j++) {
       const t = j / steps;
       const len = startLen + (endLen - startLen) * t;
-      const drawableLen = run.isRing ? ((len % total) + total) % total : len;
+      const drawableLen = run.isRing ? wrappedRingLength(len, total) : len;
       points.push(offsetPointAt(bestPath, total, drawableLen, sign, usingBaseRoutePath ? FALLBACK_ROUTE_OFFSET : 0));
     }
 
@@ -987,8 +1078,9 @@ function drawHighlight(
 
     if (prevRunEndPoint) {
       const gap = Math.hypot(points[0]!.x - prevRunEndPoint.x, points[0]!.y - prevRunEndPoint.y);
-      const transitionStop =
-        prevRunEndStop && startStop && prevRunEndStop === startStop
+      const transitionStop = isFullRingLap
+        ? null
+        : prevRunEndStop && startStop && prevRunEndStop === startStop
           ? startStop
           : prevRenderedRun
             ? transitionStopBetweenRuns(prevRenderedRun, run)
@@ -997,9 +1089,9 @@ function drawHighlight(
       if (gap > 1 && transitionPoint) {
         const prevLeg = Math.hypot(prevRunEndPoint.x - transitionPoint.x, prevRunEndPoint.y - transitionPoint.y);
         const nextLeg = Math.hypot(points[0]!.x - transitionPoint.x, points[0]!.y - transitionPoint.y);
-        if (gap < 34) {
+        if (prevLeg < 58 && nextLeg < 58) {
           drawPath(overlayLayer, pointsToPathData([prevRunEndPoint, points[0]!]), undefined, `${prevRenderedRun?.tail || ""}->${run.tail}`);
-        } else if (prevLeg < 56 && nextLeg < 56) {
+        } else if (gap < 34) {
           drawPath(overlayLayer, pointsToPathData([prevRunEndPoint, transitionPoint, points[0]!]), undefined, `${prevRenderedRun?.tail || ""}->${run.tail}`);
         } else if (gap < 30) {
           drawPath(overlayLayer, pointsToPathData([prevRunEndPoint, points[0]!]), undefined, `${prevRenderedRun?.tail || ""}->${run.tail}`);
@@ -1048,6 +1140,8 @@ export default function ShutokoMap({
   activeSpotLabels = [],
   highlightedRoutes: _highlightedRoutes = [],
   highlightedPath = [],
+  selectableEntryNames = [],
+  onSelectEntry,
   title = "Route Map",
   headerAction,
   toolbar,
@@ -1082,6 +1176,7 @@ export default function ShutokoMap({
     styleMapBackground(rootSvg);
 
     const overlayLayer = addLayer(rootSvg, "route-overlay-layer");
+    const selectLayer = addLayer(rootSvg, "entry-select-layer");
     const markerLayer = addLayer(rootSvg, "route-marker-layer");
 
     drawHighlight(
@@ -1096,7 +1191,8 @@ export default function ShutokoMap({
       overlayLayer,
       markerLayer
     );
-  }, [svgMarkup, seqCsv, seqMap, pointMap, highlightedPath, entryName, exitName, activeSpotLabels]);
+    drawSelectableEntries(host, selectLayer, pointMap, selectableEntryNames, onSelectEntry);
+  }, [svgMarkup, seqCsv, seqMap, pointMap, highlightedPath, entryName, exitName, activeSpotLabels, selectableEntryNames, onSelectEntry]);
 
   return (
     <div
